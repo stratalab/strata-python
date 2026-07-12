@@ -493,6 +493,12 @@ def main() -> None:
     (OUT / "catalog.py").write_text(gen_catalog(commands, all_ids))
     (OUT / "__init__.py").write_text(gen_init())
 
+    # Ship the resolved command index inside the wheel (IDL decision #5) so
+    # downstream tooling and agents can introspect the installed surface offline.
+    data_dir = ROOT / "python" / "stratadb" / "_data"
+    data_dir.mkdir(parents=True, exist_ok=True)
+    (data_dir / "command-index.json").write_text((IDL / "command-index.json").read_text())
+
     print(
         f"generated {len(commands)} commands, {len(model_names)} models "
         f"({len(enum_names & model_names)} enums, {len(object_names & model_names)} objects), "

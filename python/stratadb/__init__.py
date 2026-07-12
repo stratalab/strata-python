@@ -60,6 +60,20 @@ def mcp_config(db_path: str | os.PathLike[str]) -> dict[str, Any]:
     return {"command": "strata", "args": [str(db_path), "mcp", "serve"]}
 
 
+def command_index() -> dict[str, Any]:
+    """The resolved IDL command index bundled in this wheel.
+
+    The full command catalog (ids, kinds, docs, errors) for the installed
+    version — for offline introspection of the surface.
+    """
+    import importlib.resources
+    import json
+
+    resource = importlib.resources.files("stratadb").joinpath("_data", "command-index.json")
+    with resource.open("r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
 class Strata:
     """An open Strata database.
 
@@ -267,5 +281,6 @@ __all__ = [
     "filters",
     "agents_guide",
     "mcp_config",
+    "command_index",
     "__version__",
 ]

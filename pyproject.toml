@@ -39,3 +39,5 @@ Documentation = "https://stratadb.org"
 python-source = "python"
 module-name = "stratadb._stratadb"
 features = ["pyo3/extension-module"]
+# Ship the resolved IDL command index (IDL decision #5) inside the wheel.
+include = ["python/stratadb/_data/*.json"]
