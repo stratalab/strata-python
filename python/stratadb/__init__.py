@@ -31,6 +31,11 @@ from .namespaces.kv import KVNamespace
 from .namespaces.json import JSONNamespace
 from .namespaces.vectors import VectorsNamespace
 from .namespaces.events import EventsNamespace
+from .namespaces.graphs import GraphsNamespace
+from .namespaces.branches import BranchesNamespace
+from .namespaces.spaces import SpacesNamespace
+from .namespaces.admin import AdminNamespace
+from .namespaces.arrow import ArrowNamespace
 
 __version__: str = _stratadb.version()
 
@@ -155,6 +160,67 @@ class Strata:
             ns = EventsNamespace(self._commands, self._core, self._branch, self._space)
             self.__dict__["_events_ns"] = ns
         return ns
+
+    @property
+    def graphs(self) -> GraphsNamespace:
+        """The property-graph namespace."""
+        ns = self.__dict__.get("_graphs_ns")
+        if ns is None:
+            ns = GraphsNamespace(self._commands, self._core, self._branch, self._space)
+            self.__dict__["_graphs_ns"] = ns
+        return ns
+
+    @property
+    def branches(self) -> BranchesNamespace:
+        """The branch-management namespace."""
+        ns = self.__dict__.get("_branches_ns")
+        if ns is None:
+            ns = BranchesNamespace(self._commands, self._core, self._branch, self._space)
+            self.__dict__["_branches_ns"] = ns
+        return ns
+
+    @property
+    def spaces(self) -> SpacesNamespace:
+        """The product-space namespace."""
+        ns = self.__dict__.get("_spaces_ns")
+        if ns is None:
+            ns = SpacesNamespace(self._commands, self._core, self._branch, self._space)
+            self.__dict__["_spaces_ns"] = ns
+        return ns
+
+    @property
+    def admin(self) -> AdminNamespace:
+        """The admin / diagnostics namespace."""
+        ns = self.__dict__.get("_admin_ns")
+        if ns is None:
+            ns = AdminNamespace(self._commands, self._core, self._branch, self._space)
+            self.__dict__["_admin_ns"] = ns
+        return ns
+
+    @property
+    def arrow(self) -> ArrowNamespace:
+        """The Arrow / Parquet import-export namespace."""
+        ns = self.__dict__.get("_arrow_ns")
+        if ns is None:
+            ns = ArrowNamespace(self._commands, self._core, self._branch, self._space)
+            self.__dict__["_arrow_ns"] = ns
+        return ns
+
+    def at(self, *, branch: str | None = None, space: str | None = None) -> "Strata":
+        """Returns a lightweight scoped view over the same database.
+
+        Every namespace on the view targets ``branch``/``space``; unspecified
+        axes inherit this view's scope. The view shares the underlying handle,
+        so it needs no separate close. (The raw ``execute`` escape hatch is not
+        rescoped — pass ``branch``/``space`` in the command for that path.)
+        """
+        view = object.__new__(Strata)
+        view._core = self._core
+        view._commands = self._commands
+        view._closed = self._closed
+        view._branch = branch if branch is not None else self._branch
+        view._space = space if space is not None else self._space
+        return view
 
     @property
     def version(self) -> str:

@@ -9,5 +9,20 @@ from .kv import KVNamespace
 from .json import JSONNamespace
 from .vectors import VectorsNamespace
 from .events import EventsNamespace
+from .graphs import GraphsNamespace
+from .branches import BranchesNamespace
+from .spaces import SpacesNamespace
+from .admin import AdminNamespace
+from .arrow import ArrowNamespace
 
-__all__ = ["KVNamespace", "JSONNamespace", "VectorsNamespace", "EventsNamespace"]
+__all__ = [
+    "KVNamespace",
+    "JSONNamespace",
+    "VectorsNamespace",
+    "EventsNamespace",
+    "GraphsNamespace",
+    "BranchesNamespace",
+    "SpacesNamespace",
+    "AdminNamespace",
+    "ArrowNamespace",
+]
