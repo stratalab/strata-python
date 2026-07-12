@@ -1,8 +1,8 @@
 [package]
 name = "stratadb-python"
-version = "0.14.5"
+version = "1.0.0"
 edition = "2021"
-description = "Python bindings for StrataDB"
+description = "Python bindings for Strata (embedded multi-model database)"
 license = "MIT"
 repository = "https://github.com/stratalab/strata-python"
 
@@ -10,22 +10,16 @@ repository = "https://github.com/stratalab/strata-python"
 name = "_stratadb"
 crate-type = ["cdylib"]
 
-[features]
-default = ["embed"]
-embed = ["stratadb/embed", "dep:strata-intelligence"]
-embed-cuda = ["embed", "stratadb/embed-cuda", "strata-intelligence/embed-cuda"]
-
 [dependencies]
-pyo3 = { version = "0.22", features = ["extension-module"] }
-numpy = "0.22"
+pyo3 = { version = "0.23", features = ["extension-module", "abi3-py39"] }
+serde_json = "1"
 
-# Use path dependency for local development
-# stratadb = { path = "../strata-core" }
-stratadb = { git = "https://github.com/stratalab/strata-core", branch = "main" }
-
-# Intelligence crate for model download (embed feature only)
-# strata-intelligence = { path = "../strata-core/crates/intelligence", features = ["embed"], optional = true }
-strata-intelligence = { git = "https://github.com/stratalab/strata-core", branch = "main", features = ["embed"], optional = true }
-
-[build-dependencies]
-pyo3-build-config = "0.22"
+# The native binding links the V1 executor's serialized command boundary in
+# process — the same wire the CLI, MCP server, and wasm bindings speak. No
+# `hub` (network/tokio) and no `inference` (model runtime): the V1 Python SDK
+# is data-plane only, keeping the wheel lean and toolchain-free to install.
+#
+# Local development uses a path dependency to the sibling strata-core checkout.
+# The release build (P6) pins the published rev:
+#   strata-executor = { git = "https://github.com/stratalab/strata-core", rev = "8fbd3e7e...", default-features = false, features = ["localfs", "arrow"] }
+strata-executor = { path = "../strata-core/crates/executor", default-features = false, features = ["localfs", "arrow"] }
