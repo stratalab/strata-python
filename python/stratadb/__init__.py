@@ -29,6 +29,8 @@ from ._generated import Commands
 from .errors import InvalidArgumentError, UnsupportedError, client_error
 from .namespaces.kv import KVNamespace
 from .namespaces.json import JSONNamespace
+from .namespaces.vectors import VectorsNamespace
+from .namespaces.events import EventsNamespace
 
 __version__: str = _stratadb.version()
 
@@ -134,6 +136,24 @@ class Strata:
         if ns is None:
             ns = JSONNamespace(self._commands, self._core, self._branch, self._space)
             self.__dict__["_json_ns"] = ns
+        return ns
+
+    @property
+    def vectors(self) -> VectorsNamespace:
+        """The vector namespace."""
+        ns = self.__dict__.get("_vectors_ns")
+        if ns is None:
+            ns = VectorsNamespace(self._commands, self._core, self._branch, self._space)
+            self.__dict__["_vectors_ns"] = ns
+        return ns
+
+    @property
+    def events(self) -> EventsNamespace:
+        """The event-log namespace."""
+        ns = self.__dict__.get("_events_ns")
+        if ns is None:
+            ns = EventsNamespace(self._commands, self._core, self._branch, self._space)
+            self.__dict__["_events_ns"] = ns
         return ns
 
     @property

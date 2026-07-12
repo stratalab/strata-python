@@ -7,5 +7,7 @@ affordances (``str | bytes`` coercion, ``as_of`` reads, ``iter_*`` pagination,
 
 from .kv import KVNamespace
 from .json import JSONNamespace
+from .vectors import VectorsNamespace
+from .events import EventsNamespace
 
-__all__ = ["KVNamespace", "JSONNamespace"]
+__all__ = ["KVNamespace", "JSONNamespace", "VectorsNamespace", "EventsNamespace"]

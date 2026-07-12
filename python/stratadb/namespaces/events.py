@@ -1,0 +1,127 @@
+"""``db.events`` — the append-only, hash-chained event log.
+
+Records are immutable and expose ``previous_hash``/``hash``. Sequence numbers
+are dense and monotonic. ``range_by_time`` is the one wall-clock (occurrence
+time) axis; everything else is sequence-addressed.
+"""
+
+from __future__ import annotations
+
+from typing import Any, Optional
+
+from .._results import BatchResult, Page
+from .base import Namespace
+
+
+def _event_entries(entries: Any) -> list[dict]:
+    out = []
+    for entry in entries:
+        if isinstance(entry, dict):
+            out.append({"event_type": entry["event_type"], "payload": entry["payload"]})
+        else:
+            event_type, payload = entry
+            out.append({"event_type": event_type, "payload": payload})
+    return out
+
+
+def _direction(reverse: bool) -> str:
+    return "reverse" if reverse else "forward"
+
+
+class EventsNamespace(Namespace):
+    """The hash-chained event log."""
+
+    def append(self, event_type: str, payload: Any) -> Any:
+        """Appends one event; returns its sequence + commit receipt."""
+        return self._c.event_append(event_type, payload, **self._scope)
+
+    def append_many(self, entries: Any) -> BatchResult:
+        """Appends many events in one commit. Each entry is (event_type, payload) or a dict."""
+        return BatchResult.from_wire(
+            self._c.event_batch_append(_event_entries(entries), **self._scope)
+        )
+
+    def get(self, sequence: int, *, as_of: Optional[int] = None) -> Any:
+        """Returns the event at ``sequence``, or ``None`` if out of range."""
+        result = self._c.event_get(sequence, as_of=as_of, **self._scope)
+        return result.value if result.found else None
+
+    def exists(self, sequence: int) -> bool:
+        """Whether an event exists at ``sequence``."""
+        return self._c.event_exists(sequence, **self._scope)
+
+    def len(self, *, as_of: Optional[int] = None) -> int:
+        """Number of events in the log."""
+        return self._c.event_count(as_of=as_of, **self._scope).count
+
+    def __len__(self) -> int:
+        return self.len()
+
+    def range(
+        self,
+        start: int,
+        *,
+        end: Optional[int] = None,
+        limit: Optional[int] = None,
+        reverse: bool = False,
+        event_type: Optional[str] = None,
+    ) -> Page:
+        """A page of events by sequence, from ``start`` (to ``end`` if given)."""
+        return Page.from_wire(
+            self._c.event_range(
+                start,
+                _direction(reverse),
+                end_seq=end,
+                event_type=event_type,
+                limit=limit,
+                **self._scope,
+            )
+        )
+
+    def range_by_time(
+        self,
+        start_ts: int,
+        *,
+        end_ts: Optional[int] = None,
+        limit: Optional[int] = None,
+        reverse: bool = False,
+        event_type: Optional[str] = None,
+    ) -> Page:
+        """A page of events by **occurrence time** (the one wall-clock axis)."""
+        return Page.from_wire(
+            self._c.event_range_time(
+                start_ts,
+                _direction(reverse),
+                end_ts=end_ts,
+                event_type=event_type,
+                limit=limit,
+                **self._scope,
+            )
+        )
+
+    def list(
+        self,
+        event_type: Optional[str] = None,
+        *,
+        limit: Optional[int] = None,
+        after_sequence: Optional[int] = None,
+        as_of: Optional[int] = None,
+    ) -> Page:
+        """A page of events, optionally filtered by type / after a sequence."""
+        return Page.from_wire(
+            self._c.event_list(
+                event_type=event_type,
+                limit=limit,
+                after_sequence=after_sequence,
+                as_of=as_of,
+                **self._scope,
+            )
+        )
+
+    def types(self, *, as_of: Optional[int] = None) -> list:
+        """The distinct event types present in the log."""
+        return self._c.event_types(as_of=as_of, **self._scope).items
+
+    def verify_chain(self) -> Any:
+        """Verifies the hash chain; returns its length, validity, and first invalid link."""
+        return self._c.event_verify_chain(**self._scope)
