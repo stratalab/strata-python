@@ -25,7 +25,10 @@ from typing import Any
 from . import _stratadb  # native extension
 from . import errors, filters
 from ._core import Core
+from ._generated import Commands
 from .errors import InvalidArgumentError, UnsupportedError, client_error
+from .namespaces.kv import KVNamespace
+from .namespaces.json import JSONNamespace
 
 __version__: str = _stratadb.version()
 
@@ -84,6 +87,10 @@ class Strata:
         self._closed = False
         if branch is not None or space is not None:
             self._core.set_scope(branch, space)
+        self._commands = Commands(self._core)
+        # Scope override for db.at(...) views; None means "use the session default".
+        self._branch: str | None = None
+        self._space: str | None = None
 
     @classmethod
     def from_env(cls, *, branch: str | None = None, space: str | None = None) -> "Strata":
@@ -110,6 +117,24 @@ class Strata:
         failure.
         """
         return self._core.execute(command)
+
+    @property
+    def kv(self) -> KVNamespace:
+        """The key-value namespace."""
+        ns = self.__dict__.get("_kv_ns")
+        if ns is None:
+            ns = KVNamespace(self._commands, self._core, self._branch, self._space)
+            self.__dict__["_kv_ns"] = ns
+        return ns
+
+    @property
+    def json(self) -> JSONNamespace:
+        """The JSON-document namespace."""
+        ns = self.__dict__.get("_json_ns")
+        if ns is None:
+            ns = JSONNamespace(self._commands, self._core, self._branch, self._space)
+            self.__dict__["_json_ns"] = ns
+        return ns
 
     @property
     def version(self) -> str:
