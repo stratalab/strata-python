@@ -55,6 +55,47 @@ db.close()   # or: with stratadb.Strata("./app-data") as db: ...
 `Strata()` never opens the current directory implicitly: pass a path, set
 `STRATA_DB` (`stratadb.Strata.from_env()`), or use `cache=True`.
 
+## Inference — `db.ai`
+
+Chat, embeddings, and reranking over cloud providers (OpenAI, Anthropic, Google)
+or local GGUF models — an OpenAI-shaped surface. Strata is embedded and ships no
+keys: set `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `GOOGLE_API_KEY`, or
+`strata config set openai.api_key sk-...`.
+
+```python
+r = db.ai.chat("Explain embeddings in one sentence.",
+               model="openai:gpt-4o-mini", max_tokens=60)
+print(r.content)
+
+# Structured output (JSON Schema)
+r = db.ai.chat("Capital of France and its population?",
+               model="anthropic:claude-haiku-4-5-20251001",
+               json_schema={"type": "object",
+                            "properties": {"capital": {"type": "string"},
+                                           "population": {"type": "integer"}},
+                            "required": ["capital", "population"]})
+
+# Tool / function calling
+r = db.ai.chat("What's the weather in Paris?", model="google:gemini-2.5-flash",
+               tools=[{"type": "function",
+                       "function": {"name": "get_weather",
+                                    "parameters": {"type": "object",
+                                                   "properties": {"city": {"type": "string"}},
+                                                   "required": ["city"]}}}],
+               tool_choice="required")
+r.tool_calls          # [{'id': ..., 'function': {'name': 'get_weather', 'arguments': '{"city":"Paris"}'}}]
+
+# Embeddings
+e = db.ai.embed(["hello", "world"], model="openai:text-embedding-3-small")
+e.vectors             # [[...], [...]]
+
+# A model handle sets load params once
+qwen = db.ai.model("local:qwen3", n_ctx=8192)
+qwen.chat("Summarize: ...")
+
+db.ai.capability("openai:gpt-4o-mini")   # supported features; no network call
+```
+
 ## Branches, spaces, and time travel
 
 ```python

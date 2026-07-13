@@ -10,16 +10,26 @@ repository = "https://github.com/stratalab/strata-python"
 name = "_stratadb"
 crate-type = ["cdylib"]
 
+[features]
+# CPU-local llama.cpp. The base wheel is cloud + CPU (per the packaging
+# decision), so the release build runs `maturin build --release --features
+# local` (needs cmake); dev builds stay cloud-only for fast iteration. GPU is a
+# separate `stratadb[cuda]` companion wheel built with the CUDA toolchain.
+local = ["strata-executor/inference-local"]
+
 [dependencies]
 pyo3 = { version = "0.23", features = ["extension-module", "abi3-py39"] }
 serde_json = "1"
 
 # The native binding links the V1 executor's serialized command boundary in
-# process — the same wire the CLI, MCP server, and wasm bindings speak. No
-# `hub` (network/tokio) and no `inference` (model runtime): the V1 Python SDK
-# is data-plane only, keeping the wheel lean and toolchain-free to install.
+# process — the same wire the CLI, MCP server, and wasm bindings speak. The
+# `inference` feature adds the cloud model runtime (Anthropic/OpenAI/Google,
+# pure-Rust HTTP) so `db.ai` works out of the box; still no `hub`
+# (network/tokio). CPU-local llama.cpp is added at package time via the
+# `inference-local` feature (base wheel = cloud + CPU); GPU is a separate
+# `stratadb[cuda]` companion wheel.
 #
 # Local development uses a path dependency to the sibling strata-core checkout.
-# The release build (P6) pins the published rev:
-#   strata-executor = { git = "https://github.com/stratalab/strata-core", rev = "8fbd3e7e...", default-features = false, features = ["localfs", "arrow"] }
-strata-executor = { path = "../strata-core/crates/executor", default-features = false, features = ["localfs", "arrow"] }
+# The release build (P6) pins the published rev (see idl/v1/STRATA_CORE_REV):
+#   strata-executor = { git = "https://github.com/stratalab/strata-core", rev = "66c97cd1...", default-features = false, features = ["localfs", "arrow", "inference"] }
+strata-executor = { path = "../strata-core/crates/executor", default-features = false, features = ["localfs", "arrow", "inference"] }

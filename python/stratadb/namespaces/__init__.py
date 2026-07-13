@@ -14,8 +14,10 @@ from .branches import BranchesNamespace
 from .spaces import SpacesNamespace
 from .admin import AdminNamespace
 from .arrow import ArrowNamespace
+from .ai import AiNamespace
 
 __all__ = [
+    "AiNamespace",
     "KVNamespace",
     "JSONNamespace",
     "VectorsNamespace",

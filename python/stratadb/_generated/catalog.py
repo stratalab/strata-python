@@ -131,7 +131,6 @@ UNCOVERED_COMMANDS = [
     'inference.capability',
     'inference.detokenize',
     'inference.embed',
-    'inference.embed_batch',
     'inference.generate',
     'inference.models.list',
     'inference.models.local',

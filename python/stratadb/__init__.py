@@ -36,6 +36,7 @@ from .namespaces.branches import BranchesNamespace
 from .namespaces.spaces import SpacesNamespace
 from .namespaces.admin import AdminNamespace
 from .namespaces.arrow import ArrowNamespace
+from .namespaces.ai import AiNamespace
 
 __version__: str = _stratadb.version()
 
@@ -218,6 +219,16 @@ class Strata:
         if ns is None:
             ns = ArrowNamespace(self._commands, self._core, self._branch, self._space)
             self.__dict__["_arrow_ns"] = ns
+        return ns
+
+    @property
+    def ai(self) -> AiNamespace:
+        """The inference namespace — chat, embeddings, reranking, and model
+        management (OpenAI-shaped, cloud + local)."""
+        ns = self.__dict__.get("_ai_ns")
+        if ns is None:
+            ns = AiNamespace(self._commands, self._core, self._branch, self._space)
+            self.__dict__["_ai_ns"] = ns
         return ns
 
     def at(self, *, branch: str | None = None, space: str | None = None) -> "Strata":

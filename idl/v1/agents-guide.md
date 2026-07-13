@@ -76,7 +76,7 @@ Client config: {"command":"strata","args":["<db-path>","mcp","serve"]}.
 
 ## Command catalog
 
-126 commands carry full metadata today (catalog JSON: `strata agents commands --json`); every command documents itself via `--help`.
+125 commands carry full metadata today (catalog JSON: `strata agents commands --json`); every command documents itself via `--help`.
 
 ### admin
 
@@ -109,9 +109,9 @@ Client config: {"command":"strata","args":["<db-path>","mcp","serve"]}.
 
 - `event append` — Append one event to the branch event log.
 - `event batch-append` — Append multiple events in one commit.
+- `event count` — Count visible events in the log.
 - `event exists` — Check whether an event sequence exists.
 - `event get` — Read one event by sequence number.
-- `event len` — Count visible events in the log.
 - `event list` — List events with optional type filter and cursor.
 - `event range` — Read a range of events by sequence number.
 - `event range-time` — Read a range of events by occurrence time.
@@ -157,8 +157,7 @@ Client config: {"command":"strata","args":["<db-path>","mcp","serve"]}.
 - `inference cache-status` — Report loaded model cache state.
 - `inference capability` — Report capabilities for a model spec.
 - `inference detokenize` — Detokenize token ids with a local model.
-- `inference embed` — Embed one text into a vector.
-- `inference embed-batch` — Embed multiple texts into vectors.
+- `inference embed` — Embed one or more texts into vectors.
 - `inference generate` — Generate text with an inference model.
 - `inference models list` — List catalog inference models.
 - `inference models local` — List locally downloaded inference models.
