@@ -113,6 +113,20 @@ BINDINGS = {
     "event.types": Binding("events", "types", "{}", "json"),
     "event.verify_chain": Binding("events", "verify_chain", "{}.valid", "json"),
     "event.batch_append": Binding("events", "append_many"),
+    # graph core (management + node/edge CRUD + traversal). Analytics and
+    # ontology commands have no curated SDK method yet — allowlisted.
+    "graph.create": Binding("graphs", "create", arg_map={"graph": "name"}),
+    "graph.delete": Binding("graphs", "delete", arg_map={"graph": "name"}),
+    "graph.list": Binding("graphs", "list", "{}", "json"),
+    "graph.meta": Binding("graphs", "meta", "{}.node_count", "int", {"graph": "name"}),
+    "graph.node.add": Binding("graphs", "add_node"),
+    "graph.node.get": Binding("graphs", "get_node", "{}.properties", "json"),
+    "graph.node.remove": Binding("graphs", "remove_node"),
+    "graph.node.list": Binding("graphs", "list_nodes", "[n.node_id for n in {}]", "json"),
+    "graph.edge.add": Binding("graphs", "add_edge"),
+    "graph.edge.get": Binding("graphs", "get_edge", "{}.edge_type", "json"),
+    "graph.edge.remove": Binding("graphs", "remove_edge"),
+    "graph.neighbors": Binding("graphs", "neighbors", "[n.node_id for n in {}]", "json"),
 }
 
 DOCSTRING_INDENT = " " * 8  # method docstrings sit at 8 spaces
