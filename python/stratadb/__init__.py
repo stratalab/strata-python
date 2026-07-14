@@ -135,6 +135,45 @@ class Strata:
             )
         return cls(path, branch=branch, space=space)
 
+    @classmethod
+    def clone(
+        cls,
+        dataset: str,
+        dest: str | os.PathLike[str],
+        *,
+        hub_url: str | None = None,
+        branch: str | None = None,
+    ) -> "Strata":
+        """Clones a dataset from a StrataHub into a new durable database.
+
+        Fetches ``dataset`` from the hub (``hub_url``, or the resolver default
+        when omitted), materializes it as a durable database at ``dest`` (which
+        must not exist or be empty), and returns an open handle to it. ``branch``
+        selects the dataset branch to fetch (the dataset's default when omitted).
+
+        The StrataHub client ships in the standard wheel. A minimal build
+        compiled without the hub client instead raises
+        :class:`~stratadb.errors.FailedPreconditionError`
+        (``failed_precondition.executor.hub_clone``).
+        """
+        # Clone is a standalone operation that creates the database at `dest`; a
+        # transient cache handle only carries the command to the executor.
+        opener = cls(cache=True)
+        try:
+            command: dict[str, Any] = {
+                "type": "hub_clone",
+                "dataset": dataset,
+                "dest": str(dest),
+            }
+            if hub_url is not None:
+                command["hub_url"] = hub_url
+            if branch is not None:
+                command["branch"] = branch
+            opener.execute(command)
+        finally:
+            opener.close()
+        return cls(dest)
+
     def execute(self, command: dict[str, Any]) -> dict[str, Any]:
         """Runs one raw command on the wire, returning its output envelope.
 

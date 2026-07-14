@@ -22,18 +22,22 @@ def main() -> int:
     rev = (ROOT / "idl" / "v1" / "STRATA_CORE_REV").read_text().strip()
     cargo = ROOT / "Cargo.toml"
     text = cargo.read_text()
+    match = re.search(r"^strata-executor = \{ (?P<body>.*) \}$", text, flags=re.M)
+    if match is None:
+        print("error: strata-executor dependency line not found", file=sys.stderr)
+        return 1
+    # Preserve the feature set from Cargo.toml (its single source of truth) and
+    # only swap the local path source for the pinned git rev. Hardcoding the
+    # features here silently drops any the dev build ships (this is how the
+    # release wheel once lost `inference`/`hub`).
+    feat = re.search(r"features = \[[^\]]*\]", match.group("body"))
+    features = feat.group(0) if feat else 'features = ["localfs", "arrow"]'
     git_line = (
         'strata-executor = { git = "https://github.com/stratalab/strata-core", '
-        f'rev = "{rev}", default-features = false, features = ["localfs", "arrow"] }}'
+        f'rev = "{rev}", default-features = false, {features} }}'
     )
-    new, count = re.subn(
-        r"^strata-executor = \{ (?:path|git) = .*\}$", git_line, text, flags=re.M
-    )
-    if count != 1:
-        print(f"error: expected one strata-executor dependency line, matched {count}", file=sys.stderr)
-        return 1
-    cargo.write_text(new)
-    print(f"pinned strata-executor to strata-core rev {rev}")
+    cargo.write_text(text[: match.start()] + git_line + text[match.end() :])
+    print(f"pinned strata-executor to strata-core rev {rev} with {features}")
     return 0
 
 

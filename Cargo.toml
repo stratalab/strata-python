@@ -24,12 +24,15 @@ serde_json = "1"
 # The native binding links the V1 executor's serialized command boundary in
 # process — the same wire the CLI, MCP server, and wasm bindings speak. The
 # `inference` feature adds the cloud model runtime (Anthropic/OpenAI/Google,
-# pure-Rust HTTP) so `db.ai` works out of the box; still no `hub`
-# (network/tokio). CPU-local llama.cpp is added at package time via the
-# `inference-local` feature (base wheel = cloud + CPU); GPU is a separate
-# `stratadb[cuda]` companion wheel.
+# pure-Rust HTTP) so `db.ai` works out of the box; `hub` adds the StrataHub
+# client so `Strata.clone(...)` works out of the box, matching the executor and
+# CLI default deployment (their `default` feature set includes `hub`). CPU-local
+# llama.cpp is added at package time via the `inference-local` feature (base
+# wheel = cloud + CPU); GPU is a separate `stratadb[cuda]` companion wheel.
 #
 # Local development uses a path dependency to the sibling strata-core checkout.
-# The release build (P6) pins the published rev (see idl/v1/STRATA_CORE_REV):
-#   strata-executor = { git = "https://github.com/stratalab/strata-core", rev = "66c97cd1...", default-features = false, features = ["localfs", "arrow", "inference"] }
-strata-executor = { path = "../strata-core/crates/executor", default-features = false, features = ["localfs", "arrow", "inference"] }
+# The release build (P6) pins the published rev (see idl/v1/STRATA_CORE_REV);
+# building the hub client needs the STRATAHUB_READ_TOKEN secret for the private
+# stratahub-client dep:
+#   strata-executor = { git = "https://github.com/stratalab/strata-core", rev = "66c97cd1...", default-features = false, features = ["localfs", "arrow", "inference", "hub"] }
+strata-executor = { path = "../strata-core/crates/executor", default-features = false, features = ["localfs", "arrow", "inference", "hub"] }
