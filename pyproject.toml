@@ -28,7 +28,7 @@ keywords = ["database", "embedded", "ai", "agents", "vector", "kv", "graph", "js
 authors = [{ name = "Strata Lab" }]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.0"]
+dev = ["pytest>=7.0", "pyyaml>=6.0"]
 
 [project.urls]
 Homepage = "https://stratadb.org"

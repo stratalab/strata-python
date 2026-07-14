@@ -42,9 +42,9 @@ class KVNamespace(Namespace):
         """Stores or replaces a value. Returns a write result (receipt + effect).
 
         Examples:
-            >>> _ = db.kv.put("k", "v1")
-            >>> _ = db.kv.put("k", "v2")             # replaces
-            >>> db.kv.get("k")
+            >>> _ = db.kv.put("setting", "v1")
+            >>> _ = db.kv.put("setting", "v2")  # replaces the visible value
+            >>> db.kv.get("setting")
             b'v2'
         """
         return self._c.kv_put(key, value, **self._scope)
@@ -70,7 +70,14 @@ class KVNamespace(Namespace):
         return result.value if result.found else None
 
     def delete(self, key: str | bytes) -> Any:
-        """Deletes a key. Returns a write result."""
+        """Deletes a key. Returns a write result.
+
+        Examples:
+            >>> _ = db.kv.put("temp", "scratch")
+            >>> _ = db.kv.delete("temp")
+            >>> db.kv.exists("temp")
+            False
+        """
         return self._c.kv_delete(key, **self._scope)
 
     def exists(self, key: str | bytes) -> bool:
@@ -91,7 +98,14 @@ class KVNamespace(Namespace):
         return result.items if result is not None else None
 
     def count(self, prefix: Optional[str | bytes] = None, *, as_of: Optional[int] = None) -> int:
-        """Number of visible keys, optionally under a prefix."""
+        """Number of visible keys, optionally under a prefix.
+
+        Examples:
+            >>> _ = db.kv.put("a", "1")
+            >>> _ = db.kv.put("b", "2")
+            >>> db.kv.count()
+            2
+        """
         return self._c.kv_count(prefix=prefix, as_of=as_of, **self._scope)
 
     # --- listing / pagination ---
