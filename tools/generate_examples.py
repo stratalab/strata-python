@@ -23,6 +23,7 @@ from __future__ import annotations
 import ast
 import json
 import sys
+from collections import namedtuple
 from pathlib import Path
 
 import yaml
@@ -31,15 +32,29 @@ ROOT = Path(__file__).resolve().parent.parent
 EXAMPLES = ROOT / "idl" / "v1" / "examples"
 NS_DIR = ROOT / "python" / "stratadb" / "namespaces"
 
-# command id -> (namespace module, curated method) whose docstring shows it.
-# Grows as example specs land; every command referenced by a bound spec's
-# steps must itself be bound (so the call form is known).
+# command id -> the curated method whose docstring shows it. `expr` is the
+# demonstrated result expression (``{}`` = the call); the default ``{}`` shows
+# the call's own value. `result_type` overrides how the expected value is
+# rendered (defaults to the method's return annotation) — needed when a result
+# accessor changes the type (a Page's ``.items`` are bytes, a Sample's
+# ``.total_count`` is an int). Every command a bound spec's steps call must
+# itself be bound (so the call form is known).
+Binding = namedtuple("Binding", ["ns", "method", "expr", "result_type"], defaults=("{}", None))
+
 BINDINGS = {
-    "kv.put": ("kv", "put"),
-    "kv.get": ("kv", "get"),
-    "kv.exists": ("kv", "exists"),
-    "kv.delete": ("kv", "delete"),
-    "kv.count": ("kv", "count"),
+    "kv.put": Binding("kv", "put"),
+    "kv.get": Binding("kv", "get"),
+    "kv.exists": Binding("kv", "exists"),
+    "kv.delete": Binding("kv", "delete"),
+    "kv.count": Binding("kv", "count"),
+    "kv.batch_put": Binding("kv", "put_many"),
+    "kv.batch_get": Binding("kv", "get_many"),
+    "kv.batch_exists": Binding("kv", "exists_many"),
+    "kv.batch_delete": Binding("kv", "delete_many"),
+    "kv.history": Binding("kv", "history"),
+    "kv.list": Binding("kv", "keys", "{}.items", "list[bytes]"),
+    "kv.scan": Binding("kv", "scan", "[row.key for row in {}]", "list[bytes]"),
+    "kv.sample": Binding("kv", "sample", "{}.total_count", "int"),
 }
 
 DOCSTRING_INDENT = " " * 8  # method docstrings sit at 8 spaces
@@ -74,15 +89,23 @@ def py_lit(value) -> str:
 
 
 def render_call(step: dict, methods: dict) -> str:
-    ns, method = BINDINGS[step["call"]]
-    sig = methods[ns][method]
+    binding = BINDINGS[step["call"]]
+    sig = methods[binding.ns][binding.method]
     args = step.get("args") or {}
     parts = [py_lit(args[p]) for p in sig["pos"] if p in args]
     parts += [f"{k}={py_lit(args[k])}" for k in sig["kwonly"] if k in args]
-    return f"db.{ns}.{method}({', '.join(parts)})"
+    return f"db.{binding.ns}.{binding.method}({', '.join(parts)})"
 
 
 def render_result(value, return_annotation: str) -> str:
+    if isinstance(value, list):  # e.g. get_many -> [b'1', b'2', None]
+        return "[" + ", ".join(render_scalar(v, return_annotation) for v in value) + "]"
+    return render_scalar(value, return_annotation)
+
+
+def render_scalar(value, return_annotation: str) -> str:
+    if value is None:
+        return "None"
     if "bytes" in return_annotation and isinstance(value, str):
         return f"b{json.dumps(value)}".replace('"', "'")  # b'hello'
     if isinstance(value, bool):
@@ -91,6 +114,7 @@ def render_result(value, return_annotation: str) -> str:
 
 
 def render_step(step: dict, methods: dict) -> list[str]:
+    binding = BINDINGS[step["call"]]
     call = render_call(step, methods)
     note = f"  # {step['note']}" if step.get("note") else ""
     if "returns" not in step:
@@ -98,8 +122,9 @@ def render_step(step: dict, methods: dict) -> list[str]:
     value = step["returns"]
     if value is None:  # returns: null -> a miss
         return [f">>> {call} is None", "True"]
-    ns, method = BINDINGS[step["call"]]
-    return [f">>> {call}", render_result(value, methods[ns][method]["returns"])]
+    expr = binding.expr.format(call)  # e.g. "{}.items" -> db.kv.keys(...).items
+    result_type = binding.result_type or methods[binding.ns][binding.method]["returns"]
+    return [f">>> {expr}", render_result(value, result_type)]
 
 
 def render_block(command_id: str, methods: dict) -> list[str]:
@@ -159,8 +184,8 @@ def method_docstring_nodes(source: str):
 
 def process(write: bool) -> int:
     by_file: dict[str, list[str]] = {}
-    for command_id, (ns, _method) in BINDINGS.items():
-        by_file.setdefault(ns, []).append(command_id)
+    for command_id, binding in BINDINGS.items():
+        by_file.setdefault(binding.ns, []).append(command_id)
 
     methods = {ns: namespace_methods(ns) for ns in by_file}
     stale = []
@@ -168,7 +193,7 @@ def process(write: bool) -> int:
         path = NS_DIR / f"{ns}.py"
         source = path.read_text()
         # Map bound method -> command id for this namespace.
-        method_to_cmd = {BINDINGS[c][1]: c for c in command_ids}
+        method_to_cmd = {BINDINGS[c].method: c for c in command_ids}
 
         edits = []  # (node, new_docstring_value)
         for method_name, const in method_docstring_nodes(source):
