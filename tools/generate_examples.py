@@ -190,6 +190,10 @@ BINDINGS = {
     "inference.models.list": Binding(
         "ai", "models.list", 'sorted(set(m["task"] for m in {}["items"]))', "json"
     ),
+    # arrow — file round-trip; the `{tmpdir}/<file>` path renders as a tmp_dir
+    # expression (see render_arg). Wire `file_path` maps to the method's `path`.
+    "arrow.export": Binding("arrow", "export"),
+    "arrow.import": Binding("arrow", "import_", arg_map={"file_path": "path"}),
 }
 
 DOCSTRING_INDENT = " " * 8  # method docstrings sit at 8 spaces
@@ -259,6 +263,12 @@ def render_arg(param: str, value) -> str:
     # as the curated `stratadb.filters` builder that users actually write.
     if param == "filter" and isinstance(value, dict) and "conditions" in value:
         return render_filter(value)
+    # A `{tmpdir}/<file>` path placeholder renders as an expression scoped to the
+    # doctest's injected `tmp_dir` (test_doctests.py), so a round-trip export and
+    # import share a real, isolated file.
+    if isinstance(value, str) and "{tmpdir}" in value:
+        rest = value.replace("{tmpdir}", "").lstrip("/")
+        return f'tmp_dir + "/{rest}"'
     return py_lit(value)
 
 

@@ -10,13 +10,15 @@ from .base import Namespace
 class ArrowNamespace(Namespace):
     """Bulk import/export of a primitive's rows via Arrow-backed files.
 
-    Import and export touch real files on disk, so the examples below are
-    illustrative (``+SKIP``) rather than run.
+    Export writes one file per primitive (Parquet by default); import reads it
+    back into a primitive. Both take a filesystem path.
 
     Examples:
         >>> _ = db.kv.put("greeting", "hello")
-        >>> _ = db.arrow.export("kv", "kv.parquet")             # doctest: +SKIP
-        >>> _ = db.arrow.import_("kv", "kv.parquet")            # doctest: +SKIP
+        >>> _ = db.arrow.export("kv", tmp_dir + "/kv.parquet")
+        >>> _ = db.arrow.import_("kv", tmp_dir + "/kv.parquet")
+        >>> db.kv.get("greeting")
+        b'hello'
     """
 
     def import_(
@@ -32,7 +34,12 @@ class ArrowNamespace(Namespace):
         """Imports rows from ``path`` into ``target`` (e.g. ``"kv"``, ``"vector"``).
 
         Examples:
-            >>> _ = db.arrow.import_("kv", "users.parquet")     # doctest: +SKIP
+            >>> _ = db.kv.put("greeting", "hello")
+            >>> _ = db.arrow.export("kv", tmp_dir + "/kv.parquet", format="parquet")
+            >>> _ = db.kv.delete("greeting")
+            >>> _ = db.arrow.import_("kv", tmp_dir + "/kv.parquet")  # Rows are keyed by their source column; kv restores greeting=hello.
+            >>> db.kv.get("greeting")
+            b'hello'
         """
         return self._c.arrow_import(
             path,
@@ -59,7 +66,12 @@ class ArrowNamespace(Namespace):
         """Exports a primitive's rows to ``path`` (Parquet by default).
 
         Examples:
-            >>> _ = db.arrow.export("kv", "kv.parquet")         # doctest: +SKIP
+            >>> _ = db.kv.put("greeting", "hello")
+            >>> _ = db.arrow.export("kv", tmp_dir + "/kv.parquet", format="parquet")  # One file per primitive; Parquet by default.
+            >>> _ = db.kv.delete("greeting")
+            >>> _ = db.arrow.import_("kv", tmp_dir + "/kv.parquet")
+            >>> db.kv.get("greeting")
+            b'hello'
         """
         return self._c.arrow_export(
             primitive,
