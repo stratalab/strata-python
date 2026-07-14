@@ -100,6 +100,19 @@ BINDINGS = {
     "vector.delete_by_filter": Binding("vectors", "delete_by_filter"),
     # vector.sample / vector.scan / vector.batch_exists have no curated method:
     # reference-doc coverage in strata-core, no SDK docstring.
+    # events — sequence-numbered append-only log; payloads read back via
+    # `.event.payload`. `direction` (wire) is absorbed into the method's
+    # `reverse` default, so it is left unmapped and dropped from the render.
+    "event.append": Binding("events", "append"),
+    "event.get": Binding("events", "get", "{}.event.payload", "json"),
+    "event.exists": Binding("events", "exists"),
+    "event.count": Binding("events", "len"),
+    "event.list": Binding("events", "list", "[e.event.payload for e in {}]", "json"),
+    "event.range": Binding("events", "range", "[e.event.payload for e in {}]", "json", {"start_seq": "start"}),
+    "event.range_time": Binding("events", "range_by_time", "[e.event.payload for e in {}]", "json"),
+    "event.types": Binding("events", "types", "{}", "json"),
+    "event.verify_chain": Binding("events", "verify_chain", "{}.valid", "json"),
+    "event.batch_append": Binding("events", "append_many"),
 }
 
 DOCSTRING_INDENT = " " * 8  # method docstrings sit at 8 spaces
