@@ -41,7 +41,9 @@ NS_DIR = ROOT / "python" / "stratadb" / "namespaces"
 # itself be bound (so the call form is known).
 # `arg_map` remaps wire argument names to curated method parameter names when
 # they differ (e.g. vector.query's wire `query` -> the `vector` param; the
-# collection-management commands' wire `collection` -> the `name` param).
+# collection-management commands' wire `collection` -> the `name` param). A
+# dotted key reaches into a nested wire struct (e.g. `target.primitive` ->
+# `primitive`) when the SDK flattens it into separate parameters.
 Binding = namedtuple(
     "Binding", ["ns", "method", "expr", "result_type", "arg_map"], defaults=("{}", None, None)
 )
@@ -143,6 +145,18 @@ BINDINGS = {
     "graph.ontology.freeze": Binding("graphs", "ontology.freeze"),
     "graph.ontology.get": Binding("graphs", "ontology.get", "{}.status", "json"),
     "graph.ontology.summary": Binding("graphs", "ontology.summary", "[o.name for o in {}.object_types]", "json"),
+    # graph entity bindings — a node bound to a product entity, listed and
+    # governed by delete policy. The wire nests the identity under `target`;
+    # the SDK flattens it to primitive/key (space defaults to the scope).
+    "graph.batch_write": Binding("graphs", "batch_write"),
+    "graph.bindings": Binding(
+        "graphs", "bindings_for_entity", "[h.node_id for h in {}]", "json",
+        {"target.primitive": "primitive", "target.key": "key"},
+    ),
+    "graph.apply_delete_policy": Binding(
+        "graphs", "apply_delete_policy",
+        arg_map={"target.primitive": "primitive", "target.key": "key"},
+    ),
     # graph bulk / typed listing / sample.
     "graph.bulk_insert": Binding("graphs", "bulk_insert"),
     "graph.nodes_by_type": Binding("graphs", "nodes_by_type", "[n.node_id for n in {}]", "json"),
@@ -210,7 +224,18 @@ def render_call(step: dict, methods: dict) -> str:
     binding = BINDINGS[step["call"]]
     sig = methods[binding.ns][method_leaf(binding.method)]
     amap = binding.arg_map or {}
-    args = {amap.get(name, name): value for name, value in (step.get("args") or {}).items()}
+    raw = step.get("args") or {}
+    # An `arg_map` key may be a dotted path into a nested wire argument (e.g.
+    # `target.primitive`), letting a curated method flatten a wire struct that
+    # the SDK exposes as separate parameters. A consumed root is not passed on.
+    dotted = {src: dst for src, dst in amap.items() if "." in src}
+    consumed = {src.split(".")[0] for src in dotted}
+    args = {amap.get(name, name): value for name, value in raw.items() if name not in consumed}
+    for src, dst in dotted.items():
+        node = raw
+        for part in src.split("."):
+            node = node[part]
+        args[dst] = node
     parts = [render_arg(p, args[p]) for p in sig["pos"] if p in args]
     parts += [f"{k}={render_arg(k, args[k])}" for k in sig["kwonly"] if k in args]
     return f"db.{binding.ns}.{binding.method}({', '.join(parts)})"

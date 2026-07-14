@@ -242,7 +242,14 @@ class GraphsNamespace(Namespace):
     def bindings_for_entity(
         self, primitive: str, key: str, *, space: Optional[str] = None
     ) -> Page:
-        """Graph nodes bound to a product entity (``primitive`` is kv/json/vector/event/graph)."""
+        """Graph nodes bound to a product entity (``primitive`` is kv/json/vector/event/graph).
+
+        Examples:
+            >>> _ = db.graphs.create("kb")
+            >>> _ = db.graphs.add_node("kb", "ada", binding={"target": {"primitive": "kv", "space": "default", "key": "user:1"}})  # Bind the node to a KV entity so retrieval can cross primitives.
+            >>> [h.node_id for h in db.graphs.bindings_for_entity("kv", "user:1")]
+            ['ada']
+        """
         target = {
             "primitive": primitive,
             "key": key,
@@ -253,8 +260,40 @@ class GraphsNamespace(Namespace):
         return Page.from_wire(self._c.graph_bindings(target, **self._scope))
 
     def batch_write(self, graph: str, operations: list) -> Any:
-        """Applies a batch of node/edge operations atomically."""
+        """Applies a batch of node/edge operations atomically.
+
+        Examples:
+            >>> _ = db.graphs.create("g")
+            >>> _ = db.graphs.batch_write("g", [{"type": "upsert_node", "node_id": "a", "data": {"object_type": "person"}}, {"type": "upsert_node", "node_id": "b", "data": {"object_type": "person"}}, {"type": "upsert_edge", "src": "a", "edge_type": "knows", "dst": "b", "data": {}}])  # All operations land in one engine commit, or none do.
+            >>> db.graphs.meta("g").node_count
+            2
+        """
         return self._c.graph_batch_write(graph, operations, **self._scope)
+
+    def apply_delete_policy(
+        self, primitive: str, key: str, policy: str, *, space: Optional[str] = None
+    ) -> Any:
+        """Apply a delete policy to the graph facts bound to a product entity.
+
+        ``policy`` is ``"cascade"`` (delete the bound nodes and their incident
+        edges), ``"detach"`` (keep the nodes, drop their entity bindings), or
+        ``"keep_dangling"`` (keep the bindings; traversal reports the status).
+
+        Examples:
+            >>> _ = db.graphs.create("kb")
+            >>> _ = db.graphs.add_node("kb", "ada", binding={"target": {"primitive": "kv", "space": "default", "key": "user:1"}})
+            >>> _ = db.graphs.apply_delete_policy("kv", "user:1", "cascade")  # cascade removes the bound node and its incident edges.
+            >>> db.graphs.get_node("kb", "ada") is None
+            True
+        """
+        target = {
+            "primitive": primitive,
+            "key": key,
+            "space": space if space is not None else (self._space or "default"),
+        }
+        if self._branch is not None:
+            target["branch"] = self._branch
+        return self._c.graph_apply_delete_policy(target, policy, **self._scope)
 
     # --- bulk / typed listing / sample ---
 
