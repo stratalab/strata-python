@@ -127,6 +127,26 @@ BINDINGS = {
     "graph.edge.get": Binding("graphs", "get_edge", "{}.edge_type", "json"),
     "graph.edge.remove": Binding("graphs", "remove_edge"),
     "graph.neighbors": Binding("graphs", "neighbors", "[n.node_id for n in {}]", "json"),
+    # graph analytics (sub-namespace). Scores/labels are floats — demonstrate
+    # the (deterministic) node-id set instead.
+    "graph.analytics.pagerank": Binding("graphs", "analytics.pagerank", "sorted({}.ranks)", "json"),
+    "graph.analytics.bfs": Binding("graphs", "analytics.bfs", "{}.visited", "json"),
+    "graph.analytics.sssp": Binding("graphs", "analytics.sssp", "sorted({}.distances)", "json"),
+    "graph.analytics.wcc": Binding("graphs", "analytics.wcc", "{}.component_count", "int"),
+    "graph.analytics.cdlp": Binding("graphs", "analytics.cdlp", "sorted({}.labels)", "json"),
+    "graph.analytics.lcc": Binding("graphs", "analytics.lcc", "sorted({}.coefficients)", "json"),
+    # graph ontology (sub-namespace).
+    "graph.ontology.define_object_type": Binding("graphs", "ontology.define_object_type"),
+    "graph.ontology.define_link_type": Binding("graphs", "ontology.define_link_type"),
+    "graph.ontology.delete_object_type": Binding("graphs", "ontology.delete_object_type"),
+    "graph.ontology.delete_link_type": Binding("graphs", "ontology.delete_link_type"),
+    "graph.ontology.freeze": Binding("graphs", "ontology.freeze"),
+    "graph.ontology.get": Binding("graphs", "ontology.get", "{}.status", "json"),
+    "graph.ontology.summary": Binding("graphs", "ontology.summary", "[o.name for o in {}.object_types]", "json"),
+    # graph bulk / typed listing / sample.
+    "graph.bulk_insert": Binding("graphs", "bulk_insert"),
+    "graph.nodes_by_type": Binding("graphs", "nodes_by_type", "[n.node_id for n in {}]", "json"),
+    "graph.sample": Binding("graphs", "sample", "{}.total_count", "int"),
 }
 
 DOCSTRING_INDENT = " " * 8  # method docstrings sit at 8 spaces
@@ -160,9 +180,15 @@ def py_lit(value) -> str:
     return json.dumps(value)  # strings render double-quoted; numbers as-is
 
 
+def method_leaf(method: str) -> str:
+    # A binding method may be a sub-namespace path ("analytics.pagerank"); the
+    # AST-derived signature is keyed by the final method name.
+    return method.rsplit(".", 1)[-1]
+
+
 def render_call(step: dict, methods: dict) -> str:
     binding = BINDINGS[step["call"]]
-    sig = methods[binding.ns][binding.method]
+    sig = methods[binding.ns][method_leaf(binding.method)]
     amap = binding.arg_map or {}
     args = {amap.get(name, name): value for name, value in (step.get("args") or {}).items()}
     parts = [render_arg(p, args[p]) for p in sig["pos"] if p in args]
@@ -230,7 +256,7 @@ def render_step(step: dict, methods: dict) -> list[str]:
     # A step may override the binding's result expression to demonstrate the
     # same command a different way (e.g. read metadata back via get().data...).
     expr = (step.get("expr") or binding.expr).format(call)
-    result_type = binding.result_type or methods[binding.ns][binding.method]["returns"]
+    result_type = binding.result_type or methods[binding.ns][method_leaf(binding.method)]["returns"]
     return [f">>> {expr}", render_result(value, result_type)]
 
 
@@ -299,8 +325,8 @@ def process(write: bool) -> int:
     for ns, command_ids in by_file.items():
         path = NS_DIR / f"{ns}.py"
         source = path.read_text()
-        # Map bound method -> command id for this namespace.
-        method_to_cmd = {BINDINGS[c].method: c for c in command_ids}
+        # Map bound method (final segment for sub-namespaces) -> command id.
+        method_to_cmd = {method_leaf(BINDINGS[c].method): c for c in command_ids}
 
         edits = []  # (node, new_docstring_value)
         for method_name, const in method_docstring_nodes(source):

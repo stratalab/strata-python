@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from .._results import Page
+from .._results import Page, Sample
 from .base import Namespace
 
 
@@ -255,3 +255,350 @@ class GraphsNamespace(Namespace):
     def batch_write(self, graph: str, operations: list) -> Any:
         """Applies a batch of node/edge operations atomically."""
         return self._c.graph_batch_write(graph, operations, **self._scope)
+
+    # --- bulk / typed listing / sample ---
+
+    def bulk_insert(
+        self,
+        graph: str,
+        *,
+        nodes: Optional[list] = None,
+        edges: Optional[list] = None,
+        chunk_size: Optional[int] = None,
+    ) -> Any:
+        """Insert many nodes and edges in one commit.
+
+        Examples:
+            >>> _ = db.graphs.create("g")
+            >>> _ = db.graphs.bulk_insert("g", nodes=[{"node_id": "a", "object_type": "person"}, {"node_id": "b", "object_type": "person"}], edges=[{"src": "a", "edge_type": "knows", "dst": "b"}])
+            >>> db.graphs.meta("g").node_count
+            2
+        """
+        return self._c.graph_bulk_insert(
+            graph, nodes=nodes, edges=edges, chunk_size=chunk_size, **self._scope
+        )
+
+    def nodes_by_type(
+        self,
+        graph: str,
+        object_type: str,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Any] = None,
+        as_of: Optional[int] = None,
+    ) -> Page:
+        """A page of nodes of a given object type.
+
+        Examples:
+            >>> _ = db.graphs.create("g")
+            >>> _ = db.graphs.add_node("g", "a", object_type="person")
+            >>> _ = db.graphs.add_node("g", "b", object_type="person")
+            >>> [n.node_id for n in db.graphs.nodes_by_type("g", "person")]
+            ['a', 'b']
+        """
+        return Page.from_wire(
+            self._c.graph_nodes_by_type(
+                graph, object_type, limit=limit, cursor=cursor, as_of=as_of, **self._scope
+            )
+        )
+
+    def sample(self, graph: str, *, count: Optional[int] = None) -> Sample:
+        """A representative sample of nodes plus the total count.
+
+        Examples:
+            >>> _ = db.graphs.create("g")
+            >>> _ = db.graphs.add_node("g", "a")
+            >>> _ = db.graphs.add_node("g", "b")
+            >>> db.graphs.sample("g").total_count
+            2
+        """
+        return Sample.from_wire(self._c.graph_sample(graph, count=count, **self._scope))
+
+    # --- analytics + ontology sub-namespaces ---
+
+    @property
+    def analytics(self) -> "GraphAnalytics":
+        """Graph algorithms (PageRank, BFS, SSSP, WCC, CDLP, LCC)."""
+        ns = self.__dict__.get("_analytics")
+        if ns is None:
+            ns = GraphAnalytics(self._c, self._core, self._branch, self._space)
+            self.__dict__["_analytics"] = ns
+        return ns
+
+    @property
+    def ontology(self) -> "GraphOntology":
+        """The graph's typed schema (object and link types)."""
+        ns = self.__dict__.get("_ontology")
+        if ns is None:
+            ns = GraphOntology(self._c, self._core, self._branch, self._space)
+            self.__dict__["_ontology"] = ns
+        return ns
+
+
+class GraphAnalytics(Namespace):
+    """``db.graphs.analytics`` — algorithms over a named graph.
+
+    Each method returns a typed result carrying the algorithm's per-node output
+    plus its metadata (e.g. PageRank's ``.ranks`` + ``.iterations``).
+    """
+
+    def pagerank(
+        self,
+        graph: str,
+        *,
+        damping: Optional[float] = None,
+        max_iterations: Optional[int] = None,
+        tolerance: Optional[float] = None,
+        personalization: Optional[dict] = None,
+        budget: Optional[dict] = None,
+        as_of: Optional[int] = None,
+    ) -> Any:
+        """PageRank importance scores (``.ranks`` maps node id to score).
+
+        Examples:
+            >>> _ = db.graphs.create("g")
+            >>> _ = db.graphs.add_node("g", "a")
+            >>> _ = db.graphs.add_node("g", "b")
+            >>> _ = db.graphs.add_node("g", "c")
+            >>> _ = db.graphs.add_edge("g", "a", "knows", "b")
+            >>> _ = db.graphs.add_edge("g", "b", "knows", "c")
+            >>> sorted(db.graphs.analytics.pagerank("g").ranks)
+            ['a', 'b', 'c']
+        """
+        return self._c.graph_analytics_pagerank(
+            graph,
+            damping=damping,
+            max_iterations=max_iterations,
+            tolerance=tolerance,
+            personalization=personalization,
+            budget=budget,
+            as_of=as_of,
+            **self._scope,
+        )
+
+    def bfs(
+        self,
+        graph: str,
+        start: str,
+        *,
+        direction: Optional[str] = None,
+        edge_types: Optional[list] = None,
+        max_depth: Optional[int] = None,
+        max_nodes: Optional[int] = None,
+        budget: Optional[dict] = None,
+        as_of: Optional[int] = None,
+    ) -> Any:
+        """Breadth-first traversal from ``start`` (``.visited``, ``.depths``, ``.edges``).
+
+        Examples:
+            >>> _ = db.graphs.create("g")
+            >>> _ = db.graphs.add_node("g", "a")
+            >>> _ = db.graphs.add_node("g", "b")
+            >>> _ = db.graphs.add_node("g", "c")
+            >>> _ = db.graphs.add_edge("g", "a", "knows", "b")
+            >>> _ = db.graphs.add_edge("g", "b", "knows", "c")
+            >>> db.graphs.analytics.bfs("g", "a").visited
+            ['a', 'b', 'c']
+        """
+        return self._c.graph_analytics_bfs(
+            graph,
+            start,
+            direction=direction,
+            edge_types=edge_types,
+            max_depth=max_depth,
+            max_nodes=max_nodes,
+            budget=budget,
+            as_of=as_of,
+            **self._scope,
+        )
+
+    def sssp(
+        self,
+        graph: str,
+        source: str,
+        *,
+        direction: Optional[str] = None,
+        budget: Optional[dict] = None,
+        as_of: Optional[int] = None,
+    ) -> Any:
+        """Single-source shortest paths from ``source`` (``.distances``).
+
+        Examples:
+            >>> _ = db.graphs.create("g")
+            >>> _ = db.graphs.add_node("g", "a")
+            >>> _ = db.graphs.add_node("g", "b")
+            >>> _ = db.graphs.add_node("g", "c")
+            >>> _ = db.graphs.add_edge("g", "a", "knows", "b")
+            >>> _ = db.graphs.add_edge("g", "b", "knows", "c")
+            >>> sorted(db.graphs.analytics.sssp("g", "a").distances)
+            ['a', 'b', 'c']
+        """
+        return self._c.graph_analytics_sssp(
+            graph, source, direction=direction, budget=budget, as_of=as_of, **self._scope
+        )
+
+    def wcc(self, graph: str, *, budget: Optional[dict] = None, as_of: Optional[int] = None) -> Any:
+        """Weakly-connected components (``.components`` maps node id to component).
+
+        Examples:
+            >>> _ = db.graphs.create("g")
+            >>> _ = db.graphs.add_node("g", "a")
+            >>> _ = db.graphs.add_node("g", "b")
+            >>> _ = db.graphs.add_node("g", "c")
+            >>> _ = db.graphs.add_edge("g", "a", "knows", "b")
+            >>> _ = db.graphs.add_edge("g", "b", "knows", "c")
+            >>> db.graphs.analytics.wcc("g").component_count
+            1
+        """
+        return self._c.graph_analytics_wcc(graph, budget=budget, as_of=as_of, **self._scope)
+
+    def cdlp(
+        self,
+        graph: str,
+        *,
+        direction: Optional[str] = None,
+        max_iterations: Optional[int] = None,
+        budget: Optional[dict] = None,
+        as_of: Optional[int] = None,
+    ) -> Any:
+        """Community detection by label propagation (``.labels``).
+
+        Examples:
+            >>> _ = db.graphs.create("g")
+            >>> _ = db.graphs.add_node("g", "a")
+            >>> _ = db.graphs.add_node("g", "b")
+            >>> _ = db.graphs.add_node("g", "c")
+            >>> _ = db.graphs.add_edge("g", "a", "knows", "b")
+            >>> _ = db.graphs.add_edge("g", "b", "knows", "c")
+            >>> sorted(db.graphs.analytics.cdlp("g").labels)
+            ['a', 'b', 'c']
+        """
+        return self._c.graph_analytics_cdlp(
+            graph,
+            direction=direction,
+            max_iterations=max_iterations,
+            budget=budget,
+            as_of=as_of,
+            **self._scope,
+        )
+
+    def lcc(self, graph: str, *, budget: Optional[dict] = None, as_of: Optional[int] = None) -> Any:
+        """Local clustering coefficient per node (``.coefficients``).
+
+        Examples:
+            >>> _ = db.graphs.create("g")
+            >>> _ = db.graphs.add_node("g", "a")
+            >>> _ = db.graphs.add_node("g", "b")
+            >>> _ = db.graphs.add_node("g", "c")
+            >>> _ = db.graphs.add_edge("g", "a", "knows", "b")
+            >>> _ = db.graphs.add_edge("g", "b", "knows", "c")
+            >>> sorted(db.graphs.analytics.lcc("g").coefficients)
+            ['a', 'b', 'c']
+        """
+        return self._c.graph_analytics_lcc(graph, budget=budget, as_of=as_of, **self._scope)
+
+
+class GraphOntology(Namespace):
+    """``db.graphs.ontology`` — the graph's typed schema (object + link types)."""
+
+    def define_object_type(
+        self, graph: str, name: str, *, properties: Optional[dict] = None
+    ) -> Any:
+        """Define an object (node) type, optionally with a property schema.
+
+        Examples:
+            >>> _ = db.graphs.create("g")
+            >>> _ = db.graphs.ontology.define_object_type("g", "person")
+            >>> [o.name for o in db.graphs.ontology.summary("g").object_types]
+            ['person']
+        """
+        return self._c.graph_ontology_define_object_type(
+            graph, name, properties=properties, **self._scope
+        )
+
+    def define_link_type(
+        self,
+        graph: str,
+        name: str,
+        source: str,
+        target: str,
+        *,
+        cardinality: Optional[str] = None,
+        properties: Optional[dict] = None,
+    ) -> Any:
+        """Define a link (edge) type from a ``source`` to a ``target`` object type.
+
+        Examples:
+            >>> _ = db.graphs.create("g")
+            >>> _ = db.graphs.ontology.define_object_type("g", "person")
+            >>> _ = db.graphs.ontology.define_link_type("g", "knows", "person", "person")
+            >>> [l.name for l in db.graphs.ontology.get("g").link_types]
+            ['knows']
+        """
+        return self._c.graph_ontology_define_link_type(
+            graph,
+            name,
+            source,
+            target,
+            cardinality=cardinality,
+            properties=properties,
+            **self._scope,
+        )
+
+    def delete_object_type(self, graph: str, name: str) -> Any:
+        """Remove an object type from the ontology.
+
+        Examples:
+            >>> _ = db.graphs.create("g")
+            >>> _ = db.graphs.ontology.define_object_type("g", "person")
+            >>> _ = db.graphs.ontology.define_object_type("g", "company")
+            >>> _ = db.graphs.ontology.delete_object_type("g", "company")
+            >>> [o.name for o in db.graphs.ontology.summary("g").object_types]
+            ['person']
+        """
+        return self._c.graph_ontology_delete_object_type(graph, name, **self._scope)
+
+    def delete_link_type(self, graph: str, name: str) -> Any:
+        """Remove a link type from the ontology.
+
+        Examples:
+            >>> _ = db.graphs.create("g")
+            >>> _ = db.graphs.ontology.define_object_type("g", "person")
+            >>> _ = db.graphs.ontology.define_link_type("g", "knows", "person", "person")
+            >>> _ = db.graphs.ontology.delete_link_type("g", "knows")
+        """
+        return self._c.graph_ontology_delete_link_type(graph, name, **self._scope)
+
+    def freeze(self, graph: str) -> Any:
+        """Freeze the ontology so its types can no longer change.
+
+        Examples:
+            >>> _ = db.graphs.create("g")
+            >>> _ = db.graphs.ontology.define_object_type("g", "person")
+            >>> _ = db.graphs.ontology.freeze("g")
+            >>> db.graphs.ontology.get("g").status
+            'frozen'
+        """
+        return self._c.graph_ontology_freeze(graph, **self._scope)
+
+    def get(self, graph: str, *, as_of: Optional[int] = None) -> Any:
+        """The full ontology, or ``None`` if none is defined.
+
+        Examples:
+            >>> _ = db.graphs.create("g")
+            >>> _ = db.graphs.ontology.define_object_type("g", "person")
+            >>> db.graphs.ontology.get("g").status
+            'draft'
+        """
+        return self._c.graph_ontology_get(graph, as_of=as_of, **self._scope)
+
+    def summary(self, graph: str, *, as_of: Optional[int] = None) -> Any:
+        """A summary of the ontology (types and their node counts), or ``None``.
+
+        Examples:
+            >>> _ = db.graphs.create("g")
+            >>> _ = db.graphs.ontology.define_object_type("g", "person")
+            >>> [o.name for o in db.graphs.ontology.summary("g").object_types]
+            ['person']
+        """
+        return self._c.graph_ontology_summary(graph, as_of=as_of, **self._scope)
