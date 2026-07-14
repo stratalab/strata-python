@@ -39,7 +39,12 @@ NS_DIR = ROOT / "python" / "stratadb" / "namespaces"
 # accessor changes the type (a Page's ``.items`` are bytes, a Sample's
 # ``.total_count`` is an int). Every command a bound spec's steps call must
 # itself be bound (so the call form is known).
-Binding = namedtuple("Binding", ["ns", "method", "expr", "result_type"], defaults=("{}", None))
+# `arg_map` remaps wire argument names to curated method parameter names when
+# they differ (e.g. vector.query's wire `query` -> the `vector` param; the
+# collection-management commands' wire `collection` -> the `name` param).
+Binding = namedtuple(
+    "Binding", ["ns", "method", "expr", "result_type", "arg_map"], defaults=("{}", None, None)
+)
 
 BINDINGS = {
     "kv.put": Binding("kv", "put"),
@@ -72,6 +77,29 @@ BINDINGS = {
     "json.index.create": Binding("json", "create_index"),
     "json.index.drop": Binding("json", "drop_index"),
     "json.index.list": Binding("json", "list_indexes", "[i.name for i in {}]", "json"),
+    # vectors — collection-scoped; embeddings are float lists. Deferred (batch
+    # results, filters, index diagnostics, sample/scan) stay allowlisted.
+    "vector.collection.create": Binding("vectors", "create_collection", arg_map={"collection": "name"}),
+    "vector.collection.delete": Binding("vectors", "delete_collection", arg_map={"collection": "name"}),
+    "vector.collection.list": Binding("vectors", "list_collections", "[c.name for c in {}]", "json"),
+    "vector.collection.stats": Binding("vectors", "stats", "{}.dimension", "int", {"collection": "name"}),
+    "vector.count": Binding("vectors", "count", "{}", "int", {"collection": "name"}),
+    "vector.upsert": Binding("vectors", "upsert"),
+    "vector.get": Binding("vectors", "get", "{}.key", "json"),
+    "vector.exists": Binding("vectors", "exists"),
+    "vector.delete": Binding("vectors", "delete"),
+    "vector.delete_all": Binding("vectors", "delete_all"),
+    "vector.history": Binding("vectors", "history"),
+    "vector.keys": Binding("vectors", "keys", "{}.items", "json"),
+    "vector.query": Binding("vectors", "query", "[m.key for m in {}]", "json", {"query": "vector"}),
+    "vector.batch_upsert": Binding("vectors", "upsert_many"),
+    "vector.batch_get": Binding("vectors", "get_many", "[i.result.value.key for i in {}.items]", "json"),
+    "vector.batch_delete": Binding("vectors", "delete_many"),
+    "vector.index.query": Binding("vectors", "index_query", "[m.key for m in {}[0]]", "json", {"query": "vector"}),
+    "vector.metadata.update": Binding("vectors", "update_metadata", arg_map={"patch": "metadata"}),
+    "vector.delete_by_filter": Binding("vectors", "delete_by_filter"),
+    # vector.sample / vector.scan / vector.batch_exists have no curated method:
+    # reference-doc coverage in strata-core, no SDK docstring.
 }
 
 DOCSTRING_INDENT = " " * 8  # method docstrings sit at 8 spaces
@@ -108,10 +136,28 @@ def py_lit(value) -> str:
 def render_call(step: dict, methods: dict) -> str:
     binding = BINDINGS[step["call"]]
     sig = methods[binding.ns][binding.method]
-    args = step.get("args") or {}
-    parts = [py_lit(args[p]) for p in sig["pos"] if p in args]
-    parts += [f"{k}={py_lit(args[k])}" for k in sig["kwonly"] if k in args]
+    amap = binding.arg_map or {}
+    args = {amap.get(name, name): value for name, value in (step.get("args") or {}).items()}
+    parts = [render_arg(p, args[p]) for p in sig["pos"] if p in args]
+    parts += [f"{k}={render_arg(k, args[k])}" for k in sig["kwonly"] if k in args]
     return f"db.{binding.ns}.{binding.method}({', '.join(parts)})"
+
+
+def render_arg(param: str, value) -> str:
+    # A `filter` param carries the AND-of-conditions wire shape; render it back
+    # as the curated `stratadb.filters` builder that users actually write.
+    if param == "filter" and isinstance(value, dict) and "conditions" in value:
+        return render_filter(value)
+    return py_lit(value)
+
+
+def render_filter(wire: dict) -> str:
+    parts = []
+    for cond in wire["conditions"]:
+        raw = cond.get("value")
+        literal = raw["value"] if isinstance(raw, dict) and "value" in raw else raw
+        parts.append(f"stratadb.filters.{cond['op']}({json.dumps(cond['field'])}, {py_lit(literal)})")
+    return " & ".join(parts)
 
 
 def render_result(value, return_annotation: str) -> str:
@@ -154,7 +200,9 @@ def render_step(step: dict, methods: dict) -> list[str]:
     value = step["returns"]
     if value is None:  # returns: null -> a miss
         return [f">>> {call} is None", "True"]
-    expr = binding.expr.format(call)  # e.g. "{}.items" -> db.kv.keys(...).items
+    # A step may override the binding's result expression to demonstrate the
+    # same command a different way (e.g. read metadata back via get().data...).
+    expr = (step.get("expr") or binding.expr).format(call)
     result_type = binding.result_type or methods[binding.ns][binding.method]["returns"]
     return [f">>> {expr}", render_result(value, result_type)]
 
