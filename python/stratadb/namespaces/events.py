@@ -29,10 +29,30 @@ def _direction(reverse: bool) -> str:
 
 
 class EventsNamespace(Namespace):
-    """The hash-chained event log."""
+    """The hash-chained event log.
+
+    Events are sequence-addressed (dense, monotonic, starting at 0) and
+    immutable once appended.
+
+    Examples:
+        >>> _ = db.events.append("login", {"user": "ada"})
+        >>> _ = db.events.append("logout", {"user": "ada"})
+        >>> db.events.len()
+        2
+        >>> db.events.get(0).event.payload
+        {'user': 'ada'}
+        >>> db.events.types()
+        ['login', 'logout']
+    """
 
     def append(self, event_type: str, payload: Any) -> Any:
-        """Appends one event; returns its sequence + commit receipt."""
+        """Appends one event; returns its sequence + commit receipt.
+
+        Examples:
+            >>> _ = db.events.append("login", {"user": "ada"})
+            >>> db.events.len()
+            1
+        """
         return self._c.event_append(event_type, payload, **self._scope)
 
     def append_many(self, entries: Any) -> BatchResult:
@@ -42,7 +62,21 @@ class EventsNamespace(Namespace):
         )
 
     def get(self, sequence: int, *, as_of: Optional[int] = None) -> Any:
-        """Returns the event at ``sequence``, or ``None`` if out of range."""
+        """Returns the event at ``sequence``, or ``None`` if out of range.
+
+        The event carries a nondeterministic ``timestamp``/``hash``; access
+        stable sub-fields such as ``.event.event_type`` and ``.event.payload``.
+
+        Examples:
+            >>> _ = db.events.append("login", {"user": "ada"})
+            >>> event = db.events.get(0)
+            >>> event.event.event_type
+            'login'
+            >>> event.event.payload
+            {'user': 'ada'}
+            >>> db.events.get(99) is None
+            True
+        """
         result = self._c.event_get(sequence, as_of=as_of, **self._scope)
         return result.value if result.found else None
 
@@ -51,7 +85,14 @@ class EventsNamespace(Namespace):
         return self._c.event_exists(sequence, **self._scope)
 
     def len(self, *, as_of: Optional[int] = None) -> int:
-        """Number of events in the log."""
+        """Number of events in the log.
+
+        Examples:
+            >>> _ = db.events.append("login", {"user": "ada"})
+            >>> _ = db.events.append("logout", {"user": "ada"})
+            >>> db.events.len()
+            2
+        """
         return self._c.event_count(as_of=as_of, **self._scope).count
 
     def __len__(self) -> int:

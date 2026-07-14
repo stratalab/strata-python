@@ -8,14 +8,37 @@ from .base import Namespace
 
 
 class SpacesNamespace(Namespace):
-    """Named product spaces (isolated namespaces within a branch)."""
+    """Named product spaces (isolated namespaces within a branch).
+
+    A fresh database has one space, ``default``.
+
+    Examples:
+        >>> db.spaces.list()
+        ['default']
+        >>> _ = db.spaces.create("analytics")
+        >>> sorted(db.spaces.list())
+        ['analytics', 'default']
+        >>> db.spaces.exists("analytics")
+        True
+    """
 
     def list(self) -> list:
-        """Lists the spaces."""
+        """Lists the spaces.
+
+        Examples:
+            >>> db.spaces.list()
+            ['default']
+        """
         return list(self._c.space_list(branch=self._branch).items)
 
     def create(self, name: str) -> Any:
-        """Creates a space."""
+        """Creates a space.
+
+        Examples:
+            >>> _ = db.spaces.create("analytics")
+            >>> sorted(db.spaces.list())
+            ['analytics', 'default']
+        """
         return self._c.space_create(name, branch=self._branch)
 
     def exists(self, name: str) -> bool:

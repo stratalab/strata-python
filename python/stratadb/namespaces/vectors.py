@@ -34,12 +34,28 @@ def _vector_entries(entries: Any) -> list[dict]:
 
 
 class VectorsNamespace(Namespace):
-    """Vector collections with metadata-filtered similarity search."""
+    """Vector collections with metadata-filtered similarity search.
+
+    Examples:
+        >>> _ = db.vectors.create_collection("notes", 3)
+        >>> _ = db.vectors.upsert("notes", "n1", [0.1, 0.2, 0.3])
+        >>> _ = db.vectors.upsert("notes", "n2", [0.9, 0.8, 0.7])
+        >>> [hit.key for hit in db.vectors.query("notes", [0.1, 0.2, 0.3], k=2)]
+        ['n1', 'n2']
+        >>> db.vectors.count("notes")
+        2
+    """
 
     # --- collections ---
 
     def create_collection(self, name: str, dimension: int, *, metric: str = "cosine") -> Any:
-        """Creates a collection of ``dimension``-d vectors under ``metric``."""
+        """Creates a collection of ``dimension``-d vectors under ``metric``.
+
+        Examples:
+            >>> _ = db.vectors.create_collection("notes", 3)
+            >>> [c.name for c in db.vectors.list_collections().items]
+            ['notes']
+        """
         return self._c.vector_collection_create(name, dimension, metric, **self._scope)
 
     def delete_collection(self, name: str) -> Any:
@@ -59,7 +75,14 @@ class VectorsNamespace(Namespace):
         return page.items[0] if page.items else None
 
     def count(self, name: str, *, as_of: Optional[int] = None) -> int:
-        """Number of vectors in a collection."""
+        """Number of vectors in a collection.
+
+        Examples:
+            >>> _ = db.vectors.create_collection("notes", 3)
+            >>> _ = db.vectors.upsert("notes", "n1", [0.1, 0.2, 0.3])
+            >>> db.vectors.count("notes")
+            1
+        """
         return self._c.vector_count(name, as_of=as_of, **self._scope)
 
     # --- vectors ---
@@ -72,7 +95,14 @@ class VectorsNamespace(Namespace):
         *,
         metadata: Optional[dict] = None,
     ) -> Any:
-        """Inserts or replaces a vector (with optional metadata)."""
+        """Inserts or replaces a vector (with optional metadata).
+
+        Examples:
+            >>> _ = db.vectors.create_collection("notes", 3)
+            >>> _ = db.vectors.upsert("notes", "n1", [0.1, 0.2, 0.3], metadata={"topic": "ai"})
+            >>> db.vectors.exists("notes", "n1")
+            True
+        """
         return self._c.vector_upsert(collection, key, list(vector), metadata=metadata, **self._scope)
 
     def get(self, collection: str, key: str, *, as_of: Optional[int] = None) -> Any:
@@ -129,7 +159,18 @@ class VectorsNamespace(Namespace):
         filter: Any = None,
         as_of: Optional[int] = None,
     ) -> list:
-        """Returns the ``k`` nearest matches, optionally metadata-filtered."""
+        """Returns the ``k`` nearest matches, optionally metadata-filtered.
+
+        Each match exposes ``.key``, ``.score``, and ``.metadata``.
+
+        Examples:
+            >>> _ = db.vectors.create_collection("notes", 3)
+            >>> _ = db.vectors.upsert("notes", "n1", [0.1, 0.2, 0.3])
+            >>> _ = db.vectors.upsert("notes", "n2", [0.9, 0.8, 0.7])
+            >>> hits = db.vectors.query("notes", [0.1, 0.2, 0.3], k=1)
+            >>> hits[0].key
+            'n1'
+        """
         return self._c.vector_query(
             collection, list(vector), k, filter=_filter_wire(filter), as_of=as_of, **self._scope
         )

@@ -8,14 +8,34 @@ from .base import Namespace
 
 
 class AdminNamespace(Namespace):
-    """Read-only database status, health, and configuration."""
+    """Read-only database status, health, and configuration.
+
+    Examples:
+        >>> db.admin.ping()  # doctest: +ELLIPSIS
+        Record(version=...)
+        >>> db.admin.info().durable
+        False
+    """
 
     def ping(self) -> Any:
-        """A liveness check; returns the engine version."""
+        """A liveness check; returns the engine version.
+
+        Examples:
+            >>> db.admin.ping()  # doctest: +ELLIPSIS
+            Record(version=...)
+        """
         return self._c.admin_ping()
 
     def info(self) -> Any:
-        """Database info (target, durability, branch/space counts, version)."""
+        """Database info (target, durability, branch/space counts, version).
+
+        Examples:
+            >>> info = db.admin.info()
+            >>> info.durable            # a cache-mode database is non-durable
+            False
+            >>> info.default_branch
+            'default'
+        """
         return self._c.admin_info()
 
     def health(self) -> Any:

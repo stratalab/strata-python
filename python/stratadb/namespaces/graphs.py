@@ -9,12 +9,29 @@ from .base import Namespace
 
 
 class GraphsNamespace(Namespace):
-    """Named property graphs with typed nodes and directed, typed edges."""
+    """Named property graphs with typed nodes and directed, typed edges.
+
+    Examples:
+        >>> _ = db.graphs.create("social")
+        >>> _ = db.graphs.add_node("social", "ada")
+        >>> _ = db.graphs.add_node("social", "grace")
+        >>> _ = db.graphs.add_edge("social", "ada", "knows", "grace")
+        >>> db.graphs.list()
+        ['social']
+        >>> [hit.dst for hit in db.graphs.neighbors("social", "ada")]
+        ['grace']
+    """
 
     # --- graphs ---
 
     def create(self, name: str) -> Any:
-        """Creates an empty graph."""
+        """Creates an empty graph.
+
+        Examples:
+            >>> _ = db.graphs.create("social")
+            >>> db.graphs.list()
+            ['social']
+        """
         return self._c.graph_create(name, **self._scope)
 
     def delete(self, name: str) -> Any:
@@ -40,7 +57,14 @@ class GraphsNamespace(Namespace):
         object_type: Optional[str] = None,
         binding: Optional[dict] = None,
     ) -> Any:
-        """Adds or replaces a node."""
+        """Adds or replaces a node.
+
+        Examples:
+            >>> _ = db.graphs.create("social")
+            >>> _ = db.graphs.add_node("social", "ada", properties={"role": "admin"})
+            >>> db.graphs.get_node("social", "ada").properties
+            {'role': 'admin'}
+        """
         return self._c.graph_node_add(
             graph,
             node_id,
@@ -87,7 +111,16 @@ class GraphsNamespace(Namespace):
         weight: Optional[float] = None,
         properties: Optional[dict] = None,
     ) -> Any:
-        """Adds or replaces a directed, typed edge from ``src`` to ``dst``."""
+        """Adds or replaces a directed, typed edge from ``src`` to ``dst``.
+
+        Examples:
+            >>> _ = db.graphs.create("social")
+            >>> _ = db.graphs.add_node("social", "ada")
+            >>> _ = db.graphs.add_node("social", "grace")
+            >>> _ = db.graphs.add_edge("social", "ada", "knows", "grace")
+            >>> [hit.dst for hit in db.graphs.neighbors("social", "ada")]
+            ['grace']
+        """
         return self._c.graph_edge_add(
             graph, src, edge_type, dst, weight=weight, properties=properties, **self._scope
         )
@@ -115,7 +148,18 @@ class GraphsNamespace(Namespace):
         limit: Optional[int] = None,
         as_of: Optional[int] = None,
     ) -> Page:
-        """A page of a node's neighbors (``direction`` is outgoing/incoming/both)."""
+        """A page of a node's neighbors (``direction`` is outgoing/incoming/both).
+
+        Each hit exposes ``.dst`` (the neighbor id) plus ``.edge`` and ``.node``.
+
+        Examples:
+            >>> _ = db.graphs.create("social")
+            >>> _ = db.graphs.add_node("social", "ada")
+            >>> _ = db.graphs.add_node("social", "grace")
+            >>> _ = db.graphs.add_edge("social", "ada", "knows", "grace")
+            >>> [hit.dst for hit in db.graphs.neighbors("social", "ada")]
+            ['grace']
+        """
         return Page.from_wire(
             self._c.graph_neighbors(
                 graph,

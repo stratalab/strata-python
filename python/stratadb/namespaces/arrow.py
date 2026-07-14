@@ -8,7 +8,16 @@ from .base import Namespace
 
 
 class ArrowNamespace(Namespace):
-    """Bulk import/export of a primitive's rows via Arrow-backed files."""
+    """Bulk import/export of a primitive's rows via Arrow-backed files.
+
+    Import and export touch real files on disk, so the examples below are
+    illustrative (``+SKIP``) rather than run.
+
+    Examples:
+        >>> _ = db.kv.put("greeting", "hello")
+        >>> _ = db.arrow.export("kv", "kv.parquet")             # doctest: +SKIP
+        >>> _ = db.arrow.import_("kv", "kv.parquet")            # doctest: +SKIP
+    """
 
     def import_(
         self,
@@ -20,7 +29,11 @@ class ArrowNamespace(Namespace):
         key_column: Optional[str] = None,
         value_column: Optional[str] = None,
     ) -> Any:
-        """Imports rows from ``path`` into ``target`` (e.g. ``"kv"``, ``"vector"``)."""
+        """Imports rows from ``path`` into ``target`` (e.g. ``"kv"``, ``"vector"``).
+
+        Examples:
+            >>> _ = db.arrow.import_("kv", "users.parquet")     # doctest: +SKIP
+        """
         return self._c.arrow_import(
             path,
             target,
@@ -43,7 +56,11 @@ class ArrowNamespace(Namespace):
         limit: Optional[int] = None,
         prefix: Optional[str] = None,
     ) -> Any:
-        """Exports a primitive's rows to ``path`` (Parquet by default)."""
+        """Exports a primitive's rows to ``path`` (Parquet by default).
+
+        Examples:
+            >>> _ = db.arrow.export("kv", "kv.parquet")         # doctest: +SKIP
+        """
         return self._c.arrow_export(
             primitive,
             format,

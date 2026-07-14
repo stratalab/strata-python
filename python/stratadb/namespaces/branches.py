@@ -13,10 +13,28 @@ from .base import Namespace
 
 
 class BranchesNamespace(Namespace):
-    """Named branches with copy-on-write forks and time-anchored history."""
+    """Named branches with copy-on-write forks and time-anchored history.
+
+    A fresh database has one branch, ``default``. Each listed branch is a
+    ``BranchItem`` exposing ``.name``, ``.generation``, ``.status``, ....
+
+    Examples:
+        >>> [b.name for b in db.branches.list()]
+        ['default']
+        >>> _ = db.branches.create("feature")
+        >>> sorted(b.name for b in db.branches.list())
+        ['default', 'feature']
+        >>> "feature" in db.branches
+        True
+    """
 
     def list(self) -> list:
-        """Lists the branches."""
+        """Lists the branches.
+
+        Examples:
+            >>> [b.name for b in db.branches.list()]
+            ['default']
+        """
         return list(self._c.branch_list().items)
 
     def get(self, name: str) -> Any:
@@ -27,7 +45,13 @@ class BranchesNamespace(Namespace):
             return None
 
     def create(self, name: str) -> Any:
-        """Creates an empty branch rooted at an empty state."""
+        """Creates an empty branch rooted at an empty state.
+
+        Examples:
+            >>> _ = db.branches.create("feature")
+            >>> sorted(b.name for b in db.branches.list())
+            ['default', 'feature']
+        """
         return self._c.branch_create(name)
 
     def fork(

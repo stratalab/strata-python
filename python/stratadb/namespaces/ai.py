@@ -266,7 +266,20 @@ def _build_chat_request(
 
 
 class AiNamespace(Namespace):
-    """``db.ai`` — chat, embeddings, reranking, and model management."""
+    """``db.ai`` — chat, embeddings, reranking, and model management.
+
+    Cloud calls (``chat``/``embed``/``rank``) need network access and a provider
+    key, so those examples are illustrative (``+SKIP``). ``capability`` is a
+    local lookup and runs without a network call.
+
+    Examples:
+        >>> db.ai.capability("openai:gpt-4o-mini")["provider"]
+        'openai'
+        >>> db.ai.capability("openai:gpt-4o-mini")["can_generate"]
+        True
+        >>> db.ai.chat("Say hi", model="openai:gpt-4o-mini").content   # doctest: +SKIP
+        'Hi there!'
+    """
 
     def chat(
         self,
@@ -286,6 +299,24 @@ class AiNamespace(Namespace):
         ``top_k``, ``max_tokens``, ``tools``, ``tool_choice``, ``logprobs``,
         ``model_config``, …) are passed through as keyword arguments. Use
         ``json_schema=`` for structured output or ``response_format="json_object"``.
+
+        Examples:
+            >>> db.ai.chat("Summarize Strata in one line.",
+            ...            model="openai:gpt-4o-mini").content        # doctest: +SKIP
+            'Strata is an embedded multi-model database for AI agents.'
+            >>> schema = {"type": "object", "properties": {"city": {"type": "string"}}}
+            >>> db.ai.chat("Where is the Eiffel Tower?",
+            ...            model="openai:gpt-4o-mini",
+            ...            json_schema=schema).content                 # doctest: +SKIP
+            '{"city": "Paris"}'
+            >>> tools = [{"type": "function",
+            ...           "function": {"name": "get_weather",
+            ...                        "parameters": {"type": "object"}}}]
+            >>> db.ai.chat("Weather in Paris?",
+            ...            model="openai:gpt-4o-mini",
+            ...            tools=tools,
+            ...            tool_choice="required").tool_calls          # doctest: +SKIP
+            [{'id': ..., 'function': {'name': 'get_weather', ...}}]
         """
         request = _build_chat_request(messages, prompt, response_format, json_schema, knobs)
         _ensure_provider_keys()
@@ -302,7 +333,13 @@ class AiNamespace(Namespace):
         input_type: Optional[str] = None,
         instruction: Optional[str] = None,
     ) -> Embeddings:
-        """Embed one string or a list of strings."""
+        """Embed one string or a list of strings.
+
+        Examples:
+            >>> db.ai.embed(["hello", "world"],
+            ...            model="openai:text-embedding-3-small").vectors   # doctest: +SKIP
+            [[0.01, ...], [0.02, ...]]
+        """
         request: dict[str, Any] = {"input": input}
         if dimensions is not None:
             request["dimensions"] = dimensions
@@ -339,7 +376,15 @@ class AiNamespace(Namespace):
 
     def capability(self, model: str) -> Any:
         """Report a model's capabilities (provider, features, key/network needs).
-        No network call."""
+        No network call.
+
+        Examples:
+            >>> cap = db.ai.capability("openai:gpt-4o-mini")
+            >>> cap["provider"]
+            'openai'
+            >>> cap["requires_api_key"]
+            True
+        """
         return self._core.data({"type": "inference_model_capability", "model": model})
 
     def tokenize(self, text: str, *, model: str, add_special: bool = False) -> Any:
@@ -374,7 +419,13 @@ class AiNamespace(Namespace):
     def model(self, spec: str, **load_config: Any) -> "AiModel":
         """A handle bound to ``spec`` and per-model load config (``n_ctx``,
         ``n_gpu_layers``, ``n_batch``, ``n_threads``, ``flash_attn``, ``pooling``,
-        ``chat_format``), so load params are set once rather than per call."""
+        ``chat_format``), so load params are set once rather than per call.
+
+        Examples:
+            >>> model = db.ai.model("local:qwen3", n_ctx=8192)
+            >>> model.chat("Hello").content                     # doctest: +SKIP
+            'Hello! How can I help?'
+        """
         return AiModel(self, spec, dict(load_config) if load_config else None)
 
 

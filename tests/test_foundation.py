@@ -35,7 +35,8 @@ def test_version_matches_engine():
 
 def test_agents_guide_is_embedded():
     guide = stratadb.agents_guide()
-    assert guide.startswith("# Strata")
+    assert guide.startswith("# stratadb")
+    assert "db.ai.chat" in guide  # SDK-native Python guide, not the CLI guide
     assert len(guide) > 1000
 
 

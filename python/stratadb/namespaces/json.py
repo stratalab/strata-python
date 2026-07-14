@@ -43,12 +43,29 @@ def _kp_entries(entries: Any) -> list[dict]:
 
 
 class JSONNamespace(Namespace):
-    """JSON documents addressed by ``str`` id and JSONPath-lite path."""
+    """JSON documents addressed by ``str`` id and JSONPath-lite path.
+
+    Examples:
+        >>> _ = db.json.set("user:1", "$", {"name": "Ada", "roles": ["admin"]})
+        >>> db.json.get("user:1", "$.name")
+        'Ada'
+        >>> db.json.get("user:1")
+        {'name': 'Ada', 'roles': ['admin']}
+        >>> db.json.exists("user:1")
+        True
+    """
 
     # --- single-record ---
 
     def set(self, key: str, path: str, value: Any) -> Any:
-        """Sets ``value`` at ``path`` in document ``key``. Returns a write result."""
+        """Sets ``value`` at ``path`` in document ``key``. Returns a write result.
+
+        Examples:
+            >>> _ = db.json.set("user:1", "$", {"name": "Ada"})
+            >>> _ = db.json.set("user:1", "$.roles", ["admin"])   # patch a field
+            >>> db.json.get("user:1")
+            {'name': 'Ada', 'roles': ['admin']}
+        """
         return self._c.json_set(key, path, value, **self._scope)
 
     def get(self, key: str, path: str = "$", *, as_of: Optional[int] = None) -> Any:
@@ -56,6 +73,15 @@ class JSONNamespace(Namespace):
 
         (``None`` is also returned for a stored JSON ``null``; use ``get_entry``
         with its ``found`` flag to distinguish the two.)
+
+        Examples:
+            >>> _ = db.json.set("user:1", "$", {"name": "Ada", "roles": ["admin"]})
+            >>> db.json.get("user:1", "$.name")
+            'Ada'
+            >>> db.json.get("user:1")
+            {'name': 'Ada', 'roles': ['admin']}
+            >>> db.json.get("absent") is None
+            True
         """
         found, value, _versioned = self._read(key, path, as_of)
         return value if found else None
@@ -156,6 +182,12 @@ class JSONNamespace(Namespace):
         """Reads many documents; returns the JSON value or ``None`` per entry, in order.
 
         Each entry is a document id, a ``(key, path)`` pair, or ``{"key", "path"}``.
+
+        Examples:
+            >>> _ = db.json.set("user:1", "$", {"name": "Ada"})
+            >>> _ = db.json.set("user:2", "$", {"name": "Grace"})
+            >>> db.json.get_many(["user:1", "user:2", "user:404"])
+            [{'name': 'Ada'}, {'name': 'Grace'}, None]
         """
         result = self._c.json_batch_get(_kp_entries(entries), **self._scope)
         out: list[Any] = [None] * len(result.items)

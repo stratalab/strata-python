@@ -6,8 +6,9 @@ volatile in-memory one. Six primitives — key-value, JSON, vectors, an event
 log, and a graph — share one branch-aware, time-travelling storage substrate.
 
 The SDK speaks the exact same command surface, value shapes, and error codes as
-the ``strata`` CLI and MCP server. After install, run ``stratadb.agents_guide()``
-(or ``strata agents guide``) for the full offline usage guide.
+the ``strata`` CLI and MCP server. **For agents: call ``stratadb.agents_guide()``
+for the complete offline Python usage guide** (every namespace, ``db.ai``,
+keys, branches/time-travel, errors — all runnable Python).
 
     import stratadb
 
@@ -49,11 +50,18 @@ _NO_DB_HINT = (
 
 
 def agents_guide() -> str:
-    """The complete offline agent usage guide, embedded in the wheel.
+    """The complete offline **Python SDK** usage guide, embedded in the wheel.
 
-    Byte-identical to ``strata agents guide`` for the same version.
+    A single self-contained reference for coding agents: opening a database, all
+    namespaces (``db.kv``/``json``/``vectors``/``events``/``graphs``/``ai``),
+    provider keys, branches/time-travel, errors, and the escape hatch — every
+    snippet real, runnable Python. (For the CLI-oriented guide instead, run
+    ``strata agents guide``.)
     """
-    return _stratadb.agents_guide()
+    import importlib.resources
+
+    resource = importlib.resources.files("stratadb").joinpath("_data", "agent-guide.md")
+    return resource.read_text(encoding="utf-8")
 
 
 def mcp_config(db_path: str | os.PathLike[str]) -> dict[str, Any]:

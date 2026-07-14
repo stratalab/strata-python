@@ -15,11 +15,14 @@ def test_command_index_is_bundled():
     assert len(index["commands"]) == 125
 
 
-def test_agents_guide_matches_vendored():
-    # The guide compiled into the binding must match the vendored source
-    # (byte-identical to `strata agents guide` for the pinned version).
-    vendored = (ROOT / "idl" / "v1" / "agents-guide.md").read_text()
-    assert stratadb.agents_guide() == vendored
+def test_agents_guide_matches_bundled():
+    # agents_guide() returns the bundled Python SDK guide (drift guard). This is
+    # SDK-native Python usage, not the CLI-oriented `strata agents guide`.
+    bundled = (ROOT / "python" / "stratadb" / "_data" / "agent-guide.md").read_text(
+        encoding="utf-8"
+    )
+    assert stratadb.agents_guide() == bundled
+    assert "db.ai.chat" in bundled and "import stratadb" in bundled
 
 
 def test_version_is_engine_version():

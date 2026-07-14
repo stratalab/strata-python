@@ -23,16 +23,44 @@ def _kv_entries(entries: Any) -> list[dict]:
 
 
 class KVNamespace(Namespace):
-    """Binary key-value storage. Keys and values accept ``str`` (UTF-8) or ``bytes``."""
+    """Binary key-value storage. Keys and values accept ``str`` (UTF-8) or ``bytes``.
+
+    Examples:
+        >>> _ = db.kv.put("greeting", "hello")
+        >>> db.kv.get("greeting")
+        b'hello'
+        >>> db.kv.exists("greeting")
+        True
+        >>> _ = db.kv.put_many({"a": "1", "b": "2"})
+        >>> db.kv.get_many(["a", "b", "missing"])
+        [b'1', b'2', None]
+    """
 
     # --- single-record ---
 
     def put(self, key: str | bytes, value: str | bytes) -> Any:
-        """Stores or replaces a value. Returns a write result (receipt + effect)."""
+        """Stores or replaces a value. Returns a write result (receipt + effect).
+
+        Examples:
+            >>> _ = db.kv.put("k", "v1")
+            >>> _ = db.kv.put("k", "v2")             # replaces
+            >>> db.kv.get("k")
+            b'v2'
+        """
         return self._c.kv_put(key, value, **self._scope)
 
     def get(self, key: str | bytes, *, as_of: Optional[int] = None) -> Optional[bytes]:
-        """Returns the value bytes, or ``None`` if absent."""
+        """Returns the value bytes, or ``None`` if absent.
+
+        Pass ``as_of`` (a commit timestamp) to read a historical value.
+
+        Examples:
+            >>> _ = db.kv.put("greeting", "hello")
+            >>> db.kv.get("greeting")
+            b'hello'
+            >>> db.kv.get("absent") is None
+            True
+        """
         result = self._c.kv_get(key, as_of=as_of, **self._scope)
         return result.value.value if result.found else None
 
@@ -46,7 +74,15 @@ class KVNamespace(Namespace):
         return self._c.kv_delete(key, **self._scope)
 
     def exists(self, key: str | bytes) -> bool:
-        """Whether the key currently has a visible value."""
+        """Whether the key currently has a visible value.
+
+        Examples:
+            >>> _ = db.kv.put("k", "v")
+            >>> db.kv.exists("k")
+            True
+            >>> db.kv.exists("absent")
+            False
+        """
         return self._c.kv_exists(key, **self._scope)
 
     def history(self, key: str | bytes) -> Optional[list]:
@@ -119,7 +155,13 @@ class KVNamespace(Namespace):
         return BatchResult.from_wire(self._c.kv_batch_put(_kv_entries(entries), **self._scope))
 
     def get_many(self, keys: Sequence[str | bytes]) -> list[Optional[bytes]]:
-        """Reads many keys; returns value bytes or ``None`` per key, in order."""
+        """Reads many keys; returns value bytes or ``None`` per key, in order.
+
+        Examples:
+            >>> _ = db.kv.put_many({"a": "1", "b": "2"})
+            >>> db.kv.get_many(["a", "b", "missing"])
+            [b'1', b'2', None]
+        """
         result = self._c.kv_batch_get(list(keys), **self._scope)
         out: list[Optional[bytes]] = [None] * len(result.items)
         for item in result.items:
