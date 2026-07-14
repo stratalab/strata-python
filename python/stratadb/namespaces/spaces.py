@@ -26,8 +26,9 @@ class SpacesNamespace(Namespace):
         """Lists the spaces.
 
         Examples:
-            >>> db.spaces.list()
-            ['default']
+            >>> _ = db.spaces.create("app")
+            >>> sorted(db.spaces.list())
+            ['app', 'default']
         """
         return list(self._c.space_list(branch=self._branch).items)
 
@@ -35,18 +36,33 @@ class SpacesNamespace(Namespace):
         """Creates a space.
 
         Examples:
-            >>> _ = db.spaces.create("analytics")
+            >>> _ = db.spaces.create("app")
             >>> sorted(db.spaces.list())
-            ['analytics', 'default']
+            ['app', 'default']
         """
         return self._c.space_create(name, branch=self._branch)
 
     def exists(self, name: str) -> bool:
-        """Whether the space exists."""
+        """Whether the space exists.
+
+        Examples:
+            >>> _ = db.spaces.create("app")
+            >>> db.spaces.exists("app")
+            True
+            >>> db.spaces.exists("nope")
+            False
+        """
         return self._c.space_exists(name, branch=self._branch)
 
     def delete(self, name: str, *, force: bool = False) -> Any:
-        """Deletes a space. Refuses a non-empty space unless ``force=True``."""
+        """Deletes a space. Refuses a non-empty space unless ``force=True``.
+
+        Examples:
+            >>> _ = db.spaces.create("temp")
+            >>> _ = db.spaces.delete("temp")
+            >>> db.spaces.exists("temp")
+            False
+        """
         return self._c.space_delete(name, force=force, branch=self._branch)
 
     def __contains__(self, name: str) -> bool:

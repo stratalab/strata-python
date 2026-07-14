@@ -21,8 +21,8 @@ class AdminNamespace(Namespace):
         """A liveness check; returns the engine version.
 
         Examples:
-            >>> db.admin.ping()  # doctest: +ELLIPSIS
-            Record(version=...)
+            >>> db.admin.ping().version == stratadb.__version__
+            True
         """
         return self._c.admin_ping()
 
@@ -30,30 +30,52 @@ class AdminNamespace(Namespace):
         """Database info (target, durability, branch/space counts, version).
 
         Examples:
-            >>> info = db.admin.info()
-            >>> info.durable            # a cache-mode database is non-durable
-            False
-            >>> info.default_branch
-            'default'
+            >>> db.admin.info().branch_count
+            1
         """
         return self._c.admin_info()
 
     def health(self) -> Any:
-        """Control-plane health across the branch/space catalogs and registry."""
+        """Control-plane health across the branch/space catalogs and registry.
+
+        Examples:
+            >>> db.admin.health().status.value
+            'healthy'
+        """
         return self._c.admin_health()
 
     def metrics(self) -> Any:
-        """Operational metrics."""
+        """Operational metrics.
+
+        Examples:
+            >>> db.admin.metrics().branch_count
+            1
+        """
         return self._c.admin_metrics()
 
     def describe(self) -> Any:
-        """A structured description of the database's capabilities and layout."""
+        """A structured description of the database's capabilities and layout.
+
+        Examples:
+            >>> db.admin.describe().default_branch
+            'default'
+        """
         return self._c.admin_describe()
 
     def config(self) -> Any:
-        """The effective open configuration."""
+        """The effective open configuration.
+
+        Examples:
+            >>> db.admin.config().default_branch
+            'default'
+        """
         return self._c.admin_config()
 
     def config_value(self, key: str) -> Any:
-        """One configuration value by key."""
+        """One configuration value by key.
+
+        Examples:
+            >>> db.admin.config_value("missing") is None
+            True
+        """
         return self._c.admin_config_key(key)

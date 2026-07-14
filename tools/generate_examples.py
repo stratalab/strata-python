@@ -147,6 +147,26 @@ BINDINGS = {
     "graph.bulk_insert": Binding("graphs", "bulk_insert"),
     "graph.nodes_by_type": Binding("graphs", "nodes_by_type", "[n.node_id for n in {}]", "json"),
     "graph.sample": Binding("graphs", "sample", "{}.total_count", "int"),
+    # branch — wire operand `branch` maps to the method's `name` param.
+    "branch.create": Binding("branches", "create", arg_map={"branch": "name"}),
+    "branch.list": Binding("branches", "list", "sorted(b.name for b in {})", "json"),
+    "branch.get": Binding("branches", "get", "{}.name", "json", {"branch": "name"}),
+    "branch.fork": Binding("branches", "fork", arg_map={"branch": "name"}),
+    "branch.delete": Binding("branches", "delete", arg_map={"branch": "name"}),
+    # space — wire operand `space` maps to the method's `name` param.
+    "space.create": Binding("spaces", "create", arg_map={"space": "name"}),
+    "space.list": Binding("spaces", "list", "sorted({})", "json"),
+    "space.exists": Binding("spaces", "exists", arg_map={"space": "name"}),
+    "space.delete": Binding("spaces", "delete", arg_map={"space": "name"}),
+    # admin — facts are non-deterministic; demonstrate a stable derived value.
+    # admin.remote/hub_clone stay reference-only (no clean SDK assertion).
+    "admin.ping": Binding("admin", "ping", "{}.version == stratadb.__version__", "json"),
+    "admin.info": Binding("admin", "info", "{}.branch_count", "int"),
+    "admin.health": Binding("admin", "health", "{}.status.value", "json"),
+    "admin.metrics": Binding("admin", "metrics", "{}.branch_count", "int"),
+    "admin.describe": Binding("admin", "describe", "{}.default_branch", "json"),
+    "admin.config": Binding("admin", "config", "{}.default_branch", "json"),
+    "admin.config_key": Binding("admin", "config_value"),
 }
 
 DOCSTRING_INDENT = " " * 8  # method docstrings sit at 8 spaces

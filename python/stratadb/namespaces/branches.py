@@ -32,13 +32,20 @@ class BranchesNamespace(Namespace):
         """Lists the branches.
 
         Examples:
-            >>> [b.name for b in db.branches.list()]
-            ['default']
+            >>> _ = db.branches.create("feature")
+            >>> sorted(b.name for b in db.branches.list())
+            ['default', 'feature']
         """
         return list(self._c.branch_list().items)
 
     def get(self, name: str) -> Any:
-        """Returns a branch's info, or ``None`` if it does not exist."""
+        """Returns a branch's info, or ``None`` if it does not exist.
+
+        Examples:
+            >>> _ = db.branches.create("feature")
+            >>> db.branches.get("feature").name
+            'feature'
+        """
         try:
             return self._c.branch_get(name)
         except NotFoundError:
@@ -66,6 +73,11 @@ class BranchesNamespace(Namespace):
 
         ``version`` and ``timestamp`` are mutually exclusive; omit both to fork
         from the source's current head.
+
+        Examples:
+            >>> _ = db.branches.fork("default", "experiment")
+            >>> sorted(b.name for b in db.branches.list())
+            ['default', 'experiment']
         """
         if version is not None and timestamp is not None:
             raise ValueError("fork accepts version or timestamp, not both")
@@ -76,7 +88,14 @@ class BranchesNamespace(Namespace):
         return self._c.branch_fork(source, name)
 
     def delete(self, name: str) -> Any:
-        """Deletes a branch."""
+        """Deletes a branch.
+
+        Examples:
+            >>> _ = db.branches.create("temp")
+            >>> _ = db.branches.delete("temp")
+            >>> sorted(b.name for b in db.branches.list())
+            ['default']
+        """
         return self._c.branch_delete(name)
 
     def __contains__(self, name: str) -> bool:
