@@ -55,6 +55,23 @@ BINDINGS = {
     "kv.list": Binding("kv", "keys", "{}.items", "list[bytes]"),
     "kv.scan": Binding("kv", "scan", "[row.key for row in {}]", "list[bytes]"),
     "kv.sample": Binding("kv", "sample", "{}.total_count", "int"),
+    # json — documents are inline JSON (result_type "json" renders dict/list
+    # reprs with sorted keys). json.scan and json.batch_exists have no curated
+    # method, so they get reference-doc coverage in strata-core but no binding.
+    "json.set": Binding("json", "set"),
+    "json.get": Binding("json", "get", "{}", "json"),
+    "json.exists": Binding("json", "exists"),
+    "json.delete": Binding("json", "delete"),
+    "json.count": Binding("json", "count"),
+    "json.history": Binding("json", "history"),
+    "json.batch_set": Binding("json", "set_many"),
+    "json.batch_get": Binding("json", "get_many", "{}", "json"),
+    "json.batch_delete": Binding("json", "delete_many"),
+    "json.list": Binding("json", "keys", "{}.items", "json"),
+    "json.sample": Binding("json", "sample", "{}.total_count", "int"),
+    "json.index.create": Binding("json", "create_index"),
+    "json.index.drop": Binding("json", "drop_index"),
+    "json.index.list": Binding("json", "list_indexes", "[i.name for i in {}]", "json"),
 }
 
 DOCSTRING_INDENT = " " * 8  # method docstrings sit at 8 spaces
@@ -98,6 +115,10 @@ def render_call(step: dict, methods: dict) -> str:
 
 
 def render_result(value, return_annotation: str) -> str:
+    # JSON-document results come back as plain Python objects whose repr uses
+    # single quotes and (for dicts) engine-canonical sorted keys.
+    if return_annotation == "json":
+        return json_repr(value)
     if isinstance(value, list):  # e.g. get_many -> [b'1', b'2', None]
         return "[" + ", ".join(render_scalar(v, return_annotation) for v in value) + "]"
     return render_scalar(value, return_annotation)
@@ -111,6 +132,17 @@ def render_scalar(value, return_annotation: str) -> str:
     if isinstance(value, bool):
         return "True" if value else "False"
     return json.dumps(value)
+
+
+def json_repr(value) -> str:
+    """Python repr of a JSON value, with dict keys sorted to match the engine's
+    canonical document order (what `db.json.get` returns at runtime)."""
+    if isinstance(value, dict):
+        body = ", ".join(f"{json_repr(k)}: {json_repr(v)}" for k, v in sorted(value.items()))
+        return "{" + body + "}"
+    if isinstance(value, list):
+        return "[" + ", ".join(json_repr(v) for v in value) + "]"
+    return repr(value)
 
 
 def render_step(step: dict, methods: dict) -> list[str]:

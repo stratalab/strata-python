@@ -61,10 +61,9 @@ class JSONNamespace(Namespace):
         """Sets ``value`` at ``path`` in document ``key``. Returns a write result.
 
         Examples:
-            >>> _ = db.json.set("user:1", "$", {"name": "Ada"})
-            >>> _ = db.json.set("user:1", "$.roles", ["admin"])   # patch a field
-            >>> db.json.get("user:1")
-            {'name': 'Ada', 'roles': ['admin']}
+            >>> _ = db.json.set("user", "$", {"name": "alice", "age": 30})
+            >>> db.json.get("user", "$")
+            {'age': 30, 'name': 'alice'}
         """
         return self._c.json_set(key, path, value, **self._scope)
 
@@ -75,12 +74,12 @@ class JSONNamespace(Namespace):
         with its ``found`` flag to distinguish the two.)
 
         Examples:
-            >>> _ = db.json.set("user:1", "$", {"name": "Ada", "roles": ["admin"]})
-            >>> db.json.get("user:1", "$.name")
-            'Ada'
-            >>> db.json.get("user:1")
-            {'name': 'Ada', 'roles': ['admin']}
-            >>> db.json.get("absent") is None
+            >>> _ = db.json.set("user", "$", {"name": "alice", "age": 30})
+            >>> db.json.get("user", "$")
+            {'age': 30, 'name': 'alice'}
+            >>> db.json.get("user", "$.name")
+            'alice'
+            >>> db.json.get("absent", "$") is None
             True
         """
         found, value, _versioned = self._read(key, path, as_of)
@@ -125,20 +124,47 @@ class JSONNamespace(Namespace):
         return True, value, None
 
     def delete(self, key: str, path: str = "$") -> Any:
-        """Deletes ``path`` in document ``key`` (whole document by default)."""
+        """Deletes ``path`` in document ``key`` (whole document by default).
+
+        Examples:
+            >>> _ = db.json.set("temp", "$", {"x": 1})
+            >>> _ = db.json.delete("temp", "$")
+            >>> db.json.exists("temp")
+            False
+        """
         return self._c.json_delete(key, path, **self._scope)
 
     def exists(self, key: str) -> bool:
-        """Whether the document currently exists."""
+        """Whether the document currently exists.
+
+        Examples:
+            >>> _ = db.json.set("user", "$", {"name": "alice"})
+            >>> db.json.exists("user")
+            True
+            >>> db.json.exists("absent")
+            False
+        """
         return self._c.json_exists(key, **self._scope)
 
     def history(self, key: str) -> Optional[list]:
-        """Full version history, or ``None`` if the document never existed."""
+        """Full version history, or ``None`` if the document never existed.
+
+        Examples:
+            >>> db.json.history("absent") is None
+            True
+        """
         result = self._c.json_history(key, **self._scope)
         return result.items if result is not None else None
 
     def count(self, prefix: Optional[str] = None, *, as_of: Optional[int] = None) -> int:
-        """Number of documents, optionally under an id prefix."""
+        """Number of documents, optionally under an id prefix.
+
+        Examples:
+            >>> _ = db.json.set("a", "$", {"v": 1})
+            >>> _ = db.json.set("b", "$", {"v": 2})
+            >>> db.json.count()
+            2
+        """
         return self._c.json_count(prefix=prefix, as_of=as_of, **self._scope)
 
     # --- listing / pagination ---
@@ -151,7 +177,13 @@ class JSONNamespace(Namespace):
         cursor: Optional[Any] = None,
         as_of: Optional[int] = None,
     ) -> Page:
-        """One page of document ids (``str`` each)."""
+        """One page of document ids (``str`` each).
+
+        Examples:
+            >>> _ = db.json.set_many([{"key": "user:1", "path": "$", "value": {"v": 1}}, {"key": "user:2", "path": "$", "value": {"v": 2}}, {"key": "other", "path": "$", "value": {"v": 3}}])
+            >>> db.json.keys("user:").items
+            ['user:1', 'user:2']
+        """
         return Page.from_wire(
             self._c.json_list(prefix=prefix, limit=limit, cursor=cursor, as_of=as_of, **self._scope)
         )
@@ -169,13 +201,25 @@ class JSONNamespace(Namespace):
             cursor = page.cursor
 
     def sample(self, prefix: Optional[str] = None, *, count: Optional[int] = None) -> Sample:
-        """A deterministic representative sample plus the total count."""
+        """A deterministic representative sample plus the total count.
+
+        Examples:
+            >>> _ = db.json.set_many([{"key": "a", "path": "$", "value": {"v": 1}}, {"key": "b", "path": "$", "value": {"v": 2}}, {"key": "c", "path": "$", "value": {"v": 3}}])
+            >>> db.json.sample().total_count
+            3
+        """
         return Sample.from_wire(self._c.json_sample(prefix=prefix, count=count, **self._scope))
 
     # --- batch ---
 
     def set_many(self, entries: Any) -> BatchResult:
-        """Writes many documents. Accepts a dict, or list of (key, value)/(key, path, value)."""
+        """Writes many documents. Accepts a dict, or list of (key, value)/(key, path, value).
+
+        Examples:
+            >>> _ = db.json.set_many([{"key": "a", "path": "$", "value": {"v": 1}}, {"key": "b", "path": "$", "value": {"v": 2}}])
+            >>> db.json.get_many([{"key": "a", "path": "$"}, {"key": "b", "path": "$"}])
+            [{'v': 1}, {'v': 2}]
+        """
         return BatchResult.from_wire(self._c.json_batch_set(_set_entries(entries), **self._scope))
 
     def get_many(self, entries: Any) -> list[Any]:
@@ -184,10 +228,9 @@ class JSONNamespace(Namespace):
         Each entry is a document id, a ``(key, path)`` pair, or ``{"key", "path"}``.
 
         Examples:
-            >>> _ = db.json.set("user:1", "$", {"name": "Ada"})
-            >>> _ = db.json.set("user:2", "$", {"name": "Grace"})
-            >>> db.json.get_many(["user:1", "user:2", "user:404"])
-            [{'name': 'Ada'}, {'name': 'Grace'}, None]
+            >>> _ = db.json.set_many([{"key": "a", "path": "$", "value": {"v": 1}}, {"key": "b", "path": "$", "value": {"v": 2}}])
+            >>> db.json.get_many([{"key": "a", "path": "$"}, {"key": "b", "path": "$"}])
+            [{'v': 1}, {'v': 2}]
         """
         result = self._c.json_batch_get(_kp_entries(entries), **self._scope)
         out: list[Any] = [None] * len(result.items)
@@ -198,19 +241,45 @@ class JSONNamespace(Namespace):
         return out
 
     def delete_many(self, entries: Any) -> BatchResult:
-        """Deletes many documents/paths."""
+        """Deletes many documents/paths.
+
+        Examples:
+            >>> _ = db.json.set_many([{"key": "a", "path": "$", "value": {"v": 1}}])
+            >>> _ = db.json.delete_many([{"key": "a", "path": "$"}])
+            >>> db.json.exists("a")
+            False
+        """
         return BatchResult.from_wire(self._c.json_batch_delete(_kp_entries(entries), **self._scope))
 
     # --- indexes ---
 
     def create_index(self, name: str, field_path: str, *, index_type: str = "tag") -> Any:
-        """Creates a secondary index over ``field_path``."""
+        """Creates a secondary index over ``field_path``.
+
+        Examples:
+            >>> _ = db.json.create_index("by_name", "$.name", index_type="tag")
+            >>> [i.name for i in db.json.list_indexes()]
+            ['by_name']
+        """
         return self._c.json_index_create(name, field_path, index_type, **self._scope)
 
     def drop_index(self, name: str) -> Any:
-        """Drops a secondary index."""
+        """Drops a secondary index.
+
+        Examples:
+            >>> _ = db.json.create_index("by_name", "$.name", index_type="tag")
+            >>> _ = db.json.drop_index("by_name")
+            >>> [i.name for i in db.json.list_indexes()]
+            []
+        """
         return self._c.json_index_drop(name, **self._scope)
 
     def list_indexes(self) -> list:
-        """Lists the defined secondary indexes."""
+        """Lists the defined secondary indexes.
+
+        Examples:
+            >>> _ = db.json.create_index("by_name", "$.name", index_type="tag")
+            >>> [i.name for i in db.json.list_indexes()]
+            ['by_name']
+        """
         return self._c.json_index_list(**self._scope).items
