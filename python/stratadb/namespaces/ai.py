@@ -401,7 +401,12 @@ class AiNamespace(Namespace):
         return self._core.data({"type": "inference_models_pull", "model": model})
 
     def unload(self, model: Optional[str] = None) -> Any:
-        """Evict a cached model (or all cached models when ``model`` is None)."""
+        """Evict a cached model (or all cached models when ``model`` is None).
+
+        Examples:
+            >>> db.ai.unload()["unloaded"]
+            False
+        """
         return self._core.data({"type": "inference_unload", "model": model})
 
     def cache_status(self) -> Any:

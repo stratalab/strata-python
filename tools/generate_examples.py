@@ -166,6 +166,8 @@ BINDINGS = {
     "branch.list": Binding("branches", "list", "sorted(b.name for b in {})", "json"),
     "branch.get": Binding("branches", "get", "{}.name", "json", {"branch": "name"}),
     "branch.fork": Binding("branches", "fork", arg_map={"branch": "name"}),
+    "branch.fork_at_version": Binding("branches", "fork_at_version", arg_map={"branch": "name"}),
+    "branch.fork_at_timestamp": Binding("branches", "fork_at_timestamp", arg_map={"branch": "name"}),
     "branch.delete": Binding("branches", "delete", arg_map={"branch": "name"}),
     # space — wire operand `space` maps to the method's `name` param.
     "space.create": Binding("spaces", "create", arg_map={"space": "name"}),
@@ -190,6 +192,7 @@ BINDINGS = {
     "inference.models.list": Binding(
         "ai", "models.list", 'sorted(set(m["task"] for m in {}["items"]))', "json"
     ),
+    "inference.unload": Binding("ai", "unload", '{}["unloaded"]', "json"),
     # arrow — file round-trip; the `{tmpdir}/<file>` path renders as a tmp_dir
     # expression (see render_arg). Wire `file_path` maps to the method's `path`.
     "arrow.export": Binding("arrow", "export"),
@@ -253,9 +256,16 @@ def render_call(step: dict, methods: dict) -> str:
         for part in src.split("."):
             node = node[part]
         args[dst] = node
+    # `branch`/`space` args that are not method parameters are session scope,
+    # applied via db.at(...), not passed to the call.
+    params = set(sig["pos"]) | set(sig["kwonly"])
+    scope = {k: args.pop(k) for k in ("branch", "space") if k in args and k not in params}
+    handle = "db"
+    if scope:
+        handle = "db.at(" + ", ".join(f"{k}={py_lit(v)}" for k, v in scope.items()) + ")"
     parts = [render_arg(p, args[p]) for p in sig["pos"] if p in args]
     parts += [f"{k}={render_arg(k, args[k])}" for k in sig["kwonly"] if k in args]
-    return f"db.{binding.ns}.{binding.method}({', '.join(parts)})"
+    return f"{handle}.{binding.ns}.{binding.method}({', '.join(parts)})"
 
 
 def render_arg(param: str, value) -> str:
@@ -269,6 +279,10 @@ def render_arg(param: str, value) -> str:
     if isinstance(value, str) and "{tmpdir}" in value:
         rest = value.replace("{tmpdir}", "").lstrip("/")
         return f'tmp_dir + "/{rest}"'
+    # A `{bind.path}` reference to a prior step's bound result renders as the
+    # Python attribute path (e.g. `{base.commit.version}` -> base.commit.version).
+    if isinstance(value, str) and value.startswith("{") and value.endswith("}") and "." in value[1:-1]:
+        return value[1:-1]
     return py_lit(value)
 
 
@@ -317,7 +331,10 @@ def render_step(step: dict, methods: dict) -> list[str]:
     call = render_call(step, methods)
     note = f"  # {step['note']}" if step.get("note") else ""
     if "returns" not in step:
-        return [f">>> _ = {call}{note}"]
+        # A `bind:` step captures its result in a named variable a later step
+        # references (e.g. a receipt whose commit version drives a fork).
+        lhs = step.get("bind", "_")
+        return [f">>> {lhs} = {call}{note}"]
     value = step["returns"]
     if value is None:  # returns: null -> a miss
         return [f">>> {call} is None", "True"]
