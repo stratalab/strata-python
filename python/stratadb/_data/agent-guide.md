@@ -178,6 +178,20 @@ except errors.NotFoundError as e:
     e.hint, e.ref    # actionable hint + a docs URL
 ```
 
+## Admin & Arrow — `db.admin`, `db.arrow`
+
+`db.admin` reads control-plane facts (never writes): `db.admin.ping()`
+(liveness), `db.admin.info()` (identity + catalog summary), plus
+`db.admin.health()`, `db.admin.metrics()`, `db.admin.describe()`, and
+`db.admin.config()`.
+
+`db.arrow` bulk-moves a primitive to and from an Arrow/Parquet file:
+
+```python
+db.arrow.export("kv", "backup.parquet")     # a primitive -> Arrow file
+db.arrow.import_("kv", "backup.parquet")    # Arrow file -> primitive (note the trailing _)
+```
+
 ## Escape hatch & introspection
 
 ```python
