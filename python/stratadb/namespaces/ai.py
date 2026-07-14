@@ -379,11 +379,8 @@ class AiNamespace(Namespace):
         No network call.
 
         Examples:
-            >>> cap = db.ai.capability("openai:gpt-4o-mini")
-            >>> cap["provider"]
+            >>> db.ai.capability("openai:gpt-4o-mini")["provider"]
             'openai'
-            >>> cap["requires_api_key"]
-            True
         """
         return self._core.data({"type": "inference_model_capability", "model": model})
 
@@ -408,7 +405,12 @@ class AiNamespace(Namespace):
         return self._core.data({"type": "inference_unload", "model": model})
 
     def cache_status(self) -> Any:
-        """Which models are currently loaded in the runtime cache."""
+        """Which models are currently loaded in the runtime cache.
+
+        Examples:
+            >>> db.ai.cache_status()["generation_models"]
+            []
+        """
         return self._core.data({"type": "inference_cache_status"})
 
     @property
@@ -438,7 +440,12 @@ class _Models:
         self._core = core
 
     def list(self) -> Any:
-        """Catalog models available to pull."""
+        """Catalog models available to pull.
+
+        Examples:
+            >>> sorted(set(m["task"] for m in db.ai.models.list()["items"]))
+            ['embed', 'generate', 'rank']
+        """
         return self._core.data({"type": "inference_models_list"})
 
     def local(self) -> Any:

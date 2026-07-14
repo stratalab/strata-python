@@ -181,6 +181,15 @@ BINDINGS = {
     "admin.describe": Binding("admin", "describe", "{}.default_branch", "json"),
     "admin.config": Binding("admin", "config", "{}.default_branch", "json"),
     "admin.config_key": Binding("admin", "config_value"),
+    # inference metadata (db.ai) — no model, no network, no local runtime, no
+    # keys. The model-dependent verbs (generate/embed/rank/tokenize) and the
+    # network/machine-state ones (models.pull/local) stay allowlisted.
+    # Note: exprs go through str.format, so use set(...) not a `{...}` literal.
+    "inference.capability": Binding("ai", "capability", '{}["provider"]', "json"),
+    "inference.cache_status": Binding("ai", "cache_status", '{}["generation_models"]', "json"),
+    "inference.models.list": Binding(
+        "ai", "models.list", 'sorted(set(m["task"] for m in {}["items"]))', "json"
+    ),
 }
 
 DOCSTRING_INDENT = " " * 8  # method docstrings sit at 8 spaces
@@ -197,7 +206,11 @@ def namespace_methods(ns: str) -> dict:
     tree = ast.parse((NS_DIR / f"{ns}.py").read_text())
     methods = {}
     for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef):
+        if isinstance(node, ast.FunctionDef) and node.name not in methods:
+            # First definition wins: the primary namespace class is defined
+            # before its bound-view helpers (e.g. ai.py's AiModel re-declares
+            # capability/chat/embed without the `model` param), so a later
+            # shadow must not overwrite the real namespace method's signature.
             methods[node.name] = {
                 "pos": [a.arg for a in node.args.args if a.arg != "self"],
                 "kwonly": [a.arg for a in node.args.kwonlyargs],
