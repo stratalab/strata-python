@@ -48,3 +48,14 @@ def test_public_namespaces_present():
 def test_module_exports():
     for name in ("Strata", "errors", "filters", "agents_guide", "mcp_config", "command_index"):
         assert hasattr(stratadb, name)
+
+
+def test_agents_skill_matches_vendored_template():
+    # agents_skill() serves the vendored strata-core skill template with the
+    # wheel's version substituted (drift guard against idl/v1/agents-skill.md).
+    template = (ROOT / "idl" / "v1" / "agents-skill.md").read_text(encoding="utf-8")
+    skill = stratadb.agents_skill()
+    assert skill == template.replace("{version}", stratadb.__version__)
+    assert skill.startswith("---\nname: strata\ndescription: ")
+    assert "stratadb.open(" in skill
+    assert "{version}" not in skill

@@ -288,6 +288,22 @@ class Strata:
         return False
 
 
+def agents_skill() -> str:
+    """The Claude Code skill for Strata, embedded in the wheel.
+
+    Returns the version-stamped SKILL.md markdown (YAML frontmatter + the
+    condensed Python/CLI playbook). Write it to
+    ``.claude/skills/strata/SKILL.md`` in a repo so agent sessions load it
+    automatically — or run ``strata agents skill --write``, which does the
+    same from the CLI. The template is vendored from strata-core at the
+    pinned rev, so the two surfaces cannot drift.
+    """
+    import importlib.resources
+
+    resource = importlib.resources.files("stratadb").joinpath("_data", "skill.md")
+    return resource.read_text(encoding="utf-8").replace("{version}", __version__)
+
+
 def open(  # noqa: A001 — deliberate builtin shadow at module scope (gzip.open precedent)
     path: str | os.PathLike[str] | None = None,
     *,
@@ -368,6 +384,7 @@ __all__ = [
     "errors",
     "filters",
     "agents_guide",
+    "agents_skill",
     "mcp_config",
     "command_index",
     "__version__",
