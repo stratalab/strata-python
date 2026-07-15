@@ -12,7 +12,7 @@ KV_TARGET = {"primitive": "kv", "space": "default", "key": "user:1"}
 
 @pytest.fixture()
 def db():
-    handle = stratadb.Strata(cache=True)
+    handle = stratadb.open(cache=True)
     yield handle
     handle.close()
 

@@ -25,7 +25,7 @@ pytestmark = pytest.mark.skipif(
 
 def test_clone_titanic_into_durable_db(tmp_path):
     dest = tmp_path / "titanic.strata"
-    db = stratadb.Strata.clone("titanic", dest, hub_url=HUB_URL)
+    db = stratadb.clone("titanic", dest, hub_url=HUB_URL)
     try:
         # KV metadata cloned verbatim.
         assert db.kv.get("meta:rows") == b"30"
@@ -48,10 +48,10 @@ def test_clone_titanic_into_durable_db(tmp_path):
 
 def test_cloned_db_persists_across_reopen(tmp_path):
     dest = tmp_path / "titanic.strata"
-    stratadb.Strata.clone("titanic", dest, hub_url=HUB_URL).close()
+    stratadb.clone("titanic", dest, hub_url=HUB_URL).close()
 
     # A fresh open of the cloned path still reads the data (durable, on disk).
-    reopened = stratadb.Strata(dest)
+    reopened = stratadb.open(dest)
     try:
         assert reopened.json.get("passenger:1")["name"] == "Braund, Mr. Owen Harris"
     finally:

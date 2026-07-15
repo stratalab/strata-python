@@ -41,7 +41,7 @@ def test_family_namespace_map_covers_the_catalog():
 
 
 def test_mapped_namespaces_exist_on_the_handle():
-    db = stratadb.Strata(cache=True)
+    db = stratadb.open(cache=True)
     missing = [ns for ns in FAMILY_TO_NAMESPACE.values() if not hasattr(db, ns)]
     db.close()
     assert not missing, f"guide map names namespaces absent from Strata: {missing}"

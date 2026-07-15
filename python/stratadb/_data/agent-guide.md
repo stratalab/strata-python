@@ -16,14 +16,14 @@ Conventions in this guide: every snippet is real, runnable Python. Reads return
 ```python
 import stratadb
 
-db = stratadb.Strata("./app-data")     # durable (created if absent)
-db = stratadb.Strata(cache=True)       # ephemeral, in-memory (nothing persists)
-db = stratadb.Strata.from_env()        # path from $STRATA_DB
-with stratadb.Strata(cache=True) as db:
+db = stratadb.open("./app-data")     # durable (created if absent)
+db = stratadb.open(cache=True)       # ephemeral, in-memory (nothing persists)
+db = stratadb.from_env()              # path from $STRATA_DB
+with stratadb.open(cache=True) as db:
     ...                                # context manager closes it
 ```
 
-`Strata()` never opens the current directory implicitly — pass a path, set
+`stratadb.open()` never opens the current directory implicitly — pass a path, set
 `STRATA_DB`, or use `cache=True`, or it raises `InvalidArgumentError`.
 
 ## Key-value — `db.kv`

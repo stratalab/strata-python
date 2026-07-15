@@ -23,7 +23,7 @@ EMB = "local:miniLM"
 
 def _local_ready() -> bool:
     try:
-        db = stratadb.Strata(cache=True)
+        db = stratadb.open(cache=True)
         try:
             # provider_feature_enabled is True only when the local runtime is
             # compiled in; tokenize then also needs the model file present.
@@ -45,7 +45,7 @@ pytestmark = pytest.mark.skipif(
 
 @pytest.fixture()
 def db():
-    handle = stratadb.Strata(cache=True)
+    handle = stratadb.open(cache=True)
     yield handle
     handle.close()
 

@@ -8,14 +8,14 @@ import stratadb
 
 def test_durable_persistence_round_trips(tmp_path):
     dest = tmp_path / "db"
-    db = stratadb.Strata(dest)
+    db = stratadb.open(dest)
     db.kv.put("k", "v1")
     db.json.set("doc:1", "$", {"a": 1, "b": [2, 3]})
     receipt = db.kv.put("k", "v2")
     db.close()
 
     # Reopen the same path: committed state survived the close.
-    reopened = stratadb.Strata(dest)
+    reopened = stratadb.open(dest)
     try:
         assert reopened.kv.get("k") == b"v2"
         assert reopened.json.get("doc:1") == {"a": 1, "b": [2, 3]}
@@ -27,12 +27,12 @@ def test_durable_persistence_round_trips(tmp_path):
 
 def test_durable_branches_persist(tmp_path):
     dest = tmp_path / "db"
-    db = stratadb.Strata(dest)
+    db = stratadb.open(dest)
     db.branches.create("feature")
     db.at(branch="feature").kv.put("only", "on-feature")
     db.close()
 
-    reopened = stratadb.Strata(dest)
+    reopened = stratadb.open(dest)
     try:
         assert "feature" in [b.name for b in reopened.branches.list()]
         assert reopened.at(branch="feature").kv.get("only") == b"on-feature"

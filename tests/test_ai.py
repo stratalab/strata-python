@@ -16,7 +16,7 @@ from stratadb.namespaces import ai as ai_mod
 
 @pytest.fixture()
 def db():
-    database = stratadb.Strata(cache=True)
+    database = stratadb.open(cache=True)
     yield database
     database.close()
 

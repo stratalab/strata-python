@@ -23,8 +23,8 @@ Python 3.9+).
 ```python
 import stratadb
 
-db = stratadb.Strata("./app-data")      # durable (creates if absent)
-# db = stratadb.Strata(cache=True)      # ephemeral, in-memory
+db = stratadb.open("./app-data")      # durable (creates if absent)
+# db = stratadb.open(cache=True)      # ephemeral, in-memory
 
 # Key-value
 db.kv.put("greeting", "hello")
@@ -49,11 +49,11 @@ db.graphs.create("social")
 db.graphs.add_node("social", "ada")
 db.graphs.add_edge("social", "ada", "follows", "grace")
 
-db.close()   # or: with stratadb.Strata("./app-data") as db: ...
+db.close()   # or: with stratadb.open("./app-data") as db: ...
 ```
 
 `Strata()` never opens the current directory implicitly: pass a path, set
-`STRATA_DB` (`stratadb.Strata.from_env()`), or use `cache=True`.
+`STRATA_DB` (`stratadb.from_env()`), or use `cache=True`.
 
 ## Inference — `db.ai`
 

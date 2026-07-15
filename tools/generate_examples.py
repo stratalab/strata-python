@@ -14,7 +14,7 @@ Usage:
   python tools/generate_examples.py --write   # rewrite the bound docstrings
 
 The rendered examples remain plain doctests, so ``tests/test_doctests.py`` still
-executes them against a fresh ``Strata(cache=True)`` — that is where the exact
+executes them against a fresh ``stratadb.open(cache=True)`` — that is where the exact
 value (``b'hello'``) is asserted.
 """
 

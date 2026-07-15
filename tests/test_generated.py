@@ -23,7 +23,7 @@ GEN_DIR = ROOT / "python" / "stratadb" / "_generated"
 
 @pytest.fixture()
 def commands():
-    db = stratadb.Strata(cache=True)
+    db = stratadb.open(cache=True)
     yield Commands(db._core)
     db.close()
 

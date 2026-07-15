@@ -1,9 +1,10 @@
 """Strata — an embedded multi-model database for AI agents.
 
-Strata is embedded, not a server: ``stratadb.Strata("./app-data")`` opens a
-durable database in-process (SQLite-shaped), and ``Strata(cache=True)`` opens a
-volatile in-memory one. Six primitives — key-value, JSON, vectors, an event
-log, and a graph — share one branch-aware, time-travelling storage substrate.
+Strata is embedded, not a server: ``stratadb.open("./app-data")`` opens a
+durable database in-process (SQLite-shaped), and ``stratadb.open(cache=True)``
+opens a volatile in-memory one. Six primitives — key-value, JSON, vectors, an
+event log, and a graph — share one branch-aware, time-travelling storage
+substrate.
 
 The SDK speaks the exact same command surface, value shapes, and error codes as
 the ``strata`` CLI and MCP server. **For agents: call ``stratadb.agents_guide()``
@@ -12,10 +13,13 @@ keys, branches/time-travel, errors — all runnable Python).
 
     import stratadb
 
-    db = stratadb.Strata("./app-data")          # durable (creates if absent)
-    db = stratadb.Strata(cache=True)            # ephemeral, in-memory
-    with stratadb.Strata(cache=True) as db:
+    db = stratadb.open("./app-data")            # durable (creates if absent)
+    db = stratadb.open(cache=True)              # ephemeral, in-memory
+    with stratadb.open(cache=True) as db:
         db.execute({"type": "kv_put", "key": "aGk=", "value": "dGhlcmU="})
+
+``open()`` returns a :class:`Strata` handle (the class is public for typing,
+the way ``gzip.open`` returns a public ``GzipFile``).
 """
 
 from __future__ import annotations
@@ -44,8 +48,8 @@ __version__: str = _stratadb.version()
 # Reuse the shared D2 targeting contract's registered code and class.
 _NO_DB_CODE = "invalid_argument.cli.no_database"
 _NO_DB_HINT = (
-    "pass a path (stratadb.Strata('./mydb')), set STRATA_DB "
-    "(stratadb.Strata.from_env()), or use cache=True for ephemeral"
+    "pass a path (stratadb.open('./mydb')), set STRATA_DB "
+    "(stratadb.from_env()), or use cache=True for ephemeral"
 )
 
 
@@ -84,7 +88,10 @@ def command_index() -> dict[str, Any]:
 
 
 class Strata:
-    """An open Strata database.
+    """An open Strata database — the handle type :func:`stratadb.open` returns.
+
+    Public for typing and ``isinstance``; construct via :func:`stratadb.open`,
+    :func:`stratadb.from_env`, or :func:`stratadb.clone`.
 
     Args:
         path: Filesystem path to a durable database (created if absent).
@@ -121,58 +128,6 @@ class Strata:
         # Scope override for db.at(...) views; None means "use the session default".
         self._branch: str | None = None
         self._space: str | None = None
-
-    @classmethod
-    def from_env(cls, *, branch: str | None = None, space: str | None = None) -> "Strata":
-        """Opens the database named by the ``STRATA_DB`` environment variable.
-
-        Mirrors the CLI's D2 targeting contract exactly.
-        """
-        path = os.environ.get("STRATA_DB")
-        if not path:
-            raise client_error(
-                InvalidArgumentError, _NO_DB_CODE, "STRATA_DB is not set", _NO_DB_HINT
-            )
-        return cls(path, branch=branch, space=space)
-
-    @classmethod
-    def clone(
-        cls,
-        dataset: str,
-        dest: str | os.PathLike[str],
-        *,
-        hub_url: str | None = None,
-        branch: str | None = None,
-    ) -> "Strata":
-        """Clones a dataset from a StrataHub into a new durable database.
-
-        Fetches ``dataset`` from the hub (``hub_url``, or the resolver default
-        when omitted), materializes it as a durable database at ``dest`` (which
-        must not exist or be empty), and returns an open handle to it. ``branch``
-        selects the dataset branch to fetch (the dataset's default when omitted).
-
-        The StrataHub client ships in the standard wheel. A minimal build
-        compiled without the hub client instead raises
-        :class:`~stratadb.errors.FailedPreconditionError`
-        (``failed_precondition.executor.hub_clone``).
-        """
-        # Clone is a standalone operation that creates the database at `dest`; a
-        # transient cache handle only carries the command to the executor.
-        opener = cls(cache=True)
-        try:
-            command: dict[str, Any] = {
-                "type": "hub_clone",
-                "dataset": dataset,
-                "dest": str(dest),
-            }
-            if hub_url is not None:
-                command["hub_url"] = hub_url
-            if branch is not None:
-                command["branch"] = branch
-            opener.execute(command)
-        finally:
-            opener.close()
-        return cls(dest)
 
     def execute(self, command: dict[str, Any]) -> dict[str, Any]:
         """Runs one raw command on the wire, returning its output envelope.
@@ -333,7 +288,82 @@ class Strata:
         return False
 
 
+def open(  # noqa: A001 — deliberate builtin shadow at module scope (gzip.open precedent)
+    path: str | os.PathLike[str] | None = None,
+    *,
+    cache: bool = False,
+    branch: str | None = None,
+    space: str | None = None,
+) -> Strata:
+    """Opens a Strata database — the canonical entry point.
+
+    ``stratadb.open("./mydb")`` opens (creating if absent) a durable database
+    at a directory path; ``stratadb.open(cache=True)`` opens a volatile
+    in-memory one. ``branch``/``space`` set the session defaults for commands
+    that omit their own.
+
+    Never opens the current directory implicitly: with neither ``path`` nor
+    ``cache=True`` it raises
+    :class:`~stratadb.errors.InvalidArgumentError`.
+    """
+    return Strata(path, cache=cache, branch=branch, space=space)
+
+
+def from_env(*, branch: str | None = None, space: str | None = None) -> Strata:
+    """Opens the database named by the ``STRATA_DB`` environment variable.
+
+    Mirrors the CLI's D2 targeting contract exactly.
+    """
+    path = os.environ.get("STRATA_DB")
+    if not path:
+        raise client_error(
+            InvalidArgumentError, _NO_DB_CODE, "STRATA_DB is not set", _NO_DB_HINT
+        )
+    return Strata(path, branch=branch, space=space)
+
+
+def clone(
+    dataset: str,
+    dest: str | os.PathLike[str],
+    *,
+    hub_url: str | None = None,
+    branch: str | None = None,
+) -> Strata:
+    """Clones a dataset from a StrataHub into a new durable database.
+
+    Fetches ``dataset`` from the hub (``hub_url``, or the resolver default
+    when omitted), materializes it as a durable database at ``dest`` (which
+    must not exist or be empty), and returns an open handle to it. ``branch``
+    selects the dataset branch to fetch (the dataset's default when omitted).
+
+    The StrataHub client ships in the standard wheel. A minimal build
+    compiled without the hub client instead raises
+    :class:`~stratadb.errors.FailedPreconditionError`
+    (``failed_precondition.executor.hub_clone``).
+    """
+    # Clone is a standalone operation that creates the database at `dest`; a
+    # transient cache handle only carries the command to the executor.
+    opener = Strata(cache=True)
+    try:
+        command: dict[str, Any] = {
+            "type": "hub_clone",
+            "dataset": dataset,
+            "dest": str(dest),
+        }
+        if hub_url is not None:
+            command["hub_url"] = hub_url
+        if branch is not None:
+            command["branch"] = branch
+        opener.execute(command)
+    finally:
+        opener.close()
+    return Strata(dest)
+
+
 __all__ = [
+    "open",
+    "from_env",
+    "clone",
     "Strata",
     "errors",
     "filters",

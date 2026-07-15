@@ -23,7 +23,7 @@ def test_namespace_doctests(name):
         if not test.examples:
             continue
         found += 1
-        db = stratadb.Strata(cache=True)          # fresh, isolated db per docstring
+        db = stratadb.open(cache=True)          # fresh, isolated db per docstring
         tmp_dir = tempfile.mkdtemp()              # scratch dir for file-path examples (arrow)
         test.globs.update({"db": db, "stratadb": stratadb, "tmp_dir": tmp_dir})
         runner.run(test)

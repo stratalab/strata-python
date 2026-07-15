@@ -9,7 +9,7 @@ import stratadb
 
 @pytest.fixture()
 def graph():
-    db = stratadb.Strata(cache=True)
+    db = stratadb.open(cache=True)
     db.graphs.create("g")
     for node in ("a", "b", "c"):
         db.graphs.add_node("g", node, object_type="person")
@@ -63,7 +63,7 @@ def test_ontology_freeze(graph):
 
 
 def test_ontology_absent_is_none():
-    db = stratadb.Strata(cache=True)
+    db = stratadb.open(cache=True)
     db.graphs.create("empty")
     assert db.graphs.ontology.get("empty") is None
     db.close()
@@ -73,7 +73,7 @@ def test_ontology_absent_is_none():
 
 
 def test_bulk_insert_and_nodes_by_type():
-    db = stratadb.Strata(cache=True)
+    db = stratadb.open(cache=True)
     db.graphs.create("g")
     db.graphs.bulk_insert(
         "g",

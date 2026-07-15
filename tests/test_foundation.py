@@ -21,7 +21,7 @@ def b(text: str) -> str:
 
 @pytest.fixture()
 def db():
-    database = stratadb.Strata(cache=True)
+    database = stratadb.open(cache=True)
     yield database
     database.close()
 
@@ -97,14 +97,14 @@ def test_malformed_command_raises_value_error(db):
 
 def test_no_target_without_cache_raises_invalid_argument():
     with pytest.raises(errors.InvalidArgumentError) as excinfo:
-        stratadb.Strata()
+        stratadb.open()
     assert excinfo.value.code == "invalid_argument.cli.no_database"
 
 
 def test_from_env_without_var_raises(monkeypatch):
     monkeypatch.delenv("STRATA_DB", raising=False)
     with pytest.raises(errors.InvalidArgumentError):
-        stratadb.Strata.from_env()
+        stratadb.from_env()
 
 
 def test_state_namespace_is_reserved_with_teaching_error(db):
@@ -114,7 +114,7 @@ def test_state_namespace_is_reserved_with_teaching_error(db):
 
 
 def test_context_manager_closes(db_path=None):
-    with stratadb.Strata(cache=True) as database:
+    with stratadb.open(cache=True) as database:
         database.execute({"type": "kv_put", "key": b("k"), "value": b("v")})
     # A closed handle rejects further calls.
     with pytest.raises(Exception):
@@ -122,7 +122,7 @@ def test_context_manager_closes(db_path=None):
 
 
 def test_scope_defaults_are_reported():
-    database = stratadb.Strata(cache=True, branch="main")
+    database = stratadb.open(cache=True, branch="main")
     try:
         assert database.branch == "main"
         assert isinstance(database.space, str)
@@ -132,13 +132,13 @@ def test_scope_defaults_are_reported():
 
 def test_durable_open_round_trip(tmp_path):
     path = tmp_path / "db"
-    database = stratadb.Strata(str(path))
+    database = stratadb.open(str(path))
     try:
         database.execute({"type": "kv_put", "key": b("k"), "value": b("v")})
     finally:
         database.close()
     # Reopen: the value persists.
-    reopened = stratadb.Strata(str(path))
+    reopened = stratadb.open(str(path))
     try:
         got = reopened.execute({"type": "kv_get", "key": b("k")})
         assert got["data"]["found"] is True

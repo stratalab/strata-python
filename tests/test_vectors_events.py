@@ -10,7 +10,7 @@ from stratadb import filters
 
 @pytest.fixture()
 def db():
-    database = stratadb.Strata(cache=True)
+    database = stratadb.open(cache=True)
     yield database
     database.close()
 

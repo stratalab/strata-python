@@ -30,7 +30,7 @@ def test_version_is_engine_version():
 
 
 def test_public_namespaces_present():
-    with stratadb.Strata(cache=True) as db:
+    with stratadb.open(cache=True) as db:
         for name in (
             "kv",
             "json",
