@@ -1,0 +1,1841 @@
+{
+  "count": 204,
+  "errors": [
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.branch_catalog",
+      "commit_outcome": "not_started",
+      "hint": "Correct the invalid field named by the error message and retry the operation.",
+      "message": "The request contains invalid input.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.branch_catalog",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.branch_delete",
+      "commit_outcome": "not_started",
+      "hint": "Correct the invalid field named by the error message and retry the operation.",
+      "message": "The request contains invalid input.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.branch_delete",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.branch_name",
+      "commit_outcome": "not_started",
+      "hint": "Use a non-empty branch name that does not use reserved prefixes or invalid characters.",
+      "message": "The branch name is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.branch_name",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.branch_name_reserved",
+      "commit_outcome": "not_started",
+      "hint": "Use a non-empty branch name that does not use reserved prefixes or invalid characters.",
+      "message": "The branch name is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.branch_name_reserved",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.config_key",
+      "commit_outcome": "not_started",
+      "hint": "Correct the invalid field named by the error message and retry the operation.",
+      "message": "The request contains invalid input.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.config_key",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.event_batch",
+      "commit_outcome": "not_started",
+      "hint": "Use a valid event type, payload, and metadata within the documented event limits.",
+      "message": "The event request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.event_batch",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.event_metadata",
+      "commit_outcome": "not_started",
+      "hint": "Use a valid event type, payload, and metadata within the documented event limits.",
+      "message": "The event request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.event_metadata",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.event_payload",
+      "commit_outcome": "not_started",
+      "hint": "Use a valid event type, payload, and metadata within the documented event limits.",
+      "message": "The event request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.event_payload",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.event_payload_too_large",
+      "commit_outcome": "not_started",
+      "hint": "Use a valid event type, payload, and metadata within the documented event limits.",
+      "message": "The event request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.event_payload_too_large",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.event_record",
+      "commit_outcome": "not_started",
+      "hint": "Use a valid event type, payload, and metadata within the documented event limits.",
+      "message": "The event request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.event_record",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.event_type",
+      "commit_outcome": "not_started",
+      "hint": "Use a valid event type, payload, and metadata within the documented event limits.",
+      "message": "The event request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.event_type",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.graph_batch",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_batch",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.graph_binding",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_binding",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.graph_binding_record",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_binding_record",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.graph_edge_endpoint",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_edge_endpoint",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.graph_edge_record",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_edge_record",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.graph_edge_type",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_edge_type",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.graph_edge_type_reserved",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_edge_type_reserved",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.graph_edge_weight",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_edge_weight",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.graph_metadata",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_metadata",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.graph_name",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_name",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.graph_name_reserved",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_name_reserved",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.graph_node_id",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_node_id",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.graph_node_record",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_node_record",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.graph_ontology_record",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_ontology_record",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.graph_pagerank_options",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_pagerank_options",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.graph_personalization",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_personalization",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.graph_properties",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_properties",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.graph_properties_too_large",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_properties_too_large",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.graph_property_name",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_property_name",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.graph_type_hint",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_type_hint",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.graph_type_index_record",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_type_index_record",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.graph_type_name",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_type_name",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.graph_type_name_reserved",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_type_name_reserved",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.json_array_too_large",
+      "commit_outcome": "not_started",
+      "hint": "Correct the invalid field named by the error message and retry the operation.",
+      "message": "The request contains invalid input.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.json_array_too_large",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.json_batch",
+      "commit_outcome": "not_started",
+      "hint": "Correct the invalid field named by the error message and retry the operation.",
+      "message": "The request contains invalid input.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.json_batch",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.json_batch_duplicate_document",
+      "commit_outcome": "not_started",
+      "hint": "Correct the invalid field named by the error message and retry the operation.",
+      "message": "The request contains invalid input.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.json_batch_duplicate_document",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.json_document",
+      "commit_outcome": "not_started",
+      "hint": "Use a valid JSON document id and a JSON value within the configured size and depth limits.",
+      "message": "The JSON document request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.json_document",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.json_document_id",
+      "commit_outcome": "not_started",
+      "hint": "Use a valid JSON document id and a JSON value within the configured size and depth limits.",
+      "message": "The JSON document request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.json_document_id",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.json_document_too_deep",
+      "commit_outcome": "not_started",
+      "hint": "Use a valid JSON document id and a JSON value within the configured size and depth limits.",
+      "message": "The JSON document request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.json_document_too_deep",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.json_document_too_large",
+      "commit_outcome": "not_started",
+      "hint": "Use a valid JSON document id and a JSON value within the configured size and depth limits.",
+      "message": "The JSON document request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.json_document_too_large",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.json_index",
+      "commit_outcome": "not_started",
+      "hint": "Use a non-reserved JSON index name and definition compatible with the indexed field.",
+      "message": "The JSON index request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.json_index",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.json_index_name",
+      "commit_outcome": "not_started",
+      "hint": "Use a non-reserved JSON index name and definition compatible with the indexed field.",
+      "message": "The JSON index request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.json_index_name",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.json_index_name_reserved",
+      "commit_outcome": "not_started",
+      "hint": "Use a non-reserved JSON index name and definition compatible with the indexed field.",
+      "message": "The JSON index request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.json_index_name_reserved",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.json_path",
+      "commit_outcome": "not_started",
+      "hint": "Use a valid JSON path that points to an existing value of the expected type.",
+      "message": "The JSON path is invalid or cannot be applied to the selected value.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.json_path",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.json_path_not_found",
+      "commit_outcome": "not_started",
+      "hint": "Use a valid JSON path that points to an existing value of the expected type.",
+      "message": "The JSON path is invalid or cannot be applied to the selected value.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.json_path_not_found",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.json_path_too_long",
+      "commit_outcome": "not_started",
+      "hint": "Use a valid JSON path that points to an existing value of the expected type.",
+      "message": "The JSON path is invalid or cannot be applied to the selected value.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.json_path_too_long",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.json_path_type",
+      "commit_outcome": "not_started",
+      "hint": "Use a valid JSON path that points to an existing value of the expected type.",
+      "message": "The JSON path is invalid or cannot be applied to the selected value.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.json_path_type",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.json_value",
+      "commit_outcome": "not_started",
+      "hint": "Use a valid JSON document id and a JSON value within the configured size and depth limits.",
+      "message": "The JSON document request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.json_value",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.kv_batch",
+      "commit_outcome": "not_started",
+      "hint": "Use non-empty KV keys and keep batch structure within the documented limits.",
+      "message": "The KV request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.kv_batch",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.kv_batch_duplicate_key",
+      "commit_outcome": "not_started",
+      "hint": "Remove duplicate keys from the batch so each key appears once.",
+      "message": "The KV batch contains duplicate keys.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.kv_batch_duplicate_key",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.kv_key",
+      "commit_outcome": "not_started",
+      "hint": "Use non-empty KV keys and keep batch structure within the documented limits.",
+      "message": "The KV request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.kv_key",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.persistence",
+      "commit_outcome": "not_started",
+      "hint": "Correct the invalid field named by the error message and retry the operation.",
+      "message": "The request contains invalid input.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.persistence",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.product_space",
+      "commit_outcome": "not_started",
+      "hint": "Use an existing non-reserved space, or delete/move contained data before deleting the space.",
+      "message": "The requested space operation cannot be completed.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.product_space",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.product_space_reserved",
+      "commit_outcome": "not_started",
+      "hint": "Use an existing non-reserved space, or delete/move contained data before deleting the space.",
+      "message": "The requested space operation cannot be completed.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.product_space_reserved",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.space_catalog",
+      "commit_outcome": "not_started",
+      "hint": "Use an existing non-reserved space, or delete/move contained data before deleting the space.",
+      "message": "The requested space operation cannot be completed.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.space_catalog",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.space_delete_default",
+      "commit_outcome": "not_started",
+      "hint": "Use an existing non-reserved space, or delete/move contained data before deleting the space.",
+      "message": "The requested space operation cannot be completed.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.space_delete_default",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.space_delete_too_large",
+      "commit_outcome": "not_started",
+      "hint": "Use an existing non-reserved space, or delete/move contained data before deleting the space.",
+      "message": "The requested space operation cannot be completed.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.space_delete_too_large",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.vector_artifact",
+      "commit_outcome": "not_started",
+      "hint": "Rebuild vector index artifacts or fall back to exact search before retrying indexed queries.",
+      "message": "The vector index artifact or manifest cannot be used.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.vector_artifact",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.vector_artifact_budget",
+      "commit_outcome": "not_started",
+      "hint": "Rebuild vector index artifacts or fall back to exact search before retrying indexed queries.",
+      "message": "The vector index artifact or manifest cannot be used.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.vector_artifact_budget",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.vector_batch",
+      "commit_outcome": "not_started",
+      "hint": "Use the collection dimension, valid vector keys, and metadata/filter values supported by the collection.",
+      "message": "The vector request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.vector_batch",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.vector_collection",
+      "commit_outcome": "not_started",
+      "hint": "Use the collection dimension, valid vector keys, and metadata/filter values supported by the collection.",
+      "message": "The vector request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.vector_collection",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.vector_collection_reserved",
+      "commit_outcome": "not_started",
+      "hint": "Use the collection dimension, valid vector keys, and metadata/filter values supported by the collection.",
+      "message": "The vector request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.vector_collection_reserved",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.vector_dimension",
+      "commit_outcome": "not_started",
+      "hint": "Use the collection dimension, valid vector keys, and metadata/filter values supported by the collection.",
+      "message": "The vector request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.vector_dimension",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.vector_embedding",
+      "commit_outcome": "not_started",
+      "hint": "Use the collection dimension, valid vector keys, and metadata/filter values supported by the collection.",
+      "message": "The vector request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.vector_embedding",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.vector_filter",
+      "commit_outcome": "not_started",
+      "hint": "Use the collection dimension, valid vector keys, and metadata/filter values supported by the collection.",
+      "message": "The vector request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.vector_filter",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.vector_index_manifest",
+      "commit_outcome": "not_started",
+      "hint": "Rebuild vector index artifacts or fall back to exact search before retrying indexed queries.",
+      "message": "The vector index artifact or manifest cannot be used.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.vector_index_manifest",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.vector_key",
+      "commit_outcome": "not_started",
+      "hint": "Use the collection dimension, valid vector keys, and metadata/filter values supported by the collection.",
+      "message": "The vector request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.vector_key",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.vector_metadata",
+      "commit_outcome": "not_started",
+      "hint": "Use the collection dimension, valid vector keys, and metadata/filter values supported by the collection.",
+      "message": "The vector request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.vector_metadata",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.vector_metadata_field",
+      "commit_outcome": "not_started",
+      "hint": "Use the collection dimension, valid vector keys, and metadata/filter values supported by the collection.",
+      "message": "The vector request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.vector_metadata_field",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.vector_metadata_patch",
+      "commit_outcome": "not_started",
+      "hint": "Use the collection dimension, valid vector keys, and metadata/filter values supported by the collection.",
+      "message": "The vector request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.vector_metadata_patch",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.vector_metadata_too_large",
+      "commit_outcome": "not_started",
+      "hint": "Use the collection dimension, valid vector keys, and metadata/filter values supported by the collection.",
+      "message": "The vector request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.vector_metadata_too_large",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.vector_record",
+      "commit_outcome": "not_started",
+      "hint": "Use the collection dimension, valid vector keys, and metadata/filter values supported by the collection.",
+      "message": "The vector request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.vector_record",
+      "retry_policy": "never"
+    },
+    {
+      "class": "not_found",
+      "code": "not_found.engine.branch",
+      "commit_outcome": "not_applicable",
+      "hint": "List branches or use the default branch, then retry with an existing branch name.",
+      "message": "The requested branch was not found.",
+      "ref": "https://stratadb.org/e/not_found.engine.branch",
+      "retry_policy": "never"
+    },
+    {
+      "class": "not_found",
+      "code": "not_found.engine.graph",
+      "commit_outcome": "not_applicable",
+      "hint": "List graphs, then retry with an existing graph name.",
+      "message": "The requested graph was not found.",
+      "ref": "https://stratadb.org/e/not_found.engine.graph",
+      "retry_policy": "never"
+    },
+    {
+      "class": "not_found",
+      "code": "not_found.engine.graph_node",
+      "commit_outcome": "not_applicable",
+      "hint": "List the graph's nodes, then retry with an existing node id.",
+      "message": "The requested graph node was not found.",
+      "ref": "https://stratadb.org/e/not_found.engine.graph_node",
+      "retry_policy": "never"
+    },
+    {
+      "class": "not_found",
+      "code": "not_found.engine.json_document",
+      "commit_outcome": "not_applicable",
+      "hint": "List documents or create the document before reading it.",
+      "message": "The requested JSON document was not found.",
+      "ref": "https://stratadb.org/e/not_found.engine.json_document",
+      "retry_policy": "never"
+    },
+    {
+      "class": "not_found",
+      "code": "not_found.engine.persistence",
+      "commit_outcome": "not_applicable",
+      "hint": "List the requested resource type, then retry with an existing resource id.",
+      "message": "The requested resource was not found.",
+      "ref": "https://stratadb.org/e/not_found.engine.persistence",
+      "retry_policy": "never"
+    },
+    {
+      "class": "not_found",
+      "code": "not_found.engine.vector_collection",
+      "commit_outcome": "not_applicable",
+      "hint": "List vector collections or create the collection before issuing vector operations.",
+      "message": "The requested vector collection was not found.",
+      "ref": "https://stratadb.org/e/not_found.engine.vector_collection",
+      "retry_policy": "never"
+    },
+    {
+      "class": "already_exists",
+      "code": "already_exists.engine.persistence",
+      "commit_outcome": "not_started",
+      "hint": "Reload current state and retry against the latest version.",
+      "message": "The resource already exists.",
+      "ref": "https://stratadb.org/e/already_exists.engine.persistence",
+      "retry_policy": "never"
+    },
+    {
+      "class": "conflict",
+      "code": "conflict.engine.artifact_import",
+      "commit_outcome": "not_started",
+      "hint": "Reload current state and retry against the latest branch, space, or collection version.",
+      "message": "The request conflicts with current state.",
+      "ref": "https://stratadb.org/e/conflict.engine.artifact_import",
+      "retry_policy": "never"
+    },
+    {
+      "class": "already_exists",
+      "code": "already_exists.engine.branch",
+      "commit_outcome": "not_started",
+      "hint": "Choose a different branch name or delete the existing branch first.",
+      "message": "A branch with this name already exists.",
+      "ref": "https://stratadb.org/e/already_exists.engine.branch",
+      "retry_policy": "never"
+    },
+    {
+      "class": "already_exists",
+      "code": "already_exists.engine.graph",
+      "commit_outcome": "not_started",
+      "hint": "Choose a different graph name or delete the existing graph first.",
+      "message": "A graph with this name already exists.",
+      "ref": "https://stratadb.org/e/already_exists.engine.graph",
+      "retry_policy": "never"
+    },
+    {
+      "class": "already_exists",
+      "code": "already_exists.engine.json_document",
+      "commit_outcome": "not_started",
+      "hint": "Update the existing document, or use a different document id.",
+      "message": "A JSON document already exists at this id.",
+      "ref": "https://stratadb.org/e/already_exists.engine.json_document",
+      "retry_policy": "never"
+    },
+    {
+      "class": "already_exists",
+      "code": "already_exists.engine.json_index",
+      "commit_outcome": "not_started",
+      "hint": "Drop the existing index or choose a different index name.",
+      "message": "A JSON index with this name already exists.",
+      "ref": "https://stratadb.org/e/already_exists.engine.json_index",
+      "retry_policy": "never"
+    },
+    {
+      "class": "already_exists",
+      "code": "already_exists.engine.vector_collection",
+      "commit_outcome": "not_started",
+      "hint": "Use the existing collection, or choose a different collection name.",
+      "message": "A vector collection with this name already exists.",
+      "ref": "https://stratadb.org/e/already_exists.engine.vector_collection",
+      "retry_policy": "never"
+    },
+    {
+      "class": "conflict",
+      "code": "conflict.engine.branch_generation",
+      "commit_outcome": "definitely_not_committed",
+      "hint": "Reload current state and retry against the latest branch, space, or collection version.",
+      "message": "The request conflicts with current state.",
+      "ref": "https://stratadb.org/e/conflict.engine.branch_generation",
+      "retry_policy": "after_state_change"
+    },
+    {
+      "class": "conflict",
+      "code": "conflict.engine.persistence",
+      "commit_outcome": "definitely_not_committed",
+      "hint": "Reload current state and retry against the latest branch, space, or collection version.",
+      "message": "The request conflicts with current state.",
+      "ref": "https://stratadb.org/e/conflict.engine.persistence",
+      "retry_policy": "after_state_change"
+    },
+    {
+      "class": "failed_precondition",
+      "code": "failed_precondition.engine.graph_negative_weight",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/failed_precondition.engine.graph_negative_weight",
+      "retry_policy": "never"
+    },
+    {
+      "class": "failed_precondition",
+      "code": "failed_precondition.engine.graph_ontology_edge_type",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/failed_precondition.engine.graph_ontology_edge_type",
+      "retry_policy": "never"
+    },
+    {
+      "class": "failed_precondition",
+      "code": "failed_precondition.engine.graph_ontology_endpoint_type",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/failed_precondition.engine.graph_ontology_endpoint_type",
+      "retry_policy": "never"
+    },
+    {
+      "class": "failed_precondition",
+      "code": "failed_precondition.engine.graph_ontology_freeze",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/failed_precondition.engine.graph_ontology_freeze",
+      "retry_policy": "never"
+    },
+    {
+      "class": "failed_precondition",
+      "code": "failed_precondition.engine.graph_ontology_frozen",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/failed_precondition.engine.graph_ontology_frozen",
+      "retry_policy": "never"
+    },
+    {
+      "class": "failed_precondition",
+      "code": "failed_precondition.engine.graph_ontology_node_type",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/failed_precondition.engine.graph_ontology_node_type",
+      "retry_policy": "never"
+    },
+    {
+      "class": "failed_precondition",
+      "code": "failed_precondition.engine.graph_ontology_required_property",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/failed_precondition.engine.graph_ontology_required_property",
+      "retry_policy": "never"
+    },
+    {
+      "class": "failed_precondition",
+      "code": "failed_precondition.engine.space_not_empty",
+      "commit_outcome": "not_started",
+      "hint": "Use an existing non-reserved space, or delete/move contained data before deleting the space.",
+      "message": "The requested space operation cannot be completed.",
+      "ref": "https://stratadb.org/e/failed_precondition.engine.space_not_empty",
+      "retry_policy": "never"
+    },
+    {
+      "class": "history_unavailable",
+      "code": "history_unavailable.engine.persistence_history",
+      "commit_outcome": "not_applicable",
+      "hint": "List the requested resource type, then retry with an existing resource id.",
+      "message": "The requested resource was not found.",
+      "ref": "https://stratadb.org/e/history_unavailable.engine.persistence_history",
+      "retry_policy": "after_state_change"
+    },
+    {
+      "class": "unsupported",
+      "code": "unsupported.engine.persistence_capability",
+      "commit_outcome": "not_applicable",
+      "hint": "Open the database with a backend that supports the requested persistence capability.",
+      "message": "The selected persistence backend does not support the requested capability.",
+      "ref": "https://stratadb.org/e/unsupported.engine.persistence_capability",
+      "retry_policy": "after_state_change"
+    },
+    {
+      "class": "unsupported",
+      "code": "unsupported.engine.graph_binding_cross_branch",
+      "commit_outcome": "not_applicable",
+      "hint": "Bind graph relationships to targets on the node's own branch; cross-branch bindings are not supported in V1.",
+      "message": "Cross-branch graph relationship bindings are not supported.",
+      "ref": "https://stratadb.org/e/unsupported.engine.graph_binding_cross_branch",
+      "retry_policy": "after_state_change"
+    },
+    {
+      "class": "resource_exhausted",
+      "code": "resource_exhausted.engine.graph_analytics_budget",
+      "commit_outcome": "not_applicable",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/resource_exhausted.engine.graph_analytics_budget",
+      "retry_policy": "after_state_change"
+    },
+    {
+      "class": "resource_exhausted",
+      "code": "resource_exhausted.engine.persistence_budget",
+      "commit_outcome": "definitely_not_committed",
+      "hint": "Reduce memory or disk pressure, lower the workload size, or raise the configured resource budget.",
+      "message": "The operation exceeded a configured persistence resource budget.",
+      "ref": "https://stratadb.org/e/resource_exhausted.engine.persistence_budget",
+      "retry_policy": "after_state_change"
+    },
+    {
+      "class": "corruption",
+      "code": "corruption.engine.artifact_payload",
+      "commit_outcome": "not_applicable",
+      "hint": "Stop writing to the database and inspect recovery diagnostics before continuing.",
+      "message": "Stored data failed validation.",
+      "ref": "https://stratadb.org/e/corruption.engine.artifact_payload",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "corruption.engine.persistence_recovery",
+      "commit_outcome": "not_applicable",
+      "hint": "Stop writing to the database and inspect recovery diagnostics before continuing.",
+      "message": "Stored data failed validation.",
+      "ref": "https://stratadb.org/e/corruption.engine.persistence_recovery",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.branch_catalog",
+      "commit_outcome": "not_applicable",
+      "hint": "Stop writing to the database and inspect recovery diagnostics before continuing.",
+      "message": "Stored data failed validation.",
+      "ref": "https://stratadb.org/e/data_loss.engine.branch_catalog",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.branch_id",
+      "commit_outcome": "not_applicable",
+      "hint": "Stop writing to the database and inspect recovery diagnostics before continuing.",
+      "message": "Stored data failed validation.",
+      "ref": "https://stratadb.org/e/data_loss.engine.branch_id",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.control_name",
+      "commit_outcome": "not_applicable",
+      "hint": "Stop writing to the database and inspect recovery diagnostics before continuing.",
+      "message": "Stored data failed validation.",
+      "ref": "https://stratadb.org/e/data_loss.engine.control_name",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.control_plane",
+      "commit_outcome": "not_applicable",
+      "hint": "Stop writing to the database and inspect recovery diagnostics before continuing.",
+      "message": "Stored data failed validation.",
+      "ref": "https://stratadb.org/e/data_loss.engine.control_plane",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.control_plane_missing",
+      "commit_outcome": "not_applicable",
+      "hint": "Stop writing to the database and inspect recovery diagnostics before continuing.",
+      "message": "Stored data failed validation.",
+      "ref": "https://stratadb.org/e/data_loss.engine.control_plane_missing",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.event_index_key",
+      "commit_outcome": "not_applicable",
+      "hint": "Use a valid event type, payload, and metadata within the documented event limits.",
+      "message": "The event request is invalid.",
+      "ref": "https://stratadb.org/e/data_loss.engine.event_index_key",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.event_key",
+      "commit_outcome": "not_applicable",
+      "hint": "Use a valid event type, payload, and metadata within the documented event limits.",
+      "message": "The event request is invalid.",
+      "ref": "https://stratadb.org/e/data_loss.engine.event_key",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.event_metadata",
+      "commit_outcome": "not_applicable",
+      "hint": "Use a valid event type, payload, and metadata within the documented event limits.",
+      "message": "The event request is invalid.",
+      "ref": "https://stratadb.org/e/data_loss.engine.event_metadata",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.event_record",
+      "commit_outcome": "not_applicable",
+      "hint": "Use a valid event type, payload, and metadata within the documented event limits.",
+      "message": "The event request is invalid.",
+      "ref": "https://stratadb.org/e/data_loss.engine.event_record",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.graph_binding_key",
+      "commit_outcome": "not_applicable",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/data_loss.engine.graph_binding_key",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.graph_binding_record",
+      "commit_outcome": "not_applicable",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/data_loss.engine.graph_binding_record",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.graph_edge_key",
+      "commit_outcome": "not_applicable",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/data_loss.engine.graph_edge_key",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.graph_edge_record",
+      "commit_outcome": "not_applicable",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/data_loss.engine.graph_edge_record",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.graph_index",
+      "commit_outcome": "not_applicable",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/data_loss.engine.graph_index",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.graph_key",
+      "commit_outcome": "not_applicable",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/data_loss.engine.graph_key",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.graph_metadata",
+      "commit_outcome": "not_applicable",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/data_loss.engine.graph_metadata",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.graph_node_key",
+      "commit_outcome": "not_applicable",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/data_loss.engine.graph_node_key",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.graph_node_record",
+      "commit_outcome": "not_applicable",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/data_loss.engine.graph_node_record",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.graph_ontology_record",
+      "commit_outcome": "not_applicable",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/data_loss.engine.graph_ontology_record",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.graph_reverse_edge_key",
+      "commit_outcome": "not_applicable",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/data_loss.engine.graph_reverse_edge_key",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.graph_type_index_key",
+      "commit_outcome": "not_applicable",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/data_loss.engine.graph_type_index_key",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.graph_type_index_record",
+      "commit_outcome": "not_applicable",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/data_loss.engine.graph_type_index_record",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.json_document",
+      "commit_outcome": "not_applicable",
+      "hint": "Use a valid JSON document id and a JSON value within the configured size and depth limits.",
+      "message": "The JSON document request is invalid.",
+      "ref": "https://stratadb.org/e/data_loss.engine.json_document",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.json_index",
+      "commit_outcome": "not_applicable",
+      "hint": "Use a non-reserved JSON index name and definition compatible with the indexed field.",
+      "message": "The JSON index request is invalid.",
+      "ref": "https://stratadb.org/e/data_loss.engine.json_index",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.json_index_key",
+      "commit_outcome": "not_applicable",
+      "hint": "Use a non-reserved JSON index name and definition compatible with the indexed field.",
+      "message": "The JSON index request is invalid.",
+      "ref": "https://stratadb.org/e/data_loss.engine.json_index_key",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.json_key",
+      "commit_outcome": "not_applicable",
+      "hint": "Stop writing to the database and inspect recovery diagnostics before continuing.",
+      "message": "Stored data failed validation.",
+      "ref": "https://stratadb.org/e/data_loss.engine.json_key",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.kv_key",
+      "commit_outcome": "not_applicable",
+      "hint": "Use non-empty KV keys and keep batch structure within the documented limits.",
+      "message": "The KV request is invalid.",
+      "ref": "https://stratadb.org/e/data_loss.engine.kv_key",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.kv_value",
+      "commit_outcome": "not_applicable",
+      "hint": "Use non-empty KV keys and keep batch structure within the documented limits.",
+      "message": "The KV request is invalid.",
+      "ref": "https://stratadb.org/e/data_loss.engine.kv_value",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.space_catalog",
+      "commit_outcome": "not_applicable",
+      "hint": "Use an existing non-reserved space, or delete/move contained data before deleting the space.",
+      "message": "The requested space operation cannot be completed.",
+      "ref": "https://stratadb.org/e/data_loss.engine.space_catalog",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.vector_artifact",
+      "commit_outcome": "not_applicable",
+      "hint": "Rebuild vector index artifacts or fall back to exact search before retrying indexed queries.",
+      "message": "The vector index artifact or manifest cannot be used.",
+      "ref": "https://stratadb.org/e/data_loss.engine.vector_artifact",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.vector_artifacts",
+      "commit_outcome": "not_applicable",
+      "hint": "Rebuild vector index artifacts or fall back to exact search before retrying indexed queries.",
+      "message": "The vector index artifact or manifest cannot be used.",
+      "ref": "https://stratadb.org/e/data_loss.engine.vector_artifacts",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.vector_collection",
+      "commit_outcome": "not_applicable",
+      "hint": "Use the collection dimension, valid vector keys, and metadata/filter values supported by the collection.",
+      "message": "The vector request is invalid.",
+      "ref": "https://stratadb.org/e/data_loss.engine.vector_collection",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.vector_collection_key",
+      "commit_outcome": "not_applicable",
+      "hint": "Use the collection dimension, valid vector keys, and metadata/filter values supported by the collection.",
+      "message": "The vector request is invalid.",
+      "ref": "https://stratadb.org/e/data_loss.engine.vector_collection_key",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.vector_index_manifest",
+      "commit_outcome": "not_applicable",
+      "hint": "Rebuild vector index artifacts or fall back to exact search before retrying indexed queries.",
+      "message": "The vector index artifact or manifest cannot be used.",
+      "ref": "https://stratadb.org/e/data_loss.engine.vector_index_manifest",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.vector_index_manifest_key",
+      "commit_outcome": "not_applicable",
+      "hint": "Rebuild vector index artifacts or fall back to exact search before retrying indexed queries.",
+      "message": "The vector index artifact or manifest cannot be used.",
+      "ref": "https://stratadb.org/e/data_loss.engine.vector_index_manifest_key",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.vector_key",
+      "commit_outcome": "not_applicable",
+      "hint": "Use the collection dimension, valid vector keys, and metadata/filter values supported by the collection.",
+      "message": "The vector request is invalid.",
+      "ref": "https://stratadb.org/e/data_loss.engine.vector_key",
+      "retry_policy": "never"
+    },
+    {
+      "class": "corruption",
+      "code": "data_loss.engine.vector_record",
+      "commit_outcome": "not_applicable",
+      "hint": "Use the collection dimension, valid vector keys, and metadata/filter values supported by the collection.",
+      "message": "The vector request is invalid.",
+      "ref": "https://stratadb.org/e/data_loss.engine.vector_record",
+      "retry_policy": "never"
+    },
+    {
+      "class": "ambiguous_commit",
+      "code": "ambiguous_commit.engine.persistence",
+      "commit_outcome": "maybe_committed",
+      "hint": "Re-open or inspect database state before assuming whether the write committed.",
+      "message": "The commit outcome could not be proven.",
+      "ref": "https://stratadb.org/e/ambiguous_commit.engine.persistence",
+      "retry_policy": "unknown"
+    },
+    {
+      "class": "failed_precondition",
+      "code": "failed_precondition.engine.persistence",
+      "commit_outcome": "definitely_not_committed",
+      "hint": "Retry after the required backend, control plane, or persistence capability is available.",
+      "message": "The required engine capability is unavailable.",
+      "ref": "https://stratadb.org/e/failed_precondition.engine.persistence",
+      "retry_policy": "after_state_change"
+    },
+    {
+      "class": "unavailable",
+      "code": "unavailable.engine.control_plane",
+      "commit_outcome": "not_applicable",
+      "hint": "Retry after the required backend, control plane, or persistence capability is available.",
+      "message": "The required engine capability is unavailable.",
+      "ref": "https://stratadb.org/e/unavailable.engine.control_plane",
+      "retry_policy": "after_state_change"
+    },
+    {
+      "class": "unavailable",
+      "code": "unavailable.engine.persistence",
+      "commit_outcome": "not_applicable",
+      "hint": "Retry after the required backend, control plane, or persistence capability is available.",
+      "message": "The required engine capability is unavailable.",
+      "ref": "https://stratadb.org/e/unavailable.engine.persistence",
+      "retry_policy": "same_request"
+    },
+    {
+      "class": "unavailable",
+      "code": "unavailable.engine.vector_artifacts",
+      "commit_outcome": "not_applicable",
+      "hint": "Rebuild vector index artifacts or fall back to exact search before retrying indexed queries.",
+      "message": "The vector index artifact or manifest cannot be used.",
+      "ref": "https://stratadb.org/e/unavailable.engine.vector_artifacts",
+      "retry_policy": "after_state_change"
+    },
+    {
+      "class": "failed_precondition",
+      "code": "failed_precondition.engine.branch_status",
+      "commit_outcome": "not_applicable",
+      "hint": "Open the database with a compatible Strata version or run the required migration.",
+      "message": "The stored layout is incompatible with this runtime.",
+      "ref": "https://stratadb.org/e/failed_precondition.engine.branch_status",
+      "retry_policy": "never"
+    },
+    {
+      "class": "failed_precondition",
+      "code": "failed_precondition.engine.capability_registry",
+      "commit_outcome": "not_applicable",
+      "hint": "Open the database with a compatible Strata version or run the required migration.",
+      "message": "The database layout is incompatible with this runtime.",
+      "ref": "https://stratadb.org/e/failed_precondition.engine.capability_registry",
+      "retry_policy": "never"
+    },
+    {
+      "class": "failed_precondition",
+      "code": "failed_precondition.engine.control_payload_version",
+      "commit_outcome": "not_applicable",
+      "hint": "Open the database with a compatible Strata version or run the required migration.",
+      "message": "The database layout is incompatible with this runtime.",
+      "ref": "https://stratadb.org/e/failed_precondition.engine.control_payload_version",
+      "retry_policy": "never"
+    },
+    {
+      "class": "failed_precondition",
+      "code": "failed_precondition.engine.default_branch",
+      "commit_outcome": "not_applicable",
+      "hint": "Open the database with a compatible Strata version or run the required migration.",
+      "message": "The stored layout is incompatible with this runtime.",
+      "ref": "https://stratadb.org/e/failed_precondition.engine.default_branch",
+      "retry_policy": "never"
+    },
+    {
+      "class": "failed_precondition",
+      "code": "failed_precondition.engine.layout_version",
+      "commit_outcome": "not_applicable",
+      "hint": "Open the database with a compatible Strata version or run the required migration.",
+      "message": "The database layout is incompatible with this runtime.",
+      "ref": "https://stratadb.org/e/failed_precondition.engine.layout_version",
+      "retry_policy": "never"
+    },
+    {
+      "class": "failed_precondition",
+      "code": "failed_precondition.engine.migration_registry",
+      "commit_outcome": "not_applicable",
+      "hint": "Open the database with a compatible Strata version or run the required migration.",
+      "message": "The database layout is incompatible with this runtime.",
+      "ref": "https://stratadb.org/e/failed_precondition.engine.migration_registry",
+      "retry_policy": "never"
+    },
+    {
+      "class": "failed_precondition",
+      "code": "failed_precondition.engine.storage_registry",
+      "commit_outcome": "not_applicable",
+      "hint": "Open the database with a compatible Strata version or run the required migration.",
+      "message": "The database layout is incompatible with this runtime.",
+      "ref": "https://stratadb.org/e/failed_precondition.engine.storage_registry",
+      "retry_policy": "never"
+    },
+    {
+      "class": "failed_precondition",
+      "code": "failed_precondition.engine.vector_artifact",
+      "commit_outcome": "not_applicable",
+      "hint": "Rebuild vector index artifacts or fall back to exact search before retrying indexed queries.",
+      "message": "The vector index artifact or manifest cannot be used.",
+      "ref": "https://stratadb.org/e/failed_precondition.engine.vector_artifact",
+      "retry_policy": "never"
+    },
+    {
+      "class": "failed_precondition",
+      "code": "failed_precondition.engine.vector_index_manifest",
+      "commit_outcome": "not_applicable",
+      "hint": "Rebuild vector index artifacts or fall back to exact search before retrying indexed queries.",
+      "message": "The vector index artifact or manifest cannot be used.",
+      "ref": "https://stratadb.org/e/failed_precondition.engine.vector_index_manifest",
+      "retry_policy": "never"
+    },
+    {
+      "class": "failed_precondition",
+      "code": "failed_precondition.engine.runtime_closed",
+      "commit_outcome": "not_started",
+      "hint": "Open a new database handle before issuing more commands.",
+      "message": "The runtime is closed.",
+      "ref": "https://stratadb.org/e/failed_precondition.engine.runtime_closed",
+      "retry_policy": "never"
+    },
+    {
+      "class": "internal",
+      "code": "internal.engine.persistence",
+      "commit_outcome": "not_applicable",
+      "hint": "Capture the reference id and report this as a Strata internal error.",
+      "message": "An internal engine error occurred.",
+      "ref": "https://stratadb.org/e/internal.engine.persistence",
+      "retry_policy": "unknown"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.hub_url",
+      "commit_outcome": "not_started",
+      "hint": "Provide a valid URL via --hub, STRATA_HUB_URL, or hub.url in a project or global strata config.",
+      "message": "The hub URL supplied for this invocation is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.hub_url",
+      "retry_policy": "never"
+    },
+    {
+      "class": "failed_precondition",
+      "code": "failed_precondition.executor.hub_clone",
+      "commit_outcome": "not_started",
+      "hint": "Check the destination is empty and the bundle's engine requirement matches this Strata version.",
+      "message": "The clone cannot proceed against this bundle or destination.",
+      "ref": "https://stratadb.org/e/failed_precondition.executor.hub_clone",
+      "retry_policy": "never"
+    },
+    {
+      "class": "unavailable",
+      "code": "unavailable.executor.hub_transport",
+      "commit_outcome": "not_started",
+      "hint": "Check connectivity and the hub URL, then retry.",
+      "message": "The hub could not be reached or returned an error.",
+      "ref": "https://stratadb.org/e/unavailable.executor.hub_transport",
+      "retry_policy": "same_request"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.hub_dataset",
+      "commit_outcome": "not_started",
+      "hint": "Use the dataset's slug as shown on the hub.",
+      "message": "The dataset name is not valid.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.hub_dataset",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.hub_branch",
+      "commit_outcome": "not_started",
+      "hint": "Use a branch name listed by the dataset's refs.",
+      "message": "The branch name is not valid.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.hub_branch",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.hub_feature_disabled",
+      "commit_outcome": "not_started",
+      "hint": "Run a build with the hub feature enabled before using hub clone.",
+      "message": "Hub support is not enabled in this build.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.hub_feature_disabled",
+      "retry_policy": "after_state_change"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.arrow_base64",
+      "commit_outcome": "not_started",
+      "hint": "Provide valid base64-encoded Arrow bytes or use a file path import.",
+      "message": "The Arrow base64 input is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.arrow_base64",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.arrow_collection",
+      "commit_outcome": "not_started",
+      "hint": "Provide exactly one Arrow collection target compatible with the selected primitive.",
+      "message": "The Arrow collection target is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.arrow_collection",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.arrow_empty_export",
+      "commit_outcome": "not_started",
+      "hint": "Export at least one record or choose a source that contains data.",
+      "message": "The Arrow export source is empty.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.arrow_empty_export",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.arrow_embedding_type",
+      "commit_outcome": "not_started",
+      "hint": "Use a fixed-size list, list, or JSON array of numeric values for vector embeddings.",
+      "message": "The Arrow embedding column type is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.arrow_embedding_type",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.arrow_feature_disabled",
+      "commit_outcome": "not_started",
+      "hint": "Run a build with the Arrow feature enabled before using Arrow import or export.",
+      "message": "Arrow support is not enabled in this build.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.arrow_feature_disabled",
+      "retry_policy": "after_state_change"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.arrow_format",
+      "commit_outcome": "not_started",
+      "hint": "Use a supported Arrow file format such as IPC or Parquet.",
+      "message": "The Arrow file format is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.arrow_format",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.arrow_graph",
+      "commit_outcome": "not_started",
+      "hint": "Provide a graph name and graph-compatible Arrow columns for graph export.",
+      "message": "The Arrow graph request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.arrow_graph",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.arrow_input_missing",
+      "commit_outcome": "not_started",
+      "hint": "Provide Arrow input bytes or an Arrow input path.",
+      "message": "Arrow input is missing.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.arrow_input_missing",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.arrow_json_key",
+      "commit_outcome": "not_started",
+      "hint": "Include a non-null string or binary document key column for JSON import.",
+      "message": "The Arrow JSON key column is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.arrow_json_key",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.arrow_key_column",
+      "commit_outcome": "not_started",
+      "hint": "Include a non-null string or binary key column in the Arrow input.",
+      "message": "The Arrow key column is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.arrow_key_column",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.arrow_value_column",
+      "commit_outcome": "not_started",
+      "hint": "Include a value column with a type supported by the selected Arrow import target.",
+      "message": "The Arrow value column is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.arrow_value_column",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.arrow_vector_dimension",
+      "commit_outcome": "not_started",
+      "hint": "Use embeddings whose length matches the target vector collection dimension.",
+      "message": "The Arrow vector dimension is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.arrow_vector_dimension",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.arrow_vector_key",
+      "commit_outcome": "not_started",
+      "hint": "Include a non-null string or binary vector key column for vector import.",
+      "message": "The Arrow vector key column is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.arrow_vector_key",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.batch_item",
+      "commit_outcome": "not_started",
+      "hint": "Correct the batch item input and retry.",
+      "message": "A batch item is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.batch_item",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.kv_batch_duplicate_key",
+      "commit_outcome": "not_started",
+      "hint": "Remove duplicate keys so each KV batch item targets a unique key.",
+      "message": "The KV batch contains duplicate keys.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.kv_batch_duplicate_key",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.json_batch_duplicate_key",
+      "commit_outcome": "not_started",
+      "hint": "Remove duplicates so each JSON batch item targets a unique document and path.",
+      "message": "The JSON batch contains duplicate document targets.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.json_batch_duplicate_key",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.vector_batch_duplicate_key",
+      "commit_outcome": "not_started",
+      "hint": "Remove duplicate keys so each vector batch item targets a unique key.",
+      "message": "The vector batch contains duplicate keys.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.vector_batch_duplicate_key",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.limit",
+      "commit_outcome": "not_started",
+      "hint": "Use a positive limit within the documented maximum.",
+      "message": "The requested limit is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.limit",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.graph_analytics_budget",
+      "commit_outcome": "not_started",
+      "hint": "Use a graph analytics budget that fits the platform's addressable range.",
+      "message": "A graph analytics budget value is out of range for this platform.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.graph_analytics_budget",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.vector_dimension",
+      "commit_outcome": "not_started",
+      "hint": "Use embeddings whose length matches the vector collection dimension.",
+      "message": "The vector dimension is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.vector_dimension",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.vector_limit",
+      "commit_outcome": "not_started",
+      "hint": "Use a positive vector query limit within the documented maximum.",
+      "message": "The vector query limit is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.vector_limit",
+      "retry_policy": "never"
+    },
+    {
+      "class": "unavailable",
+      "code": "unavailable.executor.arrow_io",
+      "commit_outcome": "not_applicable",
+      "hint": "Retry after the Arrow input or output path is readable and writable.",
+      "message": "The Arrow input or output path is unavailable.",
+      "ref": "https://stratadb.org/e/unavailable.executor.arrow_io",
+      "retry_policy": "after_state_change"
+    },
+    {
+      "class": "internal",
+      "code": "internal.executor.arrow",
+      "commit_outcome": "not_applicable",
+      "hint": "Capture the reference id and report the Arrow boundary failure.",
+      "message": "An internal Arrow boundary error occurred.",
+      "ref": "https://stratadb.org/e/internal.executor.arrow",
+      "retry_policy": "unknown"
+    },
+    {
+      "class": "internal",
+      "code": "internal.executor.unregistered_code",
+      "commit_outcome": "not_applicable",
+      "hint": "Capture the reference id and report the unregistered executor error code.",
+      "message": "An unregistered executor error code was rendered.",
+      "ref": "https://stratadb.org/e/internal.executor.unregistered_code",
+      "retry_policy": "unknown"
+    },
+    {
+      "class": "failed_precondition",
+      "code": "inference.download_disabled",
+      "commit_outcome": "not_applicable",
+      "hint": "Enable model downloads or install the model manually.",
+      "message": "Model downloads are disabled.",
+      "ref": "https://stratadb.org/e/inference.download_disabled",
+      "retry_policy": "after_state_change"
+    },
+    {
+      "class": "unavailable",
+      "code": "inference.download_failed",
+      "commit_outcome": "not_applicable",
+      "hint": "Retry the model download when network access is available.",
+      "message": "The model download failed.",
+      "ref": "https://stratadb.org/e/inference.download_failed",
+      "retry_policy": "same_request"
+    },
+    {
+      "class": "corruption",
+      "code": "inference.download_verification_failed",
+      "commit_outcome": "not_applicable",
+      "hint": "Delete the corrupted model artifact and download it again.",
+      "message": "The downloaded model failed verification.",
+      "ref": "https://stratadb.org/e/inference.download_verification_failed",
+      "retry_policy": "after_state_change"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "inference.invalid_request",
+      "commit_outcome": "not_applicable",
+      "hint": "Correct the inference request options for the selected provider or model.",
+      "message": "The inference request is invalid.",
+      "ref": "https://stratadb.org/e/inference.invalid_request",
+      "retry_policy": "never"
+    },
+    {
+      "class": "io",
+      "code": "inference.io_failure",
+      "commit_outcome": "not_applicable",
+      "hint": "Inspect local model-cache filesystem permissions and retry.",
+      "message": "The local inference runtime hit an I/O failure.",
+      "ref": "https://stratadb.org/e/inference.io_failure",
+      "retry_policy": "unknown"
+    },
+    {
+      "class": "unavailable",
+      "code": "inference.local_runtime_failed",
+      "commit_outcome": "not_applicable",
+      "hint": "Check the local inference runtime and model compatibility before retrying.",
+      "message": "The local inference runtime failed.",
+      "ref": "https://stratadb.org/e/inference.local_runtime_failed",
+      "retry_policy": "unknown"
+    },
+    {
+      "class": "failed_precondition",
+      "code": "inference.missing_api_key",
+      "commit_outcome": "not_applicable",
+      "hint": "Set the provider API key and retry.",
+      "message": "The provider API key is missing.",
+      "ref": "https://stratadb.org/e/inference.missing_api_key",
+      "retry_policy": "after_state_change"
+    },
+    {
+      "class": "failed_precondition",
+      "code": "inference.missing_model",
+      "commit_outcome": "not_applicable",
+      "hint": "Install, pull, or configure the requested model before retrying.",
+      "message": "The requested model is missing.",
+      "ref": "https://stratadb.org/e/inference.missing_model",
+      "retry_policy": "after_state_change"
+    },
+    {
+      "class": "failed_precondition",
+      "code": "inference.model_load_failed",
+      "commit_outcome": "not_applicable",
+      "hint": "Verify the local model path and format, then load a compatible model.",
+      "message": "The model could not be loaded.",
+      "ref": "https://stratadb.org/e/inference.model_load_failed",
+      "retry_policy": "after_state_change"
+    },
+    {
+      "class": "access_denied",
+      "code": "inference.provider_auth_failed",
+      "commit_outcome": "not_applicable",
+      "hint": "Check provider credentials, permissions, and account access.",
+      "message": "The provider rejected authentication.",
+      "ref": "https://stratadb.org/e/inference.provider_auth_failed",
+      "retry_policy": "after_state_change"
+    },
+    {
+      "class": "serialization",
+      "code": "inference.provider_malformed_response",
+      "commit_outcome": "not_applicable",
+      "hint": "Retry or switch providers if the provider response remains invalid.",
+      "message": "The provider returned a malformed response.",
+      "ref": "https://stratadb.org/e/inference.provider_malformed_response",
+      "retry_policy": "unknown"
+    },
+    {
+      "class": "unavailable",
+      "code": "inference.provider_rate_limited",
+      "commit_outcome": "not_applicable",
+      "hint": "Wait for provider rate limits to reset or use a different provider key.",
+      "message": "The provider rate limit was reached.",
+      "ref": "https://stratadb.org/e/inference.provider_rate_limited",
+      "retry_policy": "after_state_change"
+    },
+    {
+      "class": "unavailable",
+      "code": "inference.provider_timeout",
+      "commit_outcome": "not_applicable",
+      "hint": "Retry the request when the provider endpoint is responsive.",
+      "message": "The provider request timed out.",
+      "ref": "https://stratadb.org/e/inference.provider_timeout",
+      "retry_policy": "same_request"
+    },
+    {
+      "class": "unavailable",
+      "code": "inference.provider_unavailable",
+      "commit_outcome": "not_applicable",
+      "hint": "Retry when the provider service is available.",
+      "message": "The provider is unavailable.",
+      "ref": "https://stratadb.org/e/inference.provider_unavailable",
+      "retry_policy": "same_request"
+    },
+    {
+      "class": "corruption",
+      "code": "inference.registry_corrupt",
+      "commit_outcome": "not_applicable",
+      "hint": "Repair or recreate the local model registry before retrying.",
+      "message": "The local inference registry is corrupt.",
+      "ref": "https://stratadb.org/e/inference.registry_corrupt",
+      "retry_policy": "never"
+    },
+    {
+      "class": "unsupported",
+      "code": "inference.unsupported_operation",
+      "commit_outcome": "not_applicable",
+      "hint": "Use an inference operation supported by the selected provider and model.",
+      "message": "The inference operation is unsupported.",
+      "ref": "https://stratadb.org/e/inference.unsupported_operation",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "inference.unsupported_parameter",
+      "commit_outcome": "not_applicable",
+      "hint": "Remove or change parameters unsupported by the selected provider.",
+      "message": "The inference parameter is unsupported.",
+      "ref": "https://stratadb.org/e/inference.unsupported_parameter",
+      "retry_policy": "never"
+    },
+    {
+      "class": "unsupported",
+      "code": "inference.unsupported_provider",
+      "commit_outcome": "not_applicable",
+      "hint": "Use a provider configured in this build and runtime.",
+      "message": "The inference provider is unsupported.",
+      "ref": "https://stratadb.org/e/inference.unsupported_provider",
+      "retry_policy": "never"
+    }
+  ]
+}

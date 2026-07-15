@@ -1,0 +1,117 @@
+{
+  "$defs": {
+    "Bytes": {
+      "contentEncoding": "base64",
+      "description": "Binary payload encoded as a standard base64 string.",
+      "type": "string"
+    },
+    "Maybe": {
+      "description": "Point-read envelope shared by every capability's single-record `get`.\n\n`found` is the authoritative presence flag; `value` carries the record only\nwhen it exists. A missing record serializes as `{found: false, value: null}`\nand a present one as `{found: true, value: <record>}`, so absence never\naliases a bare `null` payload and every primitive answers a point read the\nsame shape.\n\nThe payload is `Option<T>` because these primitives never store a JSON\n`null` as a record — struct payloads round-trip cleanly through\n`Option<T>`. JSON is the one exception: a stored JSON `null` is a real value\nthat `Option<serde_json::Value>` would collapse to absence on deserialize,\nso JSON reads use the dedicated [`MaybeJsonValue`](super::MaybeJsonValue)\nenvelope, which carries a non-optional `value` to keep found-null distinct\nfrom absent. Both envelopes serialize the same `{found, value}` wire shape.",
+      "properties": {
+        "found": {
+          "type": "boolean"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/VersionedValue"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "found"
+      ],
+      "type": "object"
+    },
+    "VersionedValue": {
+      "description": "Stored value with commit metadata.",
+      "properties": {
+        "timestamp": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "value": {
+          "$ref": "#/$defs/Bytes"
+        },
+        "version": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "value",
+        "version",
+        "timestamp"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://stratadb.org/idl/v1/schemas/kv.get.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "command": "kv.get",
+  "request": {
+    "additionalProperties": false,
+    "description": "Reads one KV entry.",
+    "properties": {
+      "as_of": {
+        "description": "Optional timestamp in microseconds.",
+        "format": "uint64",
+        "minimum": 0,
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
+      "branch": {
+        "description": "Target branch. Defaults to the executor handle branch.",
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "key": {
+        "$ref": "#/$defs/Bytes",
+        "description": "Key bytes."
+      },
+      "space": {
+        "description": "Target product space. Defaults to `\"default\"`.",
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "type": {
+        "const": "kv_get",
+        "type": "string"
+      }
+    },
+    "required": [
+      "type",
+      "key"
+    ],
+    "type": "object"
+  },
+  "response": {
+    "description": "KV point-read result: present value with commit metadata, or absence.",
+    "properties": {
+      "data": {
+        "$ref": "#/$defs/Maybe"
+      },
+      "type": {
+        "const": "kv_versioned_value",
+        "type": "string"
+      }
+    },
+    "required": [
+      "type",
+      "data"
+    ],
+    "type": "object"
+  }
+}

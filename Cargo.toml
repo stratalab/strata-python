@@ -1,8 +1,8 @@
 [package]
 name = "stratadb-python"
-version = "0.14.5"
+version = "1.0.0"
 edition = "2021"
-description = "Python bindings for StrataDB"
+description = "Python bindings for Strata (embedded multi-model database)"
 license = "MIT"
 repository = "https://github.com/stratalab/strata-python"
 
@@ -11,21 +11,28 @@ name = "_stratadb"
 crate-type = ["cdylib"]
 
 [features]
-default = ["embed"]
-embed = ["stratadb/embed", "dep:strata-intelligence"]
-embed-cuda = ["embed", "stratadb/embed-cuda", "strata-intelligence/embed-cuda"]
+# CPU-local llama.cpp. The base wheel is cloud + CPU (per the packaging
+# decision), so the release build runs `maturin build --release --features
+# local` (needs cmake); dev builds stay cloud-only for fast iteration. GPU is a
+# separate `stratadb[cuda]` companion wheel built with the CUDA toolchain.
+local = ["strata-executor/inference-local"]
 
 [dependencies]
-pyo3 = { version = "0.22", features = ["extension-module"] }
-numpy = "0.22"
+pyo3 = { version = "0.23", features = ["extension-module", "abi3-py39"] }
+serde_json = "1"
 
-# Use path dependency for local development
-# stratadb = { path = "../strata-core" }
-stratadb = { git = "https://github.com/stratalab/strata-core", branch = "main" }
-
-# Intelligence crate for model download (embed feature only)
-# strata-intelligence = { path = "../strata-core/crates/intelligence", features = ["embed"], optional = true }
-strata-intelligence = { git = "https://github.com/stratalab/strata-core", branch = "main", features = ["embed"], optional = true }
-
-[build-dependencies]
-pyo3-build-config = "0.22"
+# The native binding links the V1 executor's serialized command boundary in
+# process — the same wire the CLI, MCP server, and wasm bindings speak. The
+# `inference` feature adds the cloud model runtime (Anthropic/OpenAI/Google,
+# pure-Rust HTTP) so `db.ai` works out of the box; `hub` adds the StrataHub
+# client so `Strata.clone(...)` works out of the box, matching the executor and
+# CLI default deployment (their `default` feature set includes `hub`). CPU-local
+# llama.cpp is added at package time via the `inference-local` feature (base
+# wheel = cloud + CPU); GPU is a separate `stratadb[cuda]` companion wheel.
+#
+# Local development uses a path dependency to the sibling strata-core checkout.
+# The release build (P6) pins the published rev (see idl/v1/STRATA_CORE_REV);
+# building the hub client needs the STRATAHUB_READ_TOKEN secret for the private
+# stratahub-client dep:
+#   strata-executor = { git = "https://github.com/stratalab/strata-core", rev = "66c97cd1...", default-features = false, features = ["localfs", "arrow", "inference", "hub"] }
+strata-executor = { path = "../strata-core/crates/executor", default-features = false, features = ["localfs", "arrow", "inference", "hub"] }
