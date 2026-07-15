@@ -356,21 +356,17 @@ class AiNamespace(Namespace):
     def rank(
         self,
         query: str,
-        documents: Sequence[str],
+        passages: Sequence[str],
         *,
         model: str,
-        top_n: Optional[int] = None,
-        return_documents: Optional[bool] = None,
-        instruction: Optional[str] = None,
     ) -> Any:
-        """Rerank ``documents`` by relevance to ``query``."""
-        request: dict[str, Any] = {"query": query, "documents": list(documents)}
-        if top_n is not None:
-            request["top_n"] = top_n
-        if return_documents is not None:
-            request["return_documents"] = return_documents
-        if instruction is not None:
-            request["instruction"] = instruction
+        """Rerank ``passages`` by relevance to ``query``.
+
+        Returns per-passage relevance scores, best first.
+        """
+        # The wire request is exactly {query, passages} (RankRequest in the
+        # IDL); anything else is rejected by deny_unknown_fields.
+        request: dict[str, Any] = {"query": query, "passages": list(passages)}
         _ensure_provider_keys()
         return self._core.data({"type": "inference_rank", "model": model, "request": request})
 
@@ -482,8 +478,8 @@ class AiModel:
     def embed(self, input: Any, **kwargs: Any) -> Embeddings:
         return self._ai.embed(input, model=self._spec, **kwargs)
 
-    def rank(self, query: str, documents: Sequence[str], **kwargs: Any) -> Any:
-        return self._ai.rank(query, documents, model=self._spec, **kwargs)
+    def rank(self, query: str, passages: Sequence[str], **kwargs: Any) -> Any:
+        return self._ai.rank(query, passages, model=self._spec, **kwargs)
 
     def capability(self) -> Any:
         return self._ai.capability(self._spec)
