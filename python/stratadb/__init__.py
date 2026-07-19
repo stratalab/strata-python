@@ -42,6 +42,8 @@ from .namespaces.spaces import SpacesNamespace
 from .namespaces.admin import AdminNamespace
 from .namespaces.arrow import ArrowNamespace
 from .namespaces.ai import AiNamespace
+from ._demo import demo
+from ._scaffold import init
 
 __version__: str = _stratadb.version()
 
@@ -387,5 +389,7 @@ __all__ = [
     "agents_skill",
     "mcp_config",
     "command_index",
+    "demo",
+    "init",
     "__version__",
 ]

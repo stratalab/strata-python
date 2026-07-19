@@ -1303,7 +1303,7 @@ class Commands:
     def kv_get(self, key, *, as_of=None, branch=None, space=None):
         """Read the current or historical value for one KV key.
 
-        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.kv_key
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.kv_key, history_unavailable.engine.persistence_history
         """
         cmd = {'type': 'kv_get'}
         cmd['key'] = _wire.b64e(key)

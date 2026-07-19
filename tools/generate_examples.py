@@ -176,7 +176,7 @@ BINDINGS = {
     "space.delete": Binding("spaces", "delete", arg_map={"space": "name"}),
     # admin — facts are non-deterministic; demonstrate a stable derived value.
     # admin.remote/hub_clone stay reference-only (no clean SDK assertion).
-    "admin.ping": Binding("admin", "ping", "{}.version == stratadb.__version__", "json"),
+    "admin.ping": Binding("admin", "ping", "isinstance({}.version, str)", "json"),
     "admin.info": Binding("admin", "info", "{}.branch_count", "int"),
     "admin.health": Binding("admin", "health", "{}.status.value", "json"),
     "admin.metrics": Binding("admin", "metrics", "{}.branch_count", "int"),

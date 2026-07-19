@@ -45,11 +45,11 @@ for key in db.kv.iter_keys(prefix="user:"):   # auto-paginates
 ## JSON documents — `db.json`
 
 ```python
-db.json.set("user:1", "$", {"name": "Ada", "roles": ["admin"]})
+db.json.set("user:1", "$", {"name": "Ada", "roles": ["admin"]})  # -> Record(.commit, .effect, .key)
 db.json.get("user:1", "$.name")        # 'Ada'
-db.json.get("user:1")                  # {'name': 'Ada', 'roles': ['admin']}
+db.json.get("user:1")                  # {'name': 'Ada', 'roles': ['admin']}  (bare value; None on miss)
 db.json.exists("user:1")               # True
-db.json.set_many({"a": {"x": 1}, "b": {"x": 2}})
+db.json.set_many({"a": {"x": 1}, "b": {"x": 2}})   # -> BatchResult(.status, .items)
 ```
 
 ## Vectors — `db.vectors`
@@ -59,9 +59,9 @@ from stratadb import filters
 db.vectors.create_collection("notes", dimension=3, metric="cosine")
 db.vectors.upsert("notes", "n1", [0.1, 0.2, 0.3], metadata={"kind": "note"})
 hits = db.vectors.query("notes", [0.1, 0.2, 0.3], k=5,
-                        filter=filters.eq("kind", "note"))   # AND-of-equality
+                        filter=filters.eq("kind", "note"))   # AND-of-equality; -> list[VectorMatch]
 for h in hits:
-    h.key, h.score
+    h.key, h.score, h.metadata         # VectorMatch(.key: str, .score: float, .metadata)
 ```
 
 Pair with `db.ai.embed(...)` to build a semantic index: embed text, upsert the
@@ -70,12 +70,13 @@ vector, then query with an embedded query.
 ## Event log — `db.events` (append-only, hash-chained)
 
 ```python
-db.events.append("signup", {"user": "ada"})
+db.events.append("signup", {"user": "ada"})   # -> Record(.commit, .effect, .event_type, .sequence)
 db.events.len()                        # 1
-db.events.get(0)                       # the event at sequence 0
-for e in db.events.range(start=0):     # ordered replay
+ev = db.events.get(0)                  # -> EventVersionedData(.event, .timestamp, .version)
+ev.event.event_type, ev.event.payload  # ('signup', {'user': 'ada'})
+for e in db.events.range(start=0):     # ordered replay (a Page of EventVersionedData)
     ...
-db.events.verify_chain()               # integrity check
+db.events.verify_chain().valid         # True — integrity check
 ```
 
 ## Graph — `db.graphs`
@@ -85,9 +86,15 @@ db.graphs.create("social")
 db.graphs.add_node("social", "ada")
 db.graphs.add_node("social", "grace")
 db.graphs.add_edge("social", "ada", "follows", "grace")
-for n in db.graphs.neighbors("social", "ada"):
-    n.dst                              # 'grace'
+db.graphs.list()                       # -> ['social']  (list[str] of graph names)
+for n in db.graphs.neighbors("social", "ada"):   # each -> GraphNeighborHit
+    n.node_id                          # 'grace' — the neighbor, in any direction
 ```
+
+Use `n.node_id` for the neighbor: it is the other endpoint for both `direction="outgoing"`
+and `direction="incoming"`. `n.dst` is the edge's dst, which for `direction="incoming"` is the
+node you queried, not the neighbor — copying `.dst` verbatim gives the wrong node on incoming
+traversal.
 
 ## Inference — `db.ai` (OpenAI-shaped; cloud + local)
 
@@ -151,7 +158,7 @@ key.
 Every write returns a receipt whose commit timestamp you can read `as_of`:
 
 ```python
-receipt = db.kv.put("k", "v1")
+receipt = db.kv.put("k", "v1")         # -> Record; receipt.commit.timestamp (int µs), .commit.version (int)
 db.kv.put("k", "v2")
 db.kv.get("k", as_of=receipt.commit.timestamp)   # b'v1' — as_of on every read
 
@@ -178,6 +185,25 @@ except errors.NotFoundError as e:
     e.hint, e.ref    # actionable hint + a docs URL
 ```
 
+## Gotchas / known sharp edges
+
+Exact failure modes worth recognizing up front (match on the `.code`, not the message):
+
+- **`open()` needs an explicit target.** `stratadb.open()` with neither a path nor
+  `cache=True` raises `InvalidArgumentError` (`invalid_argument.cli.no_database`) —
+  Strata never opens the current directory implicitly. Pass a path, set `STRATA_DB`
+  (`stratadb.from_env()`), or use `cache=True`.
+- **Cloud `db.ai.*` needs a provider key.** A keyless cloud call raises
+  `FailedPreconditionError` (`inference.missing_api_key`), and the message names the
+  env var — it's a setup issue, not a bug. Set `OPENAI_API_KEY` (or the provider's).
+- **Embeddings need a key too.** `db.ai.embed(...)` is a cloud call; there is no
+  bundled offline/keyless embedder yet. For keyless vector search, upsert literal
+  vectors (`db.vectors.upsert(coll, key, [0.1, 0.2, ...])`), as `python -m stratadb.demo`
+  does.
+- **`db.state` was removed in V1.** Accessing it raises `UnsupportedError`
+  (`unsupported.sdk.state_removed`) — use `db.kv` for keyed values or `db.json` for
+  structured documents.
+
 ## Admin & Arrow — `db.admin`, `db.arrow`
 
 `db.admin` reads control-plane facts (never writes): `db.admin.ping()`
@@ -198,7 +224,9 @@ db.arrow.import_("kv", "backup.parquet")    # Arrow file -> primitive (note the 
 db.execute({"type": "kv_scan", "limit": 10})   # raw command wire -> {"type","data"}
 stratadb.command_index()               # full offline command catalog (ids, kinds, docs)
 stratadb.agents_guide()                # this guide
-stratadb.__version__                   # == engine version
+stratadb.demo()                        # a runnable, zero-setup tour (or: python -m stratadb.demo)
+stratadb.init("path/to/repo")          # scaffold the agent skill + AGENTS.md into a repo
+stratadb.__version__                   # the SDK version (engine version: db.admin.ping().version)
 ```
 
 `db.execute(...)` is the permanent, lossless escape hatch to the full command

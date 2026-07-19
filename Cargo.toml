@@ -1,6 +1,6 @@
 [package]
 name = "stratadb-python"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 description = "Python bindings for Strata (embedded multi-model database)"
 license = "MIT"

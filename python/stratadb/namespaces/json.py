@@ -147,14 +147,17 @@ class JSONNamespace(Namespace):
         return self._c.json_exists(key, **self._scope)
 
     def history(self, key: str) -> Optional[list]:
-        """Full version history, or ``None`` if the document never existed.
+        """Full version history (newest first), or ``None`` if the document never existed.
+
+        Each item exposes ``.value``, ``.version``, ``.timestamp``, and
+        ``.tombstone`` (the same shape as ``db.kv.history``).
 
         Examples:
             >>> db.json.history("absent") is None
             True
         """
         result = self._c.json_history(key, **self._scope)
-        return result.items if result is not None else None
+        return list(result) if result is not None else None
 
     def count(self, prefix: Optional[str] = None, *, as_of: Optional[int] = None) -> int:
         """Number of documents, optionally under an id prefix.

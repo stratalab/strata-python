@@ -143,6 +143,17 @@ def test_json_time_travel(db):
     assert db.json.get("d", as_of=at) == {"v": 1}
 
 
+def test_json_history_and_miss(db):
+    # Regression for #20: history() on an existing document must not raise
+    # (json_history returns a bare list, unlike kv/vectors' page-wrapped result).
+    db.json.set("d", "$", {"n": 1})
+    db.json.set("d", "$", {"n": 2})
+    history = db.json.history("d")
+    assert len(history) == 2
+    assert [item.value for item in history] == [{"n": 2}, {"n": 1}]  # newest first
+    assert db.json.history("never") is None
+
+
 def test_state_namespace_still_reserved(db):
     with pytest.raises(errors.UnsupportedError):
         _ = db.state
