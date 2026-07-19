@@ -143,6 +143,14 @@ def test_json_time_travel(db):
     assert db.json.get("d", as_of=at) == {"v": 1}
 
 
+def test_json_history_and_miss(db):
+    db.json.set("d", "$", {"v": 1})
+    db.json.set("d", "$", {"v": 2})
+    history = db.json.history("d")
+    assert [item.value for item in history] == [{"v": 2}, {"v": 1}]
+    assert db.json.history("never") is None
+
+
 def test_state_namespace_still_reserved(db):
     with pytest.raises(errors.UnsupportedError):
         _ = db.state

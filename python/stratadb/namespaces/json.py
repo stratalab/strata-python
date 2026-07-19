@@ -154,7 +154,7 @@ class JSONNamespace(Namespace):
             True
         """
         result = self._c.json_history(key, **self._scope)
-        return result.items if result is not None else None
+        return list(result) if result is not None else None
 
     def count(self, prefix: Optional[str] = None, *, as_of: Optional[int] = None) -> int:
         """Number of documents, optionally under an id prefix.
