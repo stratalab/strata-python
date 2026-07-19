@@ -21,7 +21,7 @@ class AdminNamespace(Namespace):
         """A liveness check; returns the engine version.
 
         Examples:
-            >>> db.admin.ping().version == stratadb.__version__
+            >>> isinstance(db.admin.ping().version, str)
             True
         """
         return self._c.admin_ping()

@@ -728,7 +728,16 @@
       ],
       "fixtures": {
         "request": "requests/v1/branches/create.json",
-        "response": "responses/v1/branches/create.json"
+        "response": "responses/v1/branches/create.json",
+        "error_cases": [
+          {
+            "setup": [
+              "requests/v1/branches/create.json"
+            ],
+            "request": "requests/v1/branches/create.json",
+            "expected_error": "responses/v1/errors/branches/create_duplicate.json"
+          }
+        ]
       },
       "source": {
         "command": "crates/executor/idl/v1/commands/branch.yaml",
@@ -1179,7 +1188,13 @@
       ],
       "fixtures": {
         "request": "requests/v1/event/append.json",
-        "response": "responses/v1/event/append_applied.json"
+        "response": "responses/v1/event/append_applied.json",
+        "error_cases": [
+          {
+            "request": "requests/v1/event/append_empty_type.json",
+            "expected_error": "responses/v1/errors/event/append_empty_type.json"
+          }
+        ]
       },
       "source": {
         "command": "crates/executor/idl/v1/commands/event.yaml",
@@ -2642,7 +2657,20 @@
       ],
       "fixtures": {
         "request": "requests/v1/graph/create.json",
-        "response": "responses/v1/graph/create_applied.json"
+        "response": "responses/v1/graph/create_applied.json",
+        "error_cases": [
+          {
+            "request": "requests/v1/graph/create_empty_name.json",
+            "expected_error": "responses/v1/errors/graph/create_empty_name.json"
+          },
+          {
+            "setup": [
+              "requests/v1/graph/create.json"
+            ],
+            "request": "requests/v1/graph/create.json",
+            "expected_error": "responses/v1/errors/graph/create_duplicate.json"
+          }
+        ]
       },
       "source": {
         "command": "crates/executor/idl/v1/commands/graph.yaml",
@@ -4354,8 +4382,7 @@
       ],
       "fixtures": {
         "request": "requests/v1/inference/detokenize.json",
-        "response": "responses/v1/inference/text.json",
-        "replay_skip": "detokenization loads a local model, which requires the local build feature"
+        "response": "responses/v1/inference/text.json"
       },
       "source": {
         "command": "crates/executor/idl/v1/commands/inference.yaml",
@@ -4446,8 +4473,7 @@
       ],
       "fixtures": {
         "request": "requests/v1/inference/embed.json",
-        "response": "responses/v1/inference/embed.json",
-        "replay_skip": "embedding runs a model: local execution needs the local build feature and cloud execution needs a provider API key"
+        "response": "responses/v1/inference/embed.json"
       },
       "source": {
         "command": "crates/executor/idl/v1/commands/inference.yaml",
@@ -4554,8 +4580,7 @@
       ],
       "fixtures": {
         "request": "requests/v1/inference/generate.json",
-        "response": "responses/v1/inference/generate.json",
-        "replay_skip": "text generation runs a model: local execution needs the local build feature and cloud execution needs a provider API key"
+        "response": "responses/v1/inference/generate.json"
       },
       "source": {
         "command": "crates/executor/idl/v1/commands/inference.yaml",
@@ -4607,8 +4632,7 @@
       ],
       "fixtures": {
         "request": "requests/v1/inference/models_list.json",
-        "response": "responses/v1/inference/models_list.json",
-        "replay_skip": "list marks each model is_local from the machine's model directory (STRATA_MODELS_DIR or ~/.strata/models), so the success output is machine-dependent"
+        "response": "responses/v1/inference/models_list.json"
       },
       "source": {
         "command": "crates/executor/idl/v1/commands/inference.yaml",
@@ -4660,8 +4684,7 @@
       ],
       "fixtures": {
         "request": "requests/v1/inference/models_local.json",
-        "response": "responses/v1/inference/models_local.json",
-        "replay_skip": "which models are present depends on the machine's model directory (STRATA_MODELS_DIR or ~/.strata/models)"
+        "response": "responses/v1/inference/models_local.json"
       },
       "source": {
         "command": "crates/executor/idl/v1/commands/inference.yaml",
@@ -4737,8 +4760,7 @@
       ],
       "fixtures": {
         "request": "requests/v1/inference/models_pull.json",
-        "response": "responses/v1/inference/models_pull.json",
-        "replay_skip": "model download performs network I/O and requires the local execution build feature"
+        "response": "responses/v1/inference/models_pull.json"
       },
       "source": {
         "command": "crates/executor/idl/v1/commands/inference.yaml",
@@ -4809,8 +4831,7 @@
       ],
       "fixtures": {
         "request": "requests/v1/inference/rank.json",
-        "response": "responses/v1/inference/rank.json",
-        "replay_skip": "ranking loads a local model, which requires the local build feature"
+        "response": "responses/v1/inference/rank.json"
       },
       "source": {
         "command": "crates/executor/idl/v1/commands/inference.yaml",
@@ -4881,8 +4902,7 @@
       ],
       "fixtures": {
         "request": "requests/v1/inference/tokenize.json",
-        "response": "responses/v1/inference/tokenize.json",
-        "replay_skip": "tokenization loads a local model, which requires the local build feature"
+        "response": "responses/v1/inference/tokenize.json"
       },
       "source": {
         "command": "crates/executor/idl/v1/commands/inference.yaml",
@@ -6058,7 +6078,13 @@
       ],
       "fixtures": {
         "request": "requests/v1/json/set.json",
-        "response": "responses/v1/json/set_applied.json"
+        "response": "responses/v1/json/set_applied.json",
+        "error_cases": [
+          {
+            "request": "requests/v1/json/set_empty_key.json",
+            "expected_error": "responses/v1/errors/json/set_empty_key.json"
+          }
+        ]
       },
       "source": {
         "command": "crates/executor/idl/v1/commands/json.yaml",
@@ -6335,7 +6361,13 @@
       ],
       "fixtures": {
         "request": "requests/v1/kv/batch_put.json",
-        "response": "responses/v1/kv/batch_mutation_ok.json"
+        "response": "responses/v1/kv/batch_mutation_ok.json",
+        "error_cases": [
+          {
+            "request": "requests/v1/kv/batch_put_duplicate_key.json",
+            "expected_error": "responses/v1/errors/kv/batch_put_duplicate_key.json"
+          }
+        ]
       },
       "source": {
         "command": "crates/executor/idl/v1/commands/kv.yaml",
@@ -6573,6 +6605,10 @@
         {
           "code": "invalid_argument.engine.kv_key",
           "docs": "https://stratadb.org/e/invalid_argument.engine.kv_key"
+        },
+        {
+          "code": "history_unavailable.engine.persistence_history",
+          "docs": "https://stratadb.org/e/history_unavailable.engine.persistence_history"
         }
       ],
       "fixtures": {
@@ -6581,6 +6617,12 @@
         "setup": [
           "requests/v1/kv/put.json",
           "requests/v1/setup/kv_put_a_two.json"
+        ],
+        "error_cases": [
+          {
+            "request": "requests/v1/kv/get_unretained_version.json",
+            "expected_error": "responses/v1/errors/kv/get_unretained_version.json"
+          }
         ]
       },
       "source": {
@@ -6767,7 +6809,13 @@
       ],
       "fixtures": {
         "request": "requests/v1/kv/put.json",
-        "response": "responses/v1/kv/write_applied.json"
+        "response": "responses/v1/kv/write_applied.json",
+        "error_cases": [
+          {
+            "request": "requests/v1/kv/put_empty_key.json",
+            "expected_error": "responses/v1/errors/kv/put_empty_key.json"
+          }
+        ]
       },
       "source": {
         "command": "crates/executor/idl/v1/commands/kv.yaml",
@@ -7026,6 +7074,12 @@
         "response": "responses/v1/spaces/delete.json",
         "setup": [
           "requests/v1/spaces/create.json"
+        ],
+        "error_cases": [
+          {
+            "request": "requests/v1/spaces/delete_default.json",
+            "expected_error": "responses/v1/errors/spaces/delete_default.json"
+          }
         ]
       },
       "source": {
@@ -7536,7 +7590,13 @@
       ],
       "fixtures": {
         "request": "requests/v1/vector/collection_create.json",
-        "response": "responses/v1/vector/collection_list.json"
+        "response": "responses/v1/vector/collection_list.json",
+        "error_cases": [
+          {
+            "request": "requests/v1/vector/collection_create_zero_dim.json",
+            "expected_error": "responses/v1/errors/vector/collection_create_zero_dim.json"
+          }
+        ]
       },
       "source": {
         "command": "crates/executor/idl/v1/commands/vector.yaml",
@@ -8183,6 +8243,12 @@
           "requests/v1/vector/collection_create.json",
           "requests/v1/vector/upsert.json",
           "requests/v1/setup/vector_upsert_doc_b.json"
+        ],
+        "error_cases": [
+          {
+            "request": "requests/v1/vector/get_missing_collection.json",
+            "expected_error": "responses/v1/errors/vector/get_missing_collection.json"
+          }
         ]
       },
       "source": {

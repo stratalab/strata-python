@@ -18,7 +18,7 @@ class GraphsNamespace(Namespace):
         >>> _ = db.graphs.add_edge("social", "ada", "knows", "grace")
         >>> db.graphs.list()
         ['social']
-        >>> [hit.dst for hit in db.graphs.neighbors("social", "ada")]
+        >>> [hit.node_id for hit in db.graphs.neighbors("social", "ada")]
         ['grace']
     """
 
@@ -217,7 +217,9 @@ class GraphsNamespace(Namespace):
     ) -> Page:
         """A page of a node's neighbors (``direction`` is outgoing/incoming/both).
 
-        Each hit exposes ``.dst`` (the neighbor id) plus ``.edge`` and ``.node``.
+        Each hit exposes ``.node_id`` (the neighbor, in any direction), plus
+        ``.edge`` and ``.node``. Prefer ``.node_id``: ``.dst`` is the edge's dst,
+        which for ``direction="incoming"`` is the queried node, not the neighbor.
 
         Examples:
             >>> _ = db.graphs.create("social")

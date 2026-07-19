@@ -30,7 +30,7 @@ def db():
 
 
 def test_version_matches_engine():
-    assert stratadb.__version__ == "1.0.0"
+    assert stratadb.__version__ == "1.0.1"
 
 
 def test_agents_guide_is_embedded():
