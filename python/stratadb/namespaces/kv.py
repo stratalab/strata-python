@@ -130,8 +130,12 @@ class KVNamespace(Namespace):
             >>> db.kv.keys("user:").items
             [b'user:1', b'user:2']
         """
-        return Page.from_wire(
-            self._c.kv_list(prefix=prefix, limit=limit, cursor=cursor, as_of=as_of, **self._scope)
+        return self._listing(
+            lambda cur, lim: self._c.kv_list(
+                prefix=prefix, limit=lim, cursor=cur, as_of=as_of, **self._scope
+            ),
+            limit=limit,
+            start=cursor,
         )
 
     def iter_keys(
@@ -163,7 +167,11 @@ class KVNamespace(Namespace):
             [b'a', b'b']
         """
         begin = cursor if cursor is not None else start
-        return Page.from_wire(self._c.kv_scan(start=begin, limit=limit, **self._scope))
+        return self._listing(
+            lambda cur, lim: self._c.kv_scan(start=cur, limit=lim, **self._scope),
+            limit=limit,
+            start=begin,
+        )
 
     def iter_rows(self, start: Optional[str | bytes] = None) -> Iterator[Any]:
         """Iterates every row from ``start``, paginating internally."""

@@ -139,10 +139,12 @@ class GraphsNamespace(Namespace):
             >>> [n.node_id for n in db.graphs.list_nodes("social")]
             ['alice', 'bob']
         """
-        return Page.from_wire(
-            self._c.graph_node_list(
-                graph, limit=limit, cursor=cursor, as_of=as_of, prefix=prefix, **self._scope
-            )
+        return self._listing(
+            lambda cur, lim: self._c.graph_node_list(
+                graph, limit=lim, cursor=cur, as_of=as_of, prefix=prefix, **self._scope
+            ),
+            limit=limit,
+            start=cursor,
         )
 
     # --- edges ---
@@ -213,6 +215,7 @@ class GraphsNamespace(Namespace):
         direction: str = "outgoing",
         edge_type: Optional[str] = None,
         limit: Optional[int] = None,
+        cursor: Optional[Any] = None,
         as_of: Optional[int] = None,
     ) -> Page:
         """A page of a node's neighbors (``direction`` is outgoing/incoming/both).
@@ -229,16 +232,19 @@ class GraphsNamespace(Namespace):
             >>> [n.node_id for n in db.graphs.neighbors("social", "alice", direction="outgoing")]
             ['bob']
         """
-        return Page.from_wire(
-            self._c.graph_neighbors(
+        return self._listing(
+            lambda cur, lim: self._c.graph_neighbors(
                 graph,
                 node_id,
                 direction,
                 edge_type=edge_type,
-                limit=limit,
+                limit=lim,
+                cursor=cur,
                 as_of=as_of,
                 **self._scope,
-            )
+            ),
+            limit=limit,
+            start=cursor,
         )
 
     def bindings_for_entity(
@@ -259,7 +265,10 @@ class GraphsNamespace(Namespace):
         }
         if self._branch is not None:
             target["branch"] = self._branch
-        return Page.from_wire(self._c.graph_bindings(target, **self._scope))
+        return self._listing(
+            lambda cur, lim: self._c.graph_bindings(target, limit=lim, cursor=cur, **self._scope),
+            limit=None,
+        )
 
     def batch_write(self, graph: str, operations: list) -> Any:
         """Applies a batch of node/edge operations atomically.
@@ -337,10 +346,12 @@ class GraphsNamespace(Namespace):
             >>> [n.node_id for n in db.graphs.nodes_by_type("g", "person")]
             ['a', 'b']
         """
-        return Page.from_wire(
-            self._c.graph_nodes_by_type(
-                graph, object_type, limit=limit, cursor=cursor, as_of=as_of, **self._scope
-            )
+        return self._listing(
+            lambda cur, lim: self._c.graph_nodes_by_type(
+                graph, object_type, limit=lim, cursor=cur, as_of=as_of, **self._scope
+            ),
+            limit=limit,
+            start=cursor,
         )
 
     def sample(self, graph: str, *, count: Optional[int] = None) -> Sample:

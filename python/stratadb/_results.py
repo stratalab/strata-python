@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Iterator, List, Optional
+from typing import Any, Callable, Iterator, List, Optional
 
 
 def _enum_value(value: Any) -> Any:
@@ -19,18 +19,35 @@ def _enum_value(value: Any) -> Any:
 
 @dataclass
 class Page:
-    """One page of a listing, plus an opaque cursor for the next page.
+    """One page of a listing that auto-paginates when iterated.
 
-    Iterable and indexable over ``items``; pass ``cursor`` back verbatim to
-    continue, or use the namespace's ``iter_*`` to auto-paginate.
+    Iterating the page (``for x in page`` / ``list(page)`` / ``page.all()``)
+    yields **every** row across all pages, fetching the next page lazily via the
+    cursor — so the natural loop never silently stops at the first page. An
+    explicit ``limit`` on the call, however, returns a single bounded page (no
+    auto-pagination).
+
+    ``items``, ``len(page)``, and ``page[i]`` reflect only the **first** page;
+    use ``page.all()`` for the full list, ``page.pages()`` to walk page objects,
+    and ``page.has_more``/``page.cursor`` to paginate manually.
     """
 
     items: List[Any]
     has_more: bool
     cursor: Optional[Any] = None
+    # Fetches the next page from a cursor; None means this is a single bounded
+    # page (an explicit limit was given) that does not auto-paginate.
+    _fetch_next: Optional[Callable[[Any], "Page"]] = field(
+        default=None, repr=False, compare=False
+    )
 
     def __iter__(self) -> Iterator[Any]:
-        return iter(self.items)
+        page: Optional["Page"] = self
+        while page is not None:
+            yield from page.items
+            if not page.has_more or page._fetch_next is None:
+                return
+            page = page._fetch_next(page.cursor)
 
     def __len__(self) -> int:
         return len(self.items)
@@ -38,9 +55,27 @@ class Page:
     def __getitem__(self, index: int) -> Any:
         return self.items[index]
 
+    def all(self) -> List[Any]:
+        """Every row across all pages, as a list (materializes the full result)."""
+        return list(self)
+
+    def pages(self) -> Iterator["Page"]:
+        """Iterates the page objects (each with its own ``items``), not the rows."""
+        page: Optional["Page"] = self
+        while page is not None:
+            yield page
+            if not page.has_more or page._fetch_next is None:
+                return
+            page = page._fetch_next(page.cursor)
+
     @classmethod
-    def from_wire(cls, record: Any) -> "Page":
-        return cls(items=list(record.items), has_more=bool(record.has_more), cursor=record.cursor)
+    def from_wire(cls, record: Any, fetch_next: Optional[Callable[[Any], "Page"]] = None) -> "Page":
+        return cls(
+            items=list(record.items),
+            has_more=bool(record.has_more),
+            cursor=record.cursor,
+            _fetch_next=fetch_next,
+        )
 
 
 @dataclass
