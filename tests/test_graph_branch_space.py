@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 import stratadb
+from stratadb import errors
 
 
 @pytest.fixture()
@@ -85,8 +86,9 @@ def test_branch_isolation(db):
 
 
 def test_fork_rejects_both_anchors(db):
-    with pytest.raises(ValueError):
+    with pytest.raises(errors.InvalidArgumentError) as excinfo:
         db.branches.fork("default", "x", version=1, timestamp=1)
+    assert excinfo.value.code == "invalid_argument.sdk.fork_ambiguous"
 
 
 # --- spaces ---------------------------------------------------------------

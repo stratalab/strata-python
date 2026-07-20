@@ -6,6 +6,7 @@ from typing import Any, Optional, Sequence, Tuple
 
 from .. import filters as _filters
 from .._results import BatchResult, Page
+from ..errors import require_field
 from .base import Namespace
 
 
@@ -21,7 +22,7 @@ def _vector_entries(entries: Any) -> list[dict]:
     out = []
     for entry in entries:
         if isinstance(entry, dict):
-            row = {"key": entry["key"], "vector": list(entry["vector"])}
+            row = {"key": require_field(entry, "key"), "vector": list(require_field(entry, "vector"))}
             if entry.get("metadata") is not None:
                 row["metadata"] = entry["metadata"]
         else:

@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from .._results import BatchResult, Page
+from ..errors import require_field
 from .base import Namespace
 
 
@@ -17,7 +18,10 @@ def _event_entries(entries: Any) -> list[dict]:
     out = []
     for entry in entries:
         if isinstance(entry, dict):
-            out.append({"event_type": entry["event_type"], "payload": entry["payload"]})
+            out.append({
+                "event_type": require_field(entry, "event_type"),
+                "payload": require_field(entry, "payload"),
+            })
         else:
             event_type, payload = entry
             out.append({"event_type": event_type, "payload": payload})

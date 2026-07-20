@@ -139,8 +139,9 @@ class Strata:
             db.execute({"type": "kv_scan", "limit": 10})
             # -> {"type": "kv_scan_result", "data": {...}}
 
-        Raises the typed :class:`~stratadb.errors.StrataError` on a domain
-        failure.
+        Raises the typed :class:`~stratadb.errors.StrataError` hierarchy: a
+        domain failure carries the engine's ``code``; invalid input raises
+        :class:`~stratadb.errors.InvalidArgumentError`.
         """
         return self._core.execute(command)
 

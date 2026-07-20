@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Any, Iterator, Optional, Sequence
 
 from .._results import BatchResult, Page, Sample
+from ..errors import require_field
 from .base import PAGE_SIZE, Namespace
 
 
@@ -18,7 +19,11 @@ def _set_entries(entries: Any) -> list[dict]:
     out = []
     for entry in entries:
         if isinstance(entry, dict):
-            out.append({"key": entry["key"], "path": entry.get("path", "$"), "value": entry["value"]})
+            out.append({
+                "key": require_field(entry, "key"),
+                "path": entry.get("path", "$"),
+                "value": require_field(entry, "value"),
+            })
         elif len(entry) == 3:
             key, path, value = entry
             out.append({"key": key, "path": path, "value": value})
@@ -32,7 +37,7 @@ def _kp_entries(entries: Any) -> list[dict]:
     out = []
     for entry in entries:
         if isinstance(entry, dict):
-            out.append({"key": entry["key"], "path": entry.get("path", "$")})
+            out.append({"key": require_field(entry, "key"), "path": entry.get("path", "$")})
         elif isinstance(entry, str):
             out.append({"key": entry, "path": "$"})
         else:

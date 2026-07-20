@@ -13,10 +13,16 @@ import os
 from typing import Any
 
 from . import _stratadb  # native extension
-from .errors import FailedPreconditionError, client_error, error_from_payload
+from .errors import (
+    FailedPreconditionError,
+    InvalidArgumentError,
+    client_error,
+    error_from_payload,
+)
 
 _NativeError = _stratadb.StrataNativeError
 
+_BAD_COMMAND_CODE = "invalid_argument.sdk.command"
 _FORK_CODE = "failed_precondition.sdk.fork_not_supported"
 _FORK_HINT = (
     "open a fresh Strata handle after os.fork(); a database handle must not be "
@@ -50,24 +56,39 @@ class Core:
 
     @classmethod
     def open_durable(cls, path: str) -> "Core":
-        return cls(_stratadb.Handle.open_durable(path))
+        try:
+            return cls(_stratadb.Handle.open_durable(path))
+        except _NativeError as exc:
+            raise error_from_payload(exc.args[0] if exc.args else "{}") from None
 
     @classmethod
     def open_cache(cls) -> "Core":
-        return cls(_stratadb.Handle.open_cache())
+        try:
+            return cls(_stratadb.Handle.open_cache())
+        except _NativeError as exc:
+            raise error_from_payload(exc.args[0] if exc.args else "{}") from None
 
     def execute(self, command: dict[str, Any]) -> dict[str, Any]:
         """Runs one command, returning its ``{"type", "data"}`` output envelope.
 
-        Raises the typed :class:`~stratadb.errors.StrataError` on a domain
-        failure, and ``ValueError`` when the command is not a valid command
-        object.
+        Raises the typed :class:`~stratadb.errors.StrataError` hierarchy: a
+        domain failure carries the engine's ``code``; invalid input — an unknown
+        command, an out-of-range or wrong-typed argument, or an unserializable
+        payload — raises :class:`~stratadb.errors.InvalidArgumentError`
+        (``invalid_argument.sdk.command``).
         """
         self._guard()
         try:
             raw = self._handle.execute(json.dumps(command))
         except _NativeError as exc:
             raise error_from_payload(exc.args[0] if exc.args else "{}") from None
+        except (TypeError, ValueError) as exc:
+            # Our-side encode failure (e.g. a bytes/NaN payload) or the binding's
+            # ValueError for a serde-rejected command/argument. Surface a typed
+            # error instead of leaking a bare TypeError/ValueError.
+            raise client_error(InvalidArgumentError, _BAD_COMMAND_CODE, str(exc)) from exc
+        # json.loads stays OUTSIDE the try: a decode failure here is a corrupt
+        # engine envelope, not caller input, and must not be mistyped.
         return json.loads(raw)
 
     def data(self, command: dict[str, Any]) -> Any:
