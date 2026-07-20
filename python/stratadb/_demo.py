@@ -98,8 +98,9 @@ def _branches_and_time_travel(db: "Strata") -> None:
     db.kv.put("counter", "2")
     print("get('counter')                 ->", db.kv.get("counter"))
     print("get('counter', as_of=<v1 time>)->", db.kv.get("counter", as_of=receipt.commit.timestamp))
-    db.branches.create("experiment")
-    experiment = db.at(branch="experiment")  # a scoped view over the same handle
+    db.branches.fork("default", "experiment")  # copy-on-write from default
+    experiment = db.at(branch="experiment")     # a scoped view; writes target the branch
+    print("counter on experiment (forked) ->", experiment.kv.get("counter"), "(inherited from default)")
     experiment.kv.put("counter", "on-branch")
     print("branches.list()                ->", [b.name for b in db.branches.list()])
     print("counter on default             ->", db.kv.get("counter"))

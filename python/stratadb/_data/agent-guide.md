@@ -155,18 +155,28 @@ key.
 
 ## Branches & time travel
 
-Every write returns a receipt whose commit timestamp you can read `as_of`:
+Every write returns a receipt. `commit.version` and `commit.timestamp` are the
+same small **logical** commit counter (not wall-clock time) — pass either to a
+read's `as_of` to see that historical state:
 
 ```python
-receipt = db.kv.put("k", "v1")         # -> Record; receipt.commit.timestamp (int µs), .commit.version (int)
+receipt = db.kv.put("k", "v1")         # -> Record; receipt.commit.version == receipt.commit.timestamp (a logical counter)
 db.kv.put("k", "v2")
-db.kv.get("k", as_of=receipt.commit.timestamp)   # b'v1' — as_of on every read
+db.kv.get("k", as_of=receipt.commit.timestamp)   # b'v1' — as_of takes the logical commit value, not wall-clock µs
 
-db.branches.create("feature")
+# fork() copies the source branch (copy-on-write); create() makes an EMPTY branch.
+db.branches.fork("default", "feature")  # feature starts as a copy of default
 db.branches.list()
-feature = db.at(branch="feature")      # a scoped view; writes target the branch
-feature.kv.put("k", "on-feature")
+feature = db.at(branch="feature")       # a scoped view; writes target the branch
+feature.kv.put("k", "on-feature")       # diverges from default without touching it
 ```
+
+Prefer `fork` when the new branch should start from existing data;
+`db.branches.create(name)` makes an **empty** branch. Fork a point in history
+with `db.branches.fork_at_version(source, name, receipt.commit.version)` or
+`db.branches.fork_at_timestamp(source, name, receipt.commit.timestamp)`.
+(`event.timestamp` is the one wall-clock value, in microseconds;
+`db.events.range_by_time(...)` is the only API that takes wall-clock µs.)
 
 `db.spaces` manages product spaces (isolated namespaces); `db.at(space=...)`
 scopes a view.
@@ -179,9 +189,9 @@ the stable `.code` (`<class>.<area>.<detail>`), never on message text:
 ```python
 from stratadb import errors
 try:
-    db.branches.get("nope")
+    db.at(branch="ghost").kv.get("k")     # reading a nonexistent branch raises
 except errors.NotFoundError as e:
-    e.code           # e.g. "not_found.engine.branch"
+    e.code           # "not_found.engine.branch"
     e.hint, e.ref    # actionable hint + a docs URL
 ```
 
