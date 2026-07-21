@@ -107,3 +107,27 @@ def test_domain_error_keeps_engine_code(db):
 
 def test_miss_is_not_an_error(db):
     assert db.kv.get("absent") is None
+
+
+# --- oversized JSON integers rejected at the wire boundary -----------------
+# strata-core #2687: the bridge calls guard_json_integers before from_str, so an
+# integer outside i64/u64 is rejected instead of being silently coerced to f64.
+
+BIG_INT_CASES = [
+    ("json value", lambda db: db.json.set("d", "$", {"n": 2**64})),
+    ("event payload", lambda db: db.events.append("e", {"n": 2**100})),
+    ("raw execute", lambda db: db.execute({"type": "json_set", "key": "d", "path": "$", "value": {"n": -(2**63) - 1}})),
+]
+
+
+@pytest.mark.parametrize("label, call", BIG_INT_CASES, ids=[c[0] for c in BIG_INT_CASES])
+def test_oversized_json_integer_rejected(db, label, call):
+    with pytest.raises(errors.InvalidArgumentError) as excinfo:
+        call(db)
+    assert excinfo.value.code == "invalid_argument.executor.json_number"
+
+
+def test_in_range_int_and_float_survive(db):
+    db.json.set("ok", "$", {"n": 2**63 - 1, "f": 1e20})
+    assert db.json.get("ok", "$.n") == 2**63 - 1
+    assert db.json.get("ok", "$.f") == 1e20

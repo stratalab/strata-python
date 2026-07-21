@@ -23,7 +23,7 @@ use pyo3::exceptions::{PyException, PyRuntimeError, PyValueError};
 use pyo3::prelude::*;
 use pyo3::wrap_pyfunction;
 
-use strata_executor::{Command, Executor, ExecutorError};
+use strata_executor::{guard_json_integers, Command, Executor, ExecutorError};
 
 create_exception!(
     _stratadb,
@@ -111,6 +111,10 @@ impl Handle {
                   the executor deliberately declined to box it, so the size is not ours to change"
     )]
     fn execute(&self, py: Python<'_>, command_json: &str) -> PyResult<String> {
+        // Reject JSON integers outside i64/u64 before serde silently coerces
+        // them to a lossy f64 and persists the damage (strata-core #2687). A
+        // cheap text scan that touches no lock, so it runs under the GIL.
+        guard_json_integers(command_json).map_err(native_error)?;
         // Parse under the GIL: it is cheap and a `PyValueError` needs the GIL,
         // so an invalid command fails fast before any locking.
         let command: Command = serde_json::from_str(command_json)
