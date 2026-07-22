@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Any, Iterator, Optional, Sequence
 
 from .._results import BatchResult, Page, Sample
+from ..errors import require_field
 from .base import PAGE_SIZE, Namespace
 
 
@@ -18,7 +19,11 @@ def _set_entries(entries: Any) -> list[dict]:
     out = []
     for entry in entries:
         if isinstance(entry, dict):
-            out.append({"key": entry["key"], "path": entry.get("path", "$"), "value": entry["value"]})
+            out.append({
+                "key": require_field(entry, "key"),
+                "path": entry.get("path", "$"),
+                "value": require_field(entry, "value"),
+            })
         elif len(entry) == 3:
             key, path, value = entry
             out.append({"key": key, "path": path, "value": value})
@@ -32,7 +37,7 @@ def _kp_entries(entries: Any) -> list[dict]:
     out = []
     for entry in entries:
         if isinstance(entry, dict):
-            out.append({"key": entry["key"], "path": entry.get("path", "$")})
+            out.append({"key": require_field(entry, "key"), "path": entry.get("path", "$")})
         elif isinstance(entry, str):
             out.append({"key": entry, "path": "$"})
         else:
@@ -187,8 +192,12 @@ class JSONNamespace(Namespace):
             >>> db.json.keys("user:").items
             ['user:1', 'user:2']
         """
-        return Page.from_wire(
-            self._c.json_list(prefix=prefix, limit=limit, cursor=cursor, as_of=as_of, **self._scope)
+        return self._listing(
+            lambda cur, lim: self._c.json_list(
+                prefix=prefix, limit=lim, cursor=cur, as_of=as_of, **self._scope
+            ),
+            limit=limit,
+            start=cursor,
         )
 
     def iter_keys(self, prefix: Optional[str] = None, *, as_of: Optional[int] = None) -> Iterator[str]:
@@ -202,6 +211,40 @@ class JSONNamespace(Namespace):
             if not page.has_more:
                 return
             cursor = page.cursor
+
+    def scan(
+        self,
+        start: Optional[str] = None,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Any] = None,
+    ) -> Page:
+        """One page of full documents (id + value + version) from ``start``.
+
+        ``start`` is a **seek** into id order, not a prefix filter — use
+        ``keys(prefix=...)`` to filter by prefix. Iterating auto-paginates.
+
+        Examples:
+            >>> _ = db.json.set_many([{"key": "a", "path": "$", "value": {"v": 1}}, {"key": "b", "path": "$", "value": {"v": 2}}])
+            >>> [row.value for row in db.json.scan()]
+            [{'v': 1}, {'v': 2}]
+        """
+        begin = cursor if cursor is not None else start
+        return self._listing(
+            lambda cur, lim: self._c.json_scan(start=cur, limit=lim, **self._scope),
+            limit=limit,
+            start=begin,
+        )
+
+    def iter_rows(self, start: Optional[str] = None) -> Iterator[Any]:
+        """Iterates every document row from ``start``, paginating internally."""
+        begin = start
+        while True:
+            page = self._c.json_scan(start=begin, limit=PAGE_SIZE, **self._scope)
+            yield from page.items
+            if not page.has_more:
+                return
+            begin = page.cursor
 
     def sample(self, prefix: Optional[str] = None, *, count: Optional[int] = None) -> Sample:
         """A deterministic representative sample plus the total count.

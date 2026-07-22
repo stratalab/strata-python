@@ -7,7 +7,7 @@ shape so callers never hand-write it::
     filters.eq("kind", "note") & filters.eq("rank", 5)
     # -> {"conditions": [
     #      {"field": "kind", "op": "eq", "value": {"type": "string", "value": "note"}},
-    #      {"field": "rank", "op": "eq", "value": {"type": "integer", "value": 5}},
+    #      {"field": "rank", "op": "eq", "value": {"type": "number", "value": 5}},
     #    ]}
 """
 
@@ -17,13 +17,13 @@ from typing import Any
 
 
 def _tag(value: Any) -> dict[str, Any]:
-    # bool is a subclass of int — check it first.
+    # The engine's metadata-filter value variants are null/bool/number/string
+    # (see idl vector.query VectorMetadataFilter). bool is a subclass of int,
+    # so it must be checked first; int and float both map to `number`.
     if isinstance(value, bool):
-        return {"type": "boolean", "value": value}
-    if isinstance(value, int):
-        return {"type": "integer", "value": value}
-    if isinstance(value, float):
-        return {"type": "float", "value": value}
+        return {"type": "bool", "value": value}
+    if isinstance(value, (int, float)):
+        return {"type": "number", "value": value}
     if isinstance(value, str):
         return {"type": "string", "value": value}
     raise TypeError(

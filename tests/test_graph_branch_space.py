@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 import stratadb
+from stratadb import errors
 
 
 @pytest.fixture()
@@ -85,8 +86,9 @@ def test_branch_isolation(db):
 
 
 def test_fork_rejects_both_anchors(db):
-    with pytest.raises(ValueError):
+    with pytest.raises(errors.InvalidArgumentError) as excinfo:
         db.branches.fork("default", "x", version=1, timestamp=1)
+    assert excinfo.value.code == "invalid_argument.sdk.fork_ambiguous"
 
 
 # --- spaces ---------------------------------------------------------------
@@ -128,3 +130,21 @@ def test_at_returns_scoped_view_sharing_handle(db):
     view.kv.put("shared", "value")
     assert db.kv.get("shared") == b"value"
     assert view.version == db.version
+
+
+def test_scoped_view_reports_its_scope(db):
+    # #54: the view's .branch/.space must report the override, not the session
+    # default. (routing already works; this fixes the introspection lie.)
+    view = db.at(branch="default", space="s1")
+    assert view.space == "s1"
+
+
+def test_scoped_view_inherits_unspecified_axis(db):
+    view = db.at(space="s1")
+    assert view.space == "s1"
+    assert view.branch == db.branch  # inherited session default
+
+
+def test_at_rebinds_scope(db):
+    # documents (does not forbid) rebinding — isolation is routing, not a sandbox
+    assert db.at(space="a").at(space="b").space == "b"

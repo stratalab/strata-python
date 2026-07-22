@@ -139,8 +139,9 @@ class Strata:
             db.execute({"type": "kv_scan", "limit": 10})
             # -> {"type": "kv_scan_result", "data": {...}}
 
-        Raises the typed :class:`~stratadb.errors.StrataError` on a domain
-        failure.
+        Raises the typed :class:`~stratadb.errors.StrataError` hierarchy: a
+        domain failure carries the engine's ``code``; invalid input raises
+        :class:`~stratadb.errors.InvalidArgumentError`.
         """
         return self._core.execute(command)
 
@@ -238,10 +239,16 @@ class Strata:
     def at(self, *, branch: str | None = None, space: str | None = None) -> "Strata":
         """Returns a lightweight scoped view over the same database.
 
-        Every namespace on the view targets ``branch``/``space``; unspecified
-        axes inherit this view's scope. The view shares the underlying handle,
-        so it needs no separate close. (The raw ``execute`` escape hatch is not
-        rescoped — pass ``branch``/``space`` in the command for that path.)
+        Each axis you pass **rebinds** that axis for the view; an axis you omit
+        inherits this view's scope. Chained ``at()`` calls therefore re-scope
+        freely — ``db.at(space="a").at(space="b")`` targets ``b`` — so branch
+        and space isolation is a routing convenience, **not** a security
+        sandbox: don't hand a scoped view to less-trusted code expecting
+        containment.
+
+        The view shares the underlying handle, so it needs no separate close.
+        (The raw ``execute`` escape hatch is not rescoped — pass
+        ``branch``/``space`` in the command for that path.)
         """
         view = object.__new__(Strata)
         view._core = self._core
@@ -258,13 +265,13 @@ class Strata:
 
     @property
     def branch(self) -> str:
-        """The session default branch."""
-        return self._core.default_branch
+        """This view's effective branch (the ``at()`` override, else the session default)."""
+        return self._branch if self._branch is not None else self._core.default_branch
 
     @property
     def space(self) -> str:
-        """The session default product space."""
-        return self._core.default_space
+        """This view's effective product space (the ``at()`` override, else the session default)."""
+        return self._space if self._space is not None else self._core.default_space
 
     @property
     def state(self) -> Any:

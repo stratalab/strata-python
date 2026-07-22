@@ -30,7 +30,7 @@ def db():
 
 
 def test_version_matches_engine():
-    assert stratadb.__version__ == "1.0.1"
+    assert stratadb.__version__ == "1.0.2"
 
 
 def test_agents_guide_is_embedded():
@@ -87,9 +87,12 @@ def test_error_str_renders_code_hint_ref(db):
     assert "ref: https://stratadb.org/e/" in rendered
 
 
-def test_malformed_command_raises_value_error(db):
-    with pytest.raises(ValueError):
+def test_malformed_command_raises_invalid_argument(db):
+    # Invalid escape-hatch input now raises a typed StrataError (was a bare
+    # ValueError) — see #52.
+    with pytest.raises(errors.InvalidArgumentError) as excinfo:
         db.execute({"type": "not_a_real_command"})
+    assert excinfo.value.code == "invalid_argument.sdk.command"
 
 
 # --- lifecycle and guards -------------------------------------------------

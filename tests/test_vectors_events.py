@@ -24,6 +24,22 @@ def vdb(db):
     return db
 
 
+@pytest.mark.parametrize("meta_val, filt_val", [(5, 5), (1.5, 1.5), (True, True), ("note", "note")])
+def test_eq_filter_all_value_types(vdb, meta_val, filt_val):
+    # #46: filters.eq must work for int/float/bool, not just str.
+    vdb.vectors.upsert("v", "match", [1.0, 0.0, 0.0], metadata={"m": meta_val})
+    vdb.vectors.upsert("v", "other", [0.0, 1.0, 0.0], metadata={"m": "different"})
+    hits = vdb.vectors.query("v", [1.0, 0.0, 0.0], k=5, filter=filters.eq("m", filt_val))
+    assert [h.key for h in hits] == ["match"]
+
+
+def test_eq_filter_wire_tags():
+    assert filters.eq("n", 9).to_wire()["conditions"][0]["value"] == {"type": "number", "value": 9}
+    assert filters.eq("f", 1.5).to_wire()["conditions"][0]["value"] == {"type": "number", "value": 1.5}
+    assert filters.eq("b", True).to_wire()["conditions"][0]["value"] == {"type": "bool", "value": True}
+    assert filters.eq("s", "x").to_wire()["conditions"][0]["value"] == {"type": "string", "value": "x"}
+
+
 def test_collection_lifecycle(db):
     db.vectors.create_collection("v", 4)
     names = [c.name for c in db.vectors.list_collections()]

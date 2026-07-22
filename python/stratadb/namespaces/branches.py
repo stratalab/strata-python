@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any, Iterator, Optional
 
-from ..errors import NotFoundError
+from ..errors import InvalidArgumentError, NotFoundError, client_error
 from .base import Namespace
 
 
@@ -80,7 +80,11 @@ class BranchesNamespace(Namespace):
             ['default', 'experiment']
         """
         if version is not None and timestamp is not None:
-            raise ValueError("fork accepts version or timestamp, not both")
+            raise client_error(
+                InvalidArgumentError,
+                "invalid_argument.sdk.fork_ambiguous",
+                "fork accepts version or timestamp, not both",
+            )
         if version is not None:
             return self._c.branch_fork_at_version(source, name, version)
         if timestamp is not None:

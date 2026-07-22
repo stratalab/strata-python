@@ -292,6 +292,8 @@ class ArrowImportTarget(str, Enum):
     KV = 'kv'
     JSON = 'json'
     VECTOR = 'vector'
+    GRAPH = 'graph'
+    EVENT = 'event'
 
 
 @dataclass
@@ -1159,6 +1161,7 @@ class GraphBfsData:
     edges: List["GraphBfsEdgeData"]
     graph: str
     start: str
+    truncated: bool
     visited: List[str]
 
     @classmethod
@@ -1168,6 +1171,7 @@ class GraphBfsData:
             edges=[GraphBfsEdgeData.from_wire(_x) for _x in (d['edges'] or [])],
             graph=d['graph'],
             start=d['start'],
+            truncated=d['truncated'],
             visited=[_x for _x in (d['visited'] or [])],
         )
 

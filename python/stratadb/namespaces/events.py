@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from .._results import BatchResult, Page
+from ..errors import require_field
 from .base import Namespace
 
 
@@ -17,7 +18,10 @@ def _event_entries(entries: Any) -> list[dict]:
     out = []
     for entry in entries:
         if isinstance(entry, dict):
-            out.append({"event_type": entry["event_type"], "payload": entry["payload"]})
+            out.append({
+                "event_type": require_field(entry, "event_type"),
+                "payload": require_field(entry, "payload"),
+            })
         else:
             event_type, payload = entry
             out.append({"event_type": event_type, "payload": payload})
@@ -126,6 +130,10 @@ class EventsNamespace(Namespace):
             >>> [e.event.payload for e in db.events.range(0)]
             [{'id': 1}, {'id': 2}]
         """
+        # range/range_by_time have no pagination cursor; an explicit limit is a
+        # bounded page, no-limit returns the full range. (Auto-pagination
+        # applies to db.events.list, which does support it.)
+        self._check_limit(limit)
         return Page.from_wire(
             self._c.event_range(
                 start,
@@ -154,6 +162,7 @@ class EventsNamespace(Namespace):
             >>> [e.event.payload for e in db.events.range_by_time(0)]
             [{'id': 1}, {'id': 2}]
         """
+        self._check_limit(limit)
         return Page.from_wire(
             self._c.event_range_time(
                 start_ts,
@@ -181,14 +190,12 @@ class EventsNamespace(Namespace):
             >>> [e.event.payload for e in db.events.list()]
             [{'id': 1}, {'id': 2}]
         """
-        return Page.from_wire(
-            self._c.event_list(
-                event_type=event_type,
-                limit=limit,
-                after_sequence=after_sequence,
-                as_of=as_of,
-                **self._scope,
-            )
+        return self._listing(
+            lambda cur, lim: self._c.event_list(
+                event_type=event_type, limit=lim, after_sequence=cur, as_of=as_of, **self._scope
+            ),
+            limit=limit,
+            start=after_sequence,
         )
 
     def types(self, *, as_of: Optional[int] = None) -> list:

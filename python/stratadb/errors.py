@@ -171,6 +171,24 @@ def error_from_payload(payload: str) -> StrataError:
     return error_from_status(status)
 
 
+def require_field(entry: Any, field: str) -> Any:
+    """Fetches ``entry[field]`` for a batch entry, raising a typed error if absent.
+
+    Batch helpers accept caller-shaped dicts; a missing required field should
+    surface as :class:`InvalidArgumentError` (``invalid_argument.sdk.entry``),
+    not a bare ``KeyError`` that ``except StrataError`` would miss.
+    """
+    try:
+        return entry[field]
+    except (KeyError, TypeError, IndexError):
+        raise client_error(
+            InvalidArgumentError,
+            "invalid_argument.sdk.entry",
+            f"batch entry is missing required field {field!r}",
+            "pass each entry as a dict (or tuple) carrying the required fields",
+        ) from None
+
+
 def client_error(
     error_cls: type[StrataError], code: str, message: str, hint: str = ""
 ) -> StrataError:
@@ -213,4 +231,5 @@ __all__ = [
     "error_from_status",
     "error_from_payload",
     "client_error",
+    "require_field",
 ]

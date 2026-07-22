@@ -2,11 +2,45 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional, Sequence, Tuple
+from typing import Any, Iterator, Optional, Sequence, Tuple
 
 from .. import filters as _filters
 from .._results import BatchResult, Page
-from .base import Namespace
+from ..errors import InvalidArgumentError, client_error, require_field
+from .base import PAGE_SIZE, Namespace
+
+# Vector distance metrics, with the natural aliases callers reach for (#61).
+_METRIC_ALIASES = {
+    "cosine": "cosine",
+    "euclidean": "euclidean",
+    "l2": "euclidean",
+    "dot_product": "dot_product",
+    "dot": "dot_product",
+}
+
+
+def _normalize_metric(metric: str) -> str:
+    try:
+        return _METRIC_ALIASES[metric.lower()]
+    except (KeyError, AttributeError):
+        raise client_error(
+            InvalidArgumentError,
+            "invalid_argument.sdk.vector_metric",
+            f"unknown metric {metric!r}",
+            "use one of: cosine, euclidean (alias l2), dot_product (alias dot)",
+        ) from None
+
+
+def _check_metadata(metadata: Any) -> None:
+    # metadata is declared Optional[dict]; a non-dict is stored verbatim by the
+    # engine and then can never match a filters.eq condition (#61).
+    if metadata is not None and not isinstance(metadata, dict):
+        raise client_error(
+            InvalidArgumentError,
+            "invalid_argument.sdk.vector_metadata",
+            f"metadata must be a dict or None, got {type(metadata).__name__}",
+            "pass metadata as a JSON object, e.g. {'tag': 'x'}",
+        )
 
 
 def _filter_wire(value: Any) -> Any:
@@ -21,13 +55,16 @@ def _vector_entries(entries: Any) -> list[dict]:
     out = []
     for entry in entries:
         if isinstance(entry, dict):
-            row = {"key": entry["key"], "vector": list(entry["vector"])}
-            if entry.get("metadata") is not None:
-                row["metadata"] = entry["metadata"]
+            row = {"key": require_field(entry, "key"), "vector": list(require_field(entry, "vector"))}
+            metadata = entry.get("metadata")
+            if metadata is not None:
+                _check_metadata(metadata)
+                row["metadata"] = metadata
         else:
             key, vector = entry[0], list(entry[1])
             row = {"key": key, "vector": vector}
             if len(entry) > 2 and entry[2] is not None:
+                _check_metadata(entry[2])
                 row["metadata"] = entry[2]
         out.append(row)
     return out
@@ -56,7 +93,9 @@ class VectorsNamespace(Namespace):
             >>> db.vectors.stats("docs").dimension
             3
         """
-        return self._c.vector_collection_create(name, dimension, metric, **self._scope)
+        return self._c.vector_collection_create(
+            name, dimension, _normalize_metric(metric), **self._scope
+        )
 
     def delete_collection(self, name: str) -> Any:
         """Deletes a collection and all its vectors.
@@ -123,6 +162,7 @@ class VectorsNamespace(Namespace):
             >>> db.vectors.exists("docs", "a")
             True
         """
+        _check_metadata(metadata)
         return self._c.vector_upsert(collection, key, list(vector), metadata=metadata, **self._scope)
 
     def get(self, collection: str, key: str, *, as_of: Optional[int] = None) -> Any:
@@ -180,9 +220,25 @@ class VectorsNamespace(Namespace):
             >>> db.vectors.keys("docs").items
             ['a', 'b']
         """
-        return Page.from_wire(
-            self._c.vector_keys(collection, limit=limit, cursor=cursor, as_of=as_of, **self._scope)
+        return self._listing(
+            lambda cur, lim: self._c.vector_keys(
+                collection, limit=lim, cursor=cur, as_of=as_of, **self._scope
+            ),
+            limit=limit,
+            start=cursor,
         )
+
+    def iter_keys(self, collection: str, *, as_of: Optional[int] = None) -> Iterator[str]:
+        """Iterates every key in ``collection``, paginating internally."""
+        cursor = None
+        while True:
+            page = self._c.vector_keys(
+                collection, limit=PAGE_SIZE, cursor=cursor, as_of=as_of, **self._scope
+            )
+            yield from page.items
+            if not page.has_more:
+                return
+            cursor = page.cursor
 
     def update_metadata(self, collection: str, key: str, metadata: dict) -> Any:
         """Patches the metadata of an existing vector.
@@ -194,6 +250,7 @@ class VectorsNamespace(Namespace):
             >>> db.vectors.get("docs", "a").data.metadata
             {'tag': 'z'}
         """
+        _check_metadata(metadata)
         return self._c.vector_metadata_update(collection, key, metadata, **self._scope)
 
     def delete(self, collection: str, key: str) -> Any:

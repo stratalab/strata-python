@@ -23,7 +23,7 @@ use pyo3::exceptions::{PyException, PyRuntimeError, PyValueError};
 use pyo3::prelude::*;
 use pyo3::wrap_pyfunction;
 
-use strata_executor::{Command, Executor, ExecutorError};
+use strata_executor::{guard_json_integers, Command, Executor, ExecutorError};
 
 create_exception!(
     _stratadb,
@@ -49,13 +49,30 @@ fn closed_error() -> PyErr {
     PyRuntimeError::new_err("database handle is closed")
 }
 
+/// A call's outcome carried back across the `allow_threads` (no-GIL) boundary.
+///
+/// A `PyErr` cannot be constructed without the GIL, so the closure that runs
+/// with the GIL released returns this instead, and the caller converts it to a
+/// `PyErr` after the GIL is re-acquired.
+#[allow(
+    clippy::large_enum_variant,
+    reason = "ExecutorError is the executor's frozen serialized-boundary type; it \
+              is only ever a short-lived local here, so the size is not worth boxing"
+)]
+enum CallError {
+    Closed,
+    Domain(ExecutorError),
+}
+
 /// One open Strata database, wrapping a single executor handle.
 ///
 /// The executor is `&mut self` per call; the `Mutex` serializes calls on one
-/// handle while the GIL is released for the engine's duration, so other
-/// Python threads run meanwhile. A durable database holds an exclusive
-/// process lock — a second `open_durable` on the same path surfaces the
-/// engine's lock error.
+/// handle. Every method takes the lock *inside* `Python::allow_threads`, i.e.
+/// with the GIL released, so a thread waiting on a busy handle never holds the
+/// GIL while it waits — concurrent callers block on the mutex without wedging
+/// the interpreter, and unrelated Python threads keep running (issue #31). A
+/// durable database holds an exclusive process lock — a second `open_durable`
+/// on the same path surfaces the engine's lock error.
 #[pyclass]
 struct Handle {
     inner: Mutex<Option<Executor>>,
@@ -94,61 +111,101 @@ impl Handle {
                   the executor deliberately declined to box it, so the size is not ours to change"
     )]
     fn execute(&self, py: Python<'_>, command_json: &str) -> PyResult<String> {
+        // Reject JSON integers outside i64/u64 before serde silently coerces
+        // them to a lossy f64 and persists the damage (strata-core #2687). A
+        // cheap text scan that touches no lock, so it runs under the GIL.
+        guard_json_integers(command_json).map_err(native_error)?;
+        // Parse under the GIL: it is cheap and a `PyValueError` needs the GIL,
+        // so an invalid command fails fast before any locking.
         let command: Command = serde_json::from_str(command_json)
             .map_err(|error| PyValueError::new_err(format!("invalid command: {error}")))?;
-        let mut guard = self.inner.lock().expect("handle mutex poisoned");
-        let executor = guard.as_mut().ok_or_else(closed_error)?;
-        let outcome = py.allow_threads(|| executor.execute(command));
+        // Release the GIL *before* locking. If a thread blocked on the mutex
+        // held the GIL, the in-flight call could never re-acquire the GIL to
+        // return, wedging the whole interpreter (issue #31). Locking inside
+        // `allow_threads` means a waiter blocks with the GIL released.
+        let outcome = py.allow_threads(|| {
+            let mut guard = self.inner.lock().expect("handle mutex poisoned");
+            let executor = guard.as_mut().ok_or(CallError::Closed)?;
+            executor.execute(command).map_err(CallError::Domain)
+        });
+        // Back under the GIL: safe to build `PyErr` and serialize the envelope.
         match outcome {
             Ok(output) => serde_json::to_string(&output).map_err(|error| {
                 PyRuntimeError::new_err(format!("envelope serialization failed: {error}"))
             }),
-            Err(error) => Err(native_error(error)),
+            Err(CallError::Closed) => Err(closed_error()),
+            Err(CallError::Domain(error)) => Err(native_error(error)),
         }
     }
 
     /// Sets the session default branch and/or space used when a command omits
     /// its own. Raises `ValueError` on an invalid name.
     #[pyo3(signature = (branch=None, space=None))]
-    fn set_scope(&self, branch: Option<String>, space: Option<String>) -> PyResult<()> {
-        let mut guard = self.inner.lock().expect("handle mutex poisoned");
-        let executor = guard.as_mut().ok_or_else(closed_error)?;
-        if let Some(branch) = branch {
-            executor
-                .set_default_branch(branch)
-                .map_err(|error| PyValueError::new_err(format!("invalid branch: {error}")))?;
+    fn set_scope(&self, py: Python<'_>, branch: Option<String>, space: Option<String>) -> PyResult<()> {
+        // Local carrier: like `CallError`, but with the two name-validation
+        // messages (captured as `String`, since a `PyErr` needs the GIL).
+        enum ScopeError {
+            Closed,
+            Branch(String),
+            Space(String),
         }
-        if let Some(space) = space {
-            executor
-                .set_default_space(space)
-                .map_err(|error| PyValueError::new_err(format!("invalid space: {error}")))?;
+        let result = py.allow_threads(|| {
+            let mut guard = self.inner.lock().expect("handle mutex poisoned");
+            let executor = guard.as_mut().ok_or(ScopeError::Closed)?;
+            if let Some(branch) = branch {
+                executor
+                    .set_default_branch(branch)
+                    .map_err(|error| ScopeError::Branch(error.to_string()))?;
+            }
+            if let Some(space) = space {
+                executor
+                    .set_default_space(space)
+                    .map_err(|error| ScopeError::Space(error.to_string()))?;
+            }
+            Ok(())
+        });
+        match result {
+            Ok(()) => Ok(()),
+            Err(ScopeError::Closed) => Err(closed_error()),
+            Err(ScopeError::Branch(message)) => {
+                Err(PyValueError::new_err(format!("invalid branch: {message}")))
+            }
+            Err(ScopeError::Space(message)) => {
+                Err(PyValueError::new_err(format!("invalid space: {message}")))
+            }
         }
-        Ok(())
     }
 
     /// Returns the session default branch.
-    fn default_branch(&self) -> PyResult<String> {
-        let guard = self.inner.lock().expect("handle mutex poisoned");
-        let executor = guard.as_ref().ok_or_else(closed_error)?;
-        Ok(executor.default_branch().to_owned())
+    fn default_branch(&self, py: Python<'_>) -> PyResult<String> {
+        py.allow_threads(|| {
+            let guard = self.inner.lock().expect("handle mutex poisoned");
+            let executor = guard.as_ref().ok_or(())?;
+            Ok(executor.default_branch().to_owned())
+        })
+        .map_err(|()| closed_error())
     }
 
     /// Returns the session default product space.
-    fn default_space(&self) -> PyResult<String> {
-        let guard = self.inner.lock().expect("handle mutex poisoned");
-        let executor = guard.as_ref().ok_or_else(closed_error)?;
-        Ok(executor.default_space().to_owned())
+    fn default_space(&self, py: Python<'_>) -> PyResult<String> {
+        py.allow_threads(|| {
+            let guard = self.inner.lock().expect("handle mutex poisoned");
+            let executor = guard.as_ref().ok_or(())?;
+            Ok(executor.default_space().to_owned())
+        })
+        .map_err(|()| closed_error())
     }
 
     /// Closes the database handle. Idempotent; further calls raise.
-    fn close(&self) -> PyResult<()> {
-        let mut guard = self.inner.lock().expect("handle mutex poisoned");
-        if let Some(mut executor) = guard.take() {
-            executor
-                .close()
-                .map_err(|error| PyRuntimeError::new_err(format!("close failed: {error}")))?;
-        }
-        Ok(())
+    fn close(&self, py: Python<'_>) -> PyResult<()> {
+        let result: Result<(), String> = py.allow_threads(|| {
+            let mut guard = self.inner.lock().expect("handle mutex poisoned");
+            if let Some(mut executor) = guard.take() {
+                executor.close().map_err(|error| error.to_string())?;
+            }
+            Ok(())
+        });
+        result.map_err(|message| PyRuntimeError::new_err(format!("close failed: {message}")))
     }
 }
 
