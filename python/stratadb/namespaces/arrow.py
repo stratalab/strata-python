@@ -28,10 +28,17 @@ class ArrowNamespace(Namespace):
         *,
         format: Optional[str] = None,
         collection: Optional[str] = None,
+        graph: Optional[str] = None,
         key_column: Optional[str] = None,
         value_column: Optional[str] = None,
     ) -> Any:
-        """Imports rows from ``path`` into ``target`` (e.g. ``"kv"``, ``"vector"``).
+        """Imports rows from ``path`` into ``target``.
+
+        ``target`` is one of ``"kv"``, ``"json"``, ``"vector"``, ``"graph"``, or
+        ``"event"``. Vector imports take ``collection=`` (the target collection);
+        graph imports take ``graph=`` (the target graph). Event imports re-derive
+        the log from the file's payload/type columns, so each appended event is
+        assigned a fresh sequence, timestamp, and hash.
 
         Examples:
             >>> _ = db.kv.put("greeting", "hello")
@@ -46,6 +53,7 @@ class ArrowNamespace(Namespace):
             target,
             format=format,
             collection=collection,
+            graph=graph,
             key_column=key_column,
             value_column=value_column,
             **self._scope,

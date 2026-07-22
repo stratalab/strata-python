@@ -221,11 +221,16 @@ Exact failure modes worth recognizing up front (match on the `.code`, not the me
 `db.admin.health()`, `db.admin.metrics()`, `db.admin.describe()`, and
 `db.admin.config()`.
 
-`db.arrow` bulk-moves a primitive to and from an Arrow/Parquet file:
+`db.arrow` bulk-moves a primitive to and from an Arrow/Parquet file. `target`
+is one of `kv`, `json`, `vector`, `graph`, or `event` — vector imports take
+`collection=`, graph imports take `graph=`, and event imports re-derive the log
+(sequence/timestamp/hash are reassigned):
 
 ```python
-db.arrow.export("kv", "backup.parquet")     # a primitive -> Arrow file
-db.arrow.import_("kv", "backup.parquet")    # Arrow file -> primitive (note the trailing _)
+db.arrow.export("kv", "backup.parquet")                  # a primitive -> Arrow file
+db.arrow.import_("kv", "backup.parquet")                 # Arrow file -> primitive (note the trailing _)
+db.arrow.export("graph", "g.parquet", graph="social")    # graph and event targets too
+db.arrow.import_("graph", "g.parquet", graph="social")
 ```
 
 ## Escape hatch & introspection
