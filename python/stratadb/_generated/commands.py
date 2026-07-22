@@ -95,7 +95,7 @@ class Commands:
     def arrow_export(self, primitive, format, path, *, collection=None, event_type=None, graph=None, limit=None, prefix=None, branch=None, space=None):
         """Export a product primitive to an Arrow-compatible file.
 
-        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.executor.arrow_feature_disabled, invalid_argument.executor.arrow_format, invalid_argument.executor.arrow_empty_export, invalid_argument.executor.arrow_value_column, invalid_argument.executor.arrow_vector_key, invalid_argument.executor.arrow_graph, invalid_argument.executor.arrow_collection, unavailable.executor.arrow_io, internal.executor.arrow
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.executor.arrow_feature_disabled, invalid_argument.executor.arrow_format, invalid_argument.executor.arrow_empty_export, invalid_argument.executor.arrow_value_column, invalid_argument.executor.arrow_vector_key, invalid_argument.executor.arrow_event, invalid_argument.executor.arrow_graph, invalid_argument.executor.arrow_collection, unavailable.executor.arrow_io, internal.executor.arrow
         """
         cmd = {'type': 'arrow_export'}
         cmd['primitive'] = primitive
@@ -118,7 +118,7 @@ class Commands:
         data = self._core.data(cmd)
         return models.ArrowExportResult.from_wire(data)
 
-    def arrow_import(self, file_path, target, *, collection=None, format=None, key_column=None, value_column=None, branch=None, space=None):
+    def arrow_import(self, file_path, target, *, collection=None, format=None, graph=None, key_column=None, value_column=None, branch=None, space=None):
         """Import an Arrow-compatible file into a product primitive.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.executor.arrow_feature_disabled, invalid_argument.executor.arrow_format, invalid_argument.executor.arrow_input_missing, invalid_argument.executor.arrow_key_column, invalid_argument.executor.arrow_value_column, invalid_argument.executor.arrow_collection, invalid_argument.executor.arrow_embedding_type, invalid_argument.executor.arrow_vector_dimension, invalid_argument.executor.arrow_json_key, invalid_argument.executor.arrow_base64, unavailable.executor.arrow_io, internal.executor.arrow
@@ -130,6 +130,8 @@ class Commands:
             cmd['collection'] = collection
         if format is not None:
             cmd['format'] = format
+        if graph is not None:
+            cmd['graph'] = graph
         if key_column is not None:
             cmd['key_column'] = key_column
         if value_column is not None:
