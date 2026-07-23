@@ -23,7 +23,9 @@ use pyo3::exceptions::{PyException, PyRuntimeError, PyValueError};
 use pyo3::prelude::*;
 use pyo3::wrap_pyfunction;
 
-use strata_executor::{guard_json_integers, Command, Executor, ExecutorError};
+use strata_executor::{
+    guard_json_integers, Command, DurabilityMode, DurableLocalOpenOptions, Executor, ExecutorError,
+};
 
 create_exception!(
     _stratadb,
@@ -81,9 +83,26 @@ struct Handle {
 #[pymethods]
 impl Handle {
     /// Opens a durable database at `path`, creating it if absent.
+    ///
+    /// `durability` selects the commit-durability mode: `"standard"` (default;
+    /// commits become durable at the next sync point) or `"always"` (every
+    /// commit is synced before acknowledgement). The Python layer validates
+    /// the string; the check here is a backstop.
     #[staticmethod]
-    fn open_durable(path: String) -> PyResult<Self> {
-        let executor = Executor::open_durable_local(PathBuf::from(path)).map_err(native_error)?;
+    #[pyo3(signature = (path, durability=None))]
+    fn open_durable(path: String, durability: Option<&str>) -> PyResult<Self> {
+        let mut options = DurableLocalOpenOptions::new();
+        match durability {
+            None | Some("standard") => {}
+            Some("always") => options = options.with_durability(DurabilityMode::Always),
+            Some(other) => {
+                return Err(PyValueError::new_err(format!(
+                    "invalid durability {other:?}: expected \"standard\" or \"always\""
+                )))
+            }
+        }
+        let executor = Executor::open_durable_local_with_options(PathBuf::from(path), options)
+            .map_err(native_error)?;
         Ok(Self {
             inner: Mutex::new(Some(executor)),
         })

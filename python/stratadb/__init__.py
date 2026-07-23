@@ -114,11 +114,27 @@ class Strata:
         cache: bool = False,
         branch: str | None = None,
         space: str | None = None,
+        durability: str | None = None,
     ):
+        if durability not in (None, "standard", "always"):
+            raise client_error(
+                InvalidArgumentError,
+                "invalid_argument.sdk.command",
+                f"invalid durability {durability!r}",
+                'use "standard" (durable at the next sync point) or "always" '
+                "(synced before every acknowledgement)",
+            )
         if cache:
+            if durability is not None:
+                raise client_error(
+                    InvalidArgumentError,
+                    "invalid_argument.sdk.command",
+                    "durability= applies only to durable databases",
+                    "an in-memory (cache=True) database has no durability mode",
+                )
             self._core = Core.open_cache()
         elif path is not None:
-            self._core = Core.open_durable(str(path))
+            self._core = Core.open_durable(str(path), durability)
         else:
             raise client_error(
                 InvalidArgumentError, _NO_DB_CODE, "no database specified", _NO_DB_HINT
@@ -319,6 +335,7 @@ def open(  # noqa: A001 — deliberate builtin shadow at module scope (gzip.open
     cache: bool = False,
     branch: str | None = None,
     space: str | None = None,
+    durability: str | None = None,
 ) -> Strata:
     """Opens a Strata database — the canonical entry point.
 
@@ -327,11 +344,18 @@ def open(  # noqa: A001 — deliberate builtin shadow at module scope (gzip.open
     in-memory one. ``branch``/``space`` set the session defaults for commands
     that omit their own.
 
+    ``durability`` selects the commit-durability mode for a durable database:
+    ``"standard"`` (the default — commits become durable at the next sync
+    point; an unclean process death can lose the acknowledged tail) or
+    ``"always"`` (every commit is synced before acknowledgement). Each write
+    receipt reports what actually held: ``receipt.commit.durability`` is one of
+    ``"not_durable"``, ``"standard"``, ``"always"``, or ``"uncertain"``.
+
     Never opens the current directory implicitly: with neither ``path`` nor
     ``cache=True`` it raises
     :class:`~stratadb.errors.InvalidArgumentError`.
     """
-    return Strata(path, cache=cache, branch=branch, space=space)
+    return Strata(path, cache=cache, branch=branch, space=space, durability=durability)
 
 
 def from_env(*, branch: str | None = None, space: str | None = None) -> Strata:

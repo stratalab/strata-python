@@ -950,6 +950,14 @@ class BranchStatus(str, Enum):
     DELETED = 'deleted'
 
 
+class CommitDurability(str, Enum):
+    """Per-commit durability, as storage attested it at acknowledgement time."""
+    NOT_DURABLE = 'not_durable'
+    STANDARD = 'standard'
+    ALWAYS = 'always'
+    UNCERTAIN = 'uncertain'
+
+
 class CommitOutcomeStatus(str, Enum):
     """V1 commit outcome status."""
     NOT_APPLICABLE = 'not_applicable'
@@ -963,7 +971,7 @@ class CommitOutcomeStatus(str, Enum):
 class CommitReceipt:
     """Commit facts returned by mutating operations."""
     delete_count: int
-    durable: bool
+    durability: "CommitDurability"
     put_count: int
     timestamp: int
     version: int
@@ -972,7 +980,7 @@ class CommitReceipt:
     def from_wire(cls, d: dict) -> "CommitReceipt":
         return cls(
             delete_count=d['delete_count'],
-            durable=d['durable'],
+            durability=CommitDurability(d['durability']),
             put_count=d['put_count'],
             timestamp=d['timestamp'],
             version=d['version'],

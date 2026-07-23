@@ -21,6 +21,12 @@ db = stratadb.open(cache=True)       # ephemeral, in-memory (nothing persists)
 db = stratadb.from_env()              # path from $STRATA_DB
 with stratadb.open(cache=True) as db:
     ...                                # context manager closes it
+
+# Commit durability: "standard" (default) syncs at the next sync point — an
+# unclean process death can lose the acknowledged tail; "always" syncs every
+# commit before acknowledgement.
+db = stratadb.open("./app-data", durability="always")
+db.kv.put("k", "v").commit.durability   # "always" — what storage attested at ack
 ```
 
 `stratadb.open()` never opens the current directory implicitly — pass a path, set
@@ -223,6 +229,12 @@ Exact failure modes worth recognizing up front (match on the `.code`, not the me
   holds an exclusive process lock. Share one module-level handle (threads are
   fine); reopen succeeds after `close()`. Don't treat this like SQLite's
   multi-connection model.
+- **Default durability is `"standard"`, not fsync-per-commit.** A commit
+  acknowledged with `receipt.commit.durability == "standard"` becomes durable at
+  the *next sync point* (close, buffer threshold, rotation) — a crash/SIGKILL
+  before then loses the acknowledged tail. Open with
+  `stratadb.open(path, durability="always")` when every acknowledgement must
+  survive process death; then receipts report `"always"`.
 - **A closed handle raises typed errors.** Any call after `db.close()` raises
   `FailedPreconditionError` (`failed_precondition.sdk.handle_closed`); `close()`
   itself is idempotent.
