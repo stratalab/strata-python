@@ -57,6 +57,11 @@ COMMAND_CASES = [
     ("nan in json", lambda db: db.json.set("d", "$", {"x": float("nan")})),
     ("bytes event payload", lambda db: db.events.append("t", b"bytes")),
     ("bogus escape-hatch command", lambda db: db.execute({"type": "not_a_real_command"})),
+    # #65: pre-dispatch conversion failures must be typed, not bare TypeError.
+    ("none kv key", lambda db: db.kv.put(None, "value")),
+    ("dict kv value", lambda db: db.kv.put("key", {"not": "bytes"})),
+    ("none query vector", lambda db: db.vectors.query("v", None)),
+    ("int upsert vector", lambda db: db.vectors.upsert("v", "k", 7)),
 ]
 
 
@@ -72,6 +77,11 @@ ENTRY_CASES = [
     ("vector entry missing key", lambda db: db.vectors.upsert_many("c", [{"vector": [1.0, 0.0]}])),
     ("json entry missing key", lambda db: db.json.set_many([{"value": 1}])),
     ("event entry missing type", lambda db: db.events.append_many([{"payload": 1}])),
+    # #64: graph bulk entries were missed by the batch-entry guard.
+    ("graph node wrong field", lambda db: db.graphs.bulk_insert("g", nodes=[{"id": "x"}])),
+    ("graph node none", lambda db: db.graphs.bulk_insert("g", nodes=[None])),
+    ("graph edge missing dst", lambda db: db.graphs.bulk_insert("g", edges=[{"src": "a"}])),
+    ("graph node bad binding", lambda db: db.graphs.bulk_insert("g", nodes=[{"node_id": "a", "binding": {}}])),
 ]
 
 
@@ -87,6 +97,30 @@ def test_fork_version_and_timestamp_is_ambiguous(db):
     with pytest.raises(errors.InvalidArgumentError) as excinfo:
         db.branches.fork("default", "x", version=1, timestamp=1)
     assert excinfo.value.code == "invalid_argument.sdk.fork_ambiguous"
+
+
+# --- #65: a closed handle raises typed errors, close() stays idempotent ----
+
+
+def test_closed_handle_raises_typed_error():
+    db = stratadb.open(cache=True)
+    db.kv.put("k", "v")
+    db.close()
+    with pytest.raises(errors.FailedPreconditionError) as excinfo:
+        db.kv.get("k")
+    assert excinfo.value.code == "failed_precondition.sdk.handle_closed"
+    with pytest.raises(errors.FailedPreconditionError):
+        db.branch  # scope accessors route through the same guard
+    db.close()  # idempotent: a second close neither raises nor changes state
+
+
+def test_malformed_batch_write_op_is_typed(db):
+    # graph_batch_write passes ops verbatim to the wire; serde rejects a
+    # malformed op and it must surface via the #52 catch, not leak.
+    db.graphs.create("bw")
+    with pytest.raises(errors.InvalidArgumentError) as excinfo:
+        db.graphs.batch_write("bw", [{"type": "upsert_node"}])
+    assert excinfo.value.code == "invalid_argument.sdk.command"
 
 
 # --- regression guards: don't over-catch --------------------------------

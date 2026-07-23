@@ -28,12 +28,14 @@ _FORK_HINT = (
     "open a fresh Strata handle after os.fork(); a database handle must not be "
     "shared across a fork() (Python itself warns fork() with threads is unsafe)"
 )
+_CLOSED_CODE = "failed_precondition.sdk.handle_closed"
+_CLOSED_HINT = "the handle was closed; open a new one with stratadb.open(...)"
 
 
 class Core:
     """A single open database, over the native handle."""
 
-    __slots__ = ("_handle", "_pid")
+    __slots__ = ("_handle", "_pid", "_closed")
 
     def __init__(self, handle: Any):
         self._handle = handle
@@ -41,6 +43,7 @@ class Core:
         # where the inherited handle acknowledges writes that never persist
         # (issue #32). fork() with the engine's threads is unsafe by POSIX rules.
         self._pid = os.getpid()
+        self._closed = False
 
     def _forked(self) -> bool:
         return os.getpid() != self._pid
@@ -52,6 +55,16 @@ class Core:
                 _FORK_CODE,
                 "database handle used in a forked child process",
                 _FORK_HINT,
+            )
+        # After close(), the binding would raise a bare RuntimeError; surface
+        # the documented typed error instead (#65). close() itself stays
+        # idempotent — it never routes through this guard.
+        if self._closed:
+            raise client_error(
+                FailedPreconditionError,
+                _CLOSED_CODE,
+                "database handle is closed",
+                _CLOSED_HINT,
             )
 
     @classmethod
@@ -87,6 +100,18 @@ class Core:
             # ValueError for a serde-rejected command/argument. Surface a typed
             # error instead of leaking a bare TypeError/ValueError.
             raise client_error(InvalidArgumentError, _BAD_COMMAND_CODE, str(exc)) from exc
+        except RuntimeError as exc:
+            # A close() that raced this call: the guard passed but the binding
+            # saw a taken handle. Only translate when we know we closed it —
+            # any other RuntimeError is an internal failure and must propagate.
+            if self._closed:
+                raise client_error(
+                    FailedPreconditionError,
+                    _CLOSED_CODE,
+                    "database handle is closed",
+                    _CLOSED_HINT,
+                ) from None
+            raise
         # json.loads stays OUTSIDE the try: a decode failure here is a corrupt
         # engine envelope, not caller input, and must not be mistyped.
         return json.loads(raw)
@@ -114,5 +139,6 @@ class Core:
         # running the engine's teardown here could flush or truncate the
         # parent's files. Skip the native close in a child — the parent still
         # owns and will close it. Idempotent; never raises.
+        self._closed = True
         if not self._forked():
             self._handle.close()
