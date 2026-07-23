@@ -26,6 +26,13 @@ with stratadb.open(cache=True) as db:
 `stratadb.open()` never opens the current directory implicitly — pass a path, set
 `STRATA_DB`, or use `cache=True`, or it raises `InvalidArgumentError`.
 
+A durable database is **exclusively owned by one open handle**: Strata is
+embedded (not a server), and the engine takes an exclusive process lock on the
+path. Open once and share that handle across your app — it is safe for
+concurrent use from multiple threads. A second `open()` on the same path (same
+or another process) fails until the first handle closes; `cache=True` opens are
+unaffected (each is an independent in-memory database).
+
 ## Key-value — `db.kv`
 
 Keys and values are `str` (UTF-8) or `bytes`; reads return `bytes` or `None`.
@@ -210,6 +217,15 @@ Exact failure modes worth recognizing up front (match on the `.code`, not the me
   bundled offline/keyless embedder yet. For keyless vector search, upsert literal
   vectors (`db.vectors.upsert(coll, key, [0.1, 0.2, ...])`), as `python -m stratadb.demo`
   does.
+- **One open handle per durable path.** A second `stratadb.open(path)` — from the
+  same or another process — raises `UnavailableError`
+  (`unavailable.engine.persistence`) while the first handle is open: the engine
+  holds an exclusive process lock. Share one module-level handle (threads are
+  fine); reopen succeeds after `close()`. Don't treat this like SQLite's
+  multi-connection model.
+- **A closed handle raises typed errors.** Any call after `db.close()` raises
+  `FailedPreconditionError` (`failed_precondition.sdk.handle_closed`); `close()`
+  itself is idempotent.
 - **`db.state` was removed in V1.** Accessing it raises `UnsupportedError`
   (`unsupported.sdk.state_removed`) — use `db.kv` for keyed values or `db.json` for
   structured documents.
