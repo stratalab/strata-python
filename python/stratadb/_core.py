@@ -68,9 +68,11 @@ class Core:
             )
 
     @classmethod
-    def open_durable(cls, path: str, durability: str | None = None) -> "Core":
+    def open_durable(
+        cls, path: str, durability: str | None = None, ipc: str | None = None
+    ) -> "Core":
         try:
-            return cls(_stratadb.Handle.open_durable(path, durability))
+            return cls(_stratadb.Handle.open_durable(path, durability, ipc))
         except _NativeError as exc:
             raise error_from_payload(exc.args[0] if exc.args else "{}") from None
 

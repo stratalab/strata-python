@@ -35,12 +35,15 @@ def test_open_regular_file_raises_typed_error(tmp_path):
     assert not isinstance(exc, ValueError)
 
 
-def test_double_open_same_durable_path_raises_typed_error(tmp_path):
+def test_double_open_off_mode_raises_typed_error(tmp_path):
+    # With ipc="off" a durable open is exclusive: a second off-mode open of the
+    # same path raises typed (no brokering). (The default ipc="host" instead
+    # brokers in — see tests/test_ipc.py.)
     path = str(tmp_path / "db")
-    first = stratadb.open(path)  # holds the exclusive process lock
+    first = stratadb.open(path, ipc="off")  # holds the exclusive process lock
     try:
         with pytest.raises(errors.StrataError):
-            stratadb.open(path)
+            stratadb.open(path, ipc="off")
     finally:
         first.close()
 

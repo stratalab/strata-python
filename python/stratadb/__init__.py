@@ -115,6 +115,7 @@ class Strata:
         branch: str | None = None,
         space: str | None = None,
         durability: str | None = None,
+        ipc: str | None = None,
     ):
         if durability not in (None, "standard", "always"):
             raise client_error(
@@ -124,17 +125,34 @@ class Strata:
                 'use "standard" (durable at the next sync point) or "always" '
                 "(synced before every acknowledgement)",
             )
+        if ipc not in (None, "host", "client", "off"):
+            raise client_error(
+                InvalidArgumentError,
+                "invalid_argument.sdk.command",
+                f"invalid ipc mode {ipc!r}",
+                'use "host" (default: own or broker, host a socket when owning), '
+                '"client" (broker on contention, never host), or "off" (exclusive open)',
+            )
+        if ipc in ("host", "client") and os.name != "posix":
+            raise client_error(
+                InvalidArgumentError,
+                "invalid_argument.sdk.command",
+                "multi-process IPC is unix-only",
+                'on this platform open with ipc="off" (or omit ipc=); '
+                "a durable database is exclusively owned by one handle",
+            )
         if cache:
-            if durability is not None:
+            if durability is not None or ipc is not None:
                 raise client_error(
                     InvalidArgumentError,
                     "invalid_argument.sdk.command",
-                    "durability= applies only to durable databases",
-                    "an in-memory (cache=True) database has no durability mode",
+                    "durability=/ipc= apply only to durable databases",
+                    "an in-memory (cache=True) database has neither a durability "
+                    "mode nor multi-process brokering",
                 )
             self._core = Core.open_cache()
         elif path is not None:
-            self._core = Core.open_durable(str(path), durability)
+            self._core = Core.open_durable(str(path), durability, ipc)
         else:
             raise client_error(
                 InvalidArgumentError, _NO_DB_CODE, "no database specified", _NO_DB_HINT
@@ -336,6 +354,7 @@ def open(  # noqa: A001 — deliberate builtin shadow at module scope (gzip.open
     branch: str | None = None,
     space: str | None = None,
     durability: str | None = None,
+    ipc: str | None = None,
 ) -> Strata:
     """Opens a Strata database — the canonical entry point.
 
@@ -351,11 +370,21 @@ def open(  # noqa: A001 — deliberate builtin shadow at module scope (gzip.open
     receipt reports what actually held: ``receipt.commit.durability`` is one of
     ``"not_durable"``, ``"standard"``, ``"always"``, or ``"uncertain"``.
 
+    ``ipc`` selects the multi-process policy for a durable database (unix):
+    ``"host"`` (the default) owns the store when the path is free — hosting a
+    socket other processes can broker to — and transparently brokers to the
+    existing owner otherwise, so several processes (or handles) share one
+    durable database; ``"client"`` brokers on contention but never hosts;
+    ``"off"`` is a raw exclusive open with no brokering (a second open then
+    raises). ``db.admin.ipc_status()`` reports the live topology.
+
     Never opens the current directory implicitly: with neither ``path`` nor
     ``cache=True`` it raises
     :class:`~stratadb.errors.InvalidArgumentError`.
     """
-    return Strata(path, cache=cache, branch=branch, space=space, durability=durability)
+    return Strata(
+        path, cache=cache, branch=branch, space=space, durability=durability, ipc=ipc
+    )
 
 
 def from_env(*, branch: str | None = None, space: str | None = None) -> Strata:

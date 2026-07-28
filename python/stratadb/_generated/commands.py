@@ -72,6 +72,15 @@ class Commands:
         data = self._core.data(cmd)
         return models.AdminDatabaseInfo.from_wire(data)
 
+    def admin_ipc_status(self):
+        """Report this process's multi-process IPC state.
+
+        Errors: failed_precondition.engine.runtime_closed
+        """
+        cmd = {'type': 'ipc_status'}
+        data = self._core.data(cmd)
+        return models.AdminIpcStatus.from_wire(data)
+
     def admin_metrics(self, *, branch=None):
         """Read lightweight database metrics.
 

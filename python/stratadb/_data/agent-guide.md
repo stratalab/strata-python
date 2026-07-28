@@ -32,12 +32,17 @@ db.kv.put("k", "v").commit.durability   # "always" — what storage attested at 
 `stratadb.open()` never opens the current directory implicitly — pass a path, set
 `STRATA_DB`, or use `cache=True`, or it raises `InvalidArgumentError`.
 
-A durable database is **exclusively owned by one open handle**: Strata is
-embedded (not a server), and the engine takes an exclusive process lock on the
-path. Open once and share that handle across your app — it is safe for
-concurrent use from multiple threads. A second `open()` on the same path (same
-or another process) fails until the first handle closes; `cache=True` opens are
-unaffected (each is an independent in-memory database).
+A durable database has **one owner process at a time**, but you are not limited
+to one handle. On unix, `open()` defaults to `ipc="host"`: the first opener owns
+the store and hosts a Unix-domain socket, and later opens — another handle in
+the same process, or a whole separate process — transparently broker to that
+owner over the socket. So a notebook, a web app's workers, and a one-off script
+can all `stratadb.open("./app-data")` the same path and share one database; the
+owner serializes every writer. `db.admin.ipc_status()` reports the topology
+(`is_owner`, `hosting`, `owner_pid`). Within one process, still prefer sharing a
+single handle across threads (it is concurrency-safe). Pass `ipc="off"` for a
+raw exclusive open (a second open then raises `UnavailableError`); `ipc="client"`
+brokers to an existing owner but never hosts. IPC is unix-only.
 
 ## Key-value — `db.kv`
 
@@ -223,12 +228,13 @@ Exact failure modes worth recognizing up front (match on the `.code`, not the me
   bundled offline/keyless embedder yet. For keyless vector search, upsert literal
   vectors (`db.vectors.upsert(coll, key, [0.1, 0.2, ...])`), as `python -m stratadb.demo`
   does.
-- **One open handle per durable path.** A second `stratadb.open(path)` — from the
-  same or another process — raises `UnavailableError`
-  (`unavailable.engine.persistence`) while the first handle is open: the engine
-  holds an exclusive process lock. Share one module-level handle (threads are
-  fine); reopen succeeds after `close()`. Don't treat this like SQLite's
-  multi-connection model.
+- **Durable opens share, they don't collide (unix).** By default (`ipc="host"`)
+  a second `stratadb.open(path)` — another handle or another process — brokers to
+  the first as the owner rather than raising; `db.admin.ipc_status()` shows who
+  owns it. Opt out with `ipc="off"` for an exclusive open, where a second open
+  raises `UnavailableError` (`unavailable.engine.persistence`) until the owner
+  closes. On non-unix platforms IPC is unavailable and durable opens are always
+  exclusive (`ipc="host"/"client"` raise `InvalidArgumentError`).
 - **Default durability is `"standard"`, not fsync-per-commit.** A commit
   acknowledged with `receipt.commit.durability == "standard"` becomes durable at
   the *next sync point* (close, buffer threshold, rotation) — a crash/SIGKILL
@@ -247,7 +253,9 @@ Exact failure modes worth recognizing up front (match on the `.code`, not the me
 `db.admin` reads control-plane facts (never writes): `db.admin.ping()`
 (liveness), `db.admin.info()` (identity + catalog summary), plus
 `db.admin.health()`, `db.admin.metrics()`, `db.admin.describe()`, and
-`db.admin.config()`.
+`db.admin.config()`. `db.admin.ipc_status()` reports the multi-process topology
+— `.is_owner`, `.hosting`, `.owner_pid`, `.socket_path`, `.client_count` (see
+Install & open for `ipc=`).
 
 `db.arrow` bulk-moves a primitive to and from an Arrow/Parquet file. `target`
 is one of `kv`, `json`, `vector`, `graph`, or `event` — vector imports take

@@ -166,6 +166,26 @@ class AdminHealthStatus(str, Enum):
 
 
 @dataclass
+class AdminIpcStatus:
+    """Multi-process IPC status output."""
+    client_count: int
+    hosting: bool
+    is_owner: bool
+    owner_pid: Optional[int] = None
+    socket_path: Optional[str] = None
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "AdminIpcStatus":
+        return cls(
+            client_count=d['client_count'],
+            hosting=d['hosting'],
+            is_owner=d['is_owner'],
+            owner_pid=(None if d.get('owner_pid') is None else d['owner_pid']),
+            socket_path=(None if d.get('socket_path') is None else d['socket_path']),
+        )
+
+
+@dataclass
 class AdminMetrics:
     """Metrics output."""
     branch_count: int

@@ -79,3 +79,17 @@ class AdminNamespace(Namespace):
             True
         """
         return self._c.admin_config_key(key)
+
+    def ipc_status(self) -> Any:
+        """This process's multi-process IPC state.
+
+        Reports whether this handle owns the store (``is_owner``), whether it
+        hosts a broker socket others can attach to (``hosting``, with
+        ``socket_path`` and ``client_count``), and the owner's pid when known.
+        Durable opens default to ``ipc="host"``; cache databases never broker.
+
+        Examples:
+            >>> db.admin.ipc_status().hosting
+            False
+        """
+        return self._c.admin_ipc_status()
