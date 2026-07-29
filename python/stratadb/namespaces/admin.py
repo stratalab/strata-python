@@ -93,3 +93,16 @@ class AdminNamespace(Namespace):
             False
         """
         return self._c.admin_ipc_status()
+
+    def ipc_stop(self) -> Any:
+        """Stop hosting the multi-process broker socket.
+
+        The store stays open and usable in-process; it simply stops accepting
+        new brokered clients. ``.stopped`` is ``True`` when a running host was
+        stopped, ``False`` when this process was not hosting.
+
+        Examples:
+            >>> db.admin.ipc_stop().stopped
+            False
+        """
+        return self._c.admin_ipc_stop()

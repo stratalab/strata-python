@@ -14,6 +14,7 @@ GENERATED_COMMANDS = [
     'admin.health',
     'admin.info',
     'admin.ipc_status',
+    'admin.ipc_stop',
     'admin.metrics',
     'admin.ping',
     'arrow.export',

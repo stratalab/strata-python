@@ -81,6 +81,15 @@ class Commands:
         data = self._core.data(cmd)
         return models.AdminIpcStatus.from_wire(data)
 
+    def admin_ipc_stop(self):
+        """Stop hosting the multi-process broker socket.
+
+        Errors: failed_precondition.engine.runtime_closed
+        """
+        cmd = {'type': 'ipc_stop'}
+        data = self._core.data(cmd)
+        return models.AdminIpcStop.from_wire(data)
+
     def admin_metrics(self, *, branch=None):
         """Read lightweight database metrics.
 

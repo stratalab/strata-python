@@ -255,7 +255,8 @@ Exact failure modes worth recognizing up front (match on the `.code`, not the me
 `db.admin.health()`, `db.admin.metrics()`, `db.admin.describe()`, and
 `db.admin.config()`. `db.admin.ipc_status()` reports the multi-process topology
 — `.is_owner`, `.hosting`, `.owner_pid`, `.socket_path`, `.client_count` (see
-Install & open for `ipc=`).
+Install & open for `ipc=`); `db.admin.ipc_stop()` stops hosting the broker
+socket (`.stopped`) while the store stays usable in-process.
 
 `db.arrow` bulk-moves a primitive to and from an Arrow/Parquet file. `target`
 is one of `kv`, `json`, `vector`, `graph`, or `event` — vector imports take

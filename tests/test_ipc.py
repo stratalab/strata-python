@@ -91,6 +91,39 @@ def test_off_mode_is_exclusive(durable_path):
         first.close()
 
 
+def test_ipc_stop_unhosts_but_keeps_store_usable(durable_path):
+    db = stratadb.open(durable_path)  # host
+    try:
+        assert db.admin.ipc_status().hosting is True
+        assert db.admin.ipc_stop().stopped is True  # a running host was stopped
+        assert db.admin.ipc_status().hosting is False
+        assert db.admin.ipc_stop().stopped is False  # nothing left to stop
+        # Unhosting only stops brokering; the store is still usable in-process.
+        db.kv.put("k", "v")
+        assert db.kv.get("k") == b"v"
+    finally:
+        db.close()
+
+
+def test_ipc_stop_when_not_hosting_is_false(durable_path):
+    db = stratadb.open(durable_path, ipc="off")  # never hosts
+    try:
+        assert db.admin.ipc_stop().stopped is False
+    finally:
+        db.close()
+
+
+def test_stopped_host_no_longer_accepts_new_clients(durable_path):
+    owner = stratadb.open(durable_path)  # host
+    try:
+        owner.admin.ipc_stop()  # drop the socket; owner keeps the writer lock
+        # A new opener can neither broker (no socket) nor win the lock (held).
+        with pytest.raises(errors.StrataError):
+            stratadb.open(durable_path, ipc="off")
+    finally:
+        owner.close()
+
+
 def test_invalid_ipc_mode_is_typed(durable_path):
     with pytest.raises(errors.InvalidArgumentError) as excinfo:
         stratadb.open(durable_path, ipc="sometimes")

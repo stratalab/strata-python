@@ -184,6 +184,7 @@ BINDINGS = {
     "admin.config": Binding("admin", "config", "{}.default_branch", "json"),
     "admin.config_key": Binding("admin", "config_value"),
     "admin.ipc_status": Binding("admin", "ipc_status", "{}.hosting"),
+    "admin.ipc_stop": Binding("admin", "ipc_stop", "{}.stopped"),
     # inference metadata (db.ai) — no model, no network, no local runtime, no
     # keys. The model-dependent verbs (generate/embed/rank/tokenize) and the
     # network/machine-state ones (models.pull/local) stay allowlisted.

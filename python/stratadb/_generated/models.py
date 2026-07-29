@@ -186,6 +186,18 @@ class AdminIpcStatus:
 
 
 @dataclass
+class AdminIpcStop:
+    """Multi-process IPC stop output."""
+    stopped: bool
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "AdminIpcStop":
+        return cls(
+            stopped=d['stopped'],
+        )
+
+
+@dataclass
 class AdminMetrics:
     """Metrics output."""
     branch_count: int
