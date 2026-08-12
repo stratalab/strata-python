@@ -27,10 +27,12 @@ print(stratadb.agents_guide())      # the entire surface, offline — read this 
   primitive's real return shape (doubles as a smoke test).
 - `stratadb.init("path/to/repo")` — scaffold the Strata agent skill and an
   `AGENTS.md` stanza into a repo so the next agent starts warm.
-- `npx strata init` — one command outside Python: installs the `strata` CLI,
-  registers the Strata MCP server with every agent surface in the workspace,
-  and installs the full skill set
-  ([strata-agent-skills](https://github.com/stratalab/strata-agent-skills)).
+- `npx skills add stratalab/strata-agent-skills` — install the full Strata
+  skill set (usage, branching, time travel) for Claude Code, Cursor, Codex,
+  and friends. The same repo
+  ([strata-agent-skills](https://github.com/stratalab/strata-agent-skills))
+  carries the one-command workspace setup (CLI + MCP registration + skills);
+  its npm publish is pending, so use the skills command today.
 
 ### Names & surfaces
 
@@ -42,7 +44,7 @@ Strata appears under a few names; here is what each string is and where it's use
 | Python import | `import stratadb` | the SDK this README documents |
 | CLI | `strata` | a separate binary (strata-core); **not** installed by this wheel |
 | MCP server | `strata <db> mcp serve` | snippet via `stratadb.mcp_config(path)` |
-| One-command setup | `npx strata init` | CLI install + MCP registration + skills |
+| Agent skills | `npx skills add stratalab/strata-agent-skills` | one-command setup lives in the same repo (npm publish pending) |
 | GitHub repo | `stratalab/strata-python` | this SDK |
 | GitHub org | `stratalab` | |
 | Website / docs | `stratadb.org` | |
