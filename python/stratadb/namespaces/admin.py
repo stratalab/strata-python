@@ -27,7 +27,15 @@ class AdminNamespace(Namespace):
         return self._c.admin_ping()
 
     def info(self) -> Any:
-        """Database info (target, durability, branch/space counts, version).
+        """Database info: target, durability, branch/space counts, version, and
+        the resolved storage memory budget.
+
+        ``memory_budget`` reports what the database is sized to run on:
+        ``total_bytes`` and a ``source`` of ``explicit`` (a budget you set),
+        ``derived_from_host`` (auto-derived at open — 25% of usable host
+        memory, capped at 8 GiB — with ``usable_host_bytes`` showing what was
+        detected), or ``fixed_default`` (the fallback when the host cannot be
+        probed).
 
         Examples:
             >>> db.admin.info().branch_count

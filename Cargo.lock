@@ -2185,7 +2185,7 @@ dependencies = [
 
 [[package]]
 name = "stratadb-python"
-version = "1.0.2"
+version = "1.0.3"
 dependencies = [
  "pyo3",
  "serde_json",

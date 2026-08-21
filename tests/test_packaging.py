@@ -26,7 +26,7 @@ def test_agents_guide_matches_bundled():
 
 
 def test_version_is_engine_version():
-    assert stratadb.__version__ == "1.0.2"
+    assert stratadb.__version__ == "1.0.3"
 
 
 def test_public_namespaces_present():

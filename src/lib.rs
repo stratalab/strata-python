@@ -50,14 +50,20 @@ mod conn {
     use std::path::PathBuf;
 
     pub use strata_executor::ipc::Connection as Inner;
-    use strata_executor::{DurableLocalOpenOptions, Executor, ExecutorError, IpcMode};
+    use strata_executor::{
+        DurableLocalOpenOptions, Executor, ExecutorError, IpcMode, SessionAccess,
+    };
 
     pub fn open_durable(
         path: PathBuf,
         options: DurableLocalOpenOptions,
         ipc: IpcMode,
     ) -> Result<Inner, ExecutorError> {
-        Inner::open_durable_local_brokered(path, options, ipc)
+        // The Python SDK opens full read-write handles; it exposes no read-only
+        // session surface, so it declares the pre-hello default access. A
+        // brokered read-only client is a CLI/server concept (`--read-only`) that
+        // the SDK does not surface yet.
+        Inner::open_durable_local_brokered(path, options, ipc, SessionAccess::ReadWrite)
     }
 
     pub fn open_cache() -> Result<Inner, ExecutorError> {
