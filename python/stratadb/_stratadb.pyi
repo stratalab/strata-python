@@ -13,6 +13,7 @@ class Handle:
         path: str,
         durability: Optional[str] = ...,
         ipc: Optional[str] = ...,
+        memory_budget: Optional[int] = ...,
     ) -> "Handle": ...
     @staticmethod
     def open_cache() -> "Handle": ...

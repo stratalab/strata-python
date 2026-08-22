@@ -27,6 +27,12 @@ with stratadb.open(cache=True) as db:
 # commit before acknowledgement.
 db = stratadb.open("./app-data", durability="always")
 db.kv.put("k", "v").commit.durability   # "always" — what storage attested at ack
+
+# Storage memory budget (bytes, >= 1 MiB). Omitted: derived at open from host
+# memory (25% of usable, capped at 8 GiB). Per open, not persisted.
+db = stratadb.open("./app-data", memory_budget=256 * 1024 * 1024)
+db.admin.info().memory_budget.source    # "explicit" (else "derived_from_host")
+db.admin.info().memory_budget.total_bytes
 ```
 
 `stratadb.open()` never opens the current directory implicitly — pass a path, set
@@ -241,6 +247,12 @@ Exact failure modes worth recognizing up front (match on the `.code`, not the me
   before then loses the acknowledged tail. Open with
   `stratadb.open(path, durability="always")` when every acknowledgement must
   survive process death; then receipts report `"always"`.
+- **`memory_budget=` belongs to the owner.** It sizes storage for the handle
+  that owns the store on this open; a handle that brokers to an existing owner
+  (the `ipc="host"` default on a busy path) inherits the owner's budget and its
+  own `memory_budget=` is ignored — check `db.admin.info().memory_budget`.
+  Budgets below 1 MiB raise `InvalidArgumentError`
+  (`invalid_argument.engine.persistence`); `cache=True` takes no budget.
 - **A closed handle raises typed errors.** Any call after `db.close()` raises
   `FailedPreconditionError` (`failed_precondition.sdk.handle_closed`); `close()`
   itself is idempotent.

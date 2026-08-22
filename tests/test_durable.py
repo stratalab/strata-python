@@ -3,6 +3,7 @@ persistence across a close/reopen. These run unconditionally (no network)."""
 
 from __future__ import annotations
 
+import os
 import signal
 import subprocess
 import sys
@@ -80,6 +81,58 @@ def test_open_durability_validation(tmp_path):
     db = stratadb.open(tmp_path / "db", durability="standard")
     assert db.kv.put("k", "v").commit.durability == "standard"
     db.close()
+
+
+def test_open_memory_budget_explicit(tmp_path):
+    budget = 64 * 1024 * 1024
+    db = stratadb.open(tmp_path / "db", memory_budget=budget)
+    try:
+        info = db.admin.info().memory_budget
+        assert info.source == "explicit"
+        assert info.total_bytes == budget
+        assert info.usable_host_bytes is None
+    finally:
+        db.close()
+    # Per open, not persisted: a plain reopen derives a budget again.
+    db = stratadb.open(tmp_path / "db")
+    try:
+        info = db.admin.info().memory_budget
+        assert info.source in ("derived_from_host", "fixed_default")
+        assert info.total_bytes > 0
+    finally:
+        db.close()
+
+
+@pytest.mark.skipif(os.name != "posix", reason="multi-process IPC is unix-only")
+def test_open_memory_budget_belongs_to_the_owner(tmp_path):
+    owner = stratadb.open(tmp_path / "db", memory_budget=64 * 1024 * 1024)
+    try:
+        # A second open brokers to the owner; its own budget is not applied.
+        client = stratadb.open(tmp_path / "db", memory_budget=128 * 1024 * 1024)
+        try:
+            assert client.admin.ipc_status().is_owner is False
+            assert client.admin.info().memory_budget.total_bytes == 64 * 1024 * 1024
+            assert client.admin.info().memory_budget.source == "explicit"
+        finally:
+            client.close()
+    finally:
+        owner.close()
+
+
+def test_open_memory_budget_validation(tmp_path):
+    # SDK-side guard: a positive int of bytes, never a bool.
+    for bad in (0, -1, True, 1.5, "64MiB"):
+        with pytest.raises(errors.InvalidArgumentError) as excinfo:
+            stratadb.open(tmp_path / "db", memory_budget=bad)
+        assert excinfo.value.code == "invalid_argument.sdk.command", bad
+    # Cache databases take no budget in this SDK.
+    with pytest.raises(errors.InvalidArgumentError) as excinfo:
+        stratadb.open(cache=True, memory_budget=1 << 20)
+    assert excinfo.value.code == "invalid_argument.sdk.command"
+    # The engine is the authority on the minimum (1 MiB) and answers typed.
+    with pytest.raises(errors.InvalidArgumentError) as excinfo:
+        stratadb.open(tmp_path / "tiny", memory_budget=1)
+    assert excinfo.value.code == "invalid_argument.engine.persistence"
 
 
 _SIGKILL_WRITER = textwrap.dedent(

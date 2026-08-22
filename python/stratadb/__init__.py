@@ -116,6 +116,7 @@ class Strata:
         space: str | None = None,
         durability: str | None = None,
         ipc: str | None = None,
+        memory_budget: int | None = None,
     ):
         if durability not in (None, "standard", "always"):
             raise client_error(
@@ -141,18 +142,31 @@ class Strata:
                 'on this platform open with ipc="off" (or omit ipc=); '
                 "a durable database is exclusively owned by one handle",
             )
+        if memory_budget is not None and (
+            isinstance(memory_budget, bool)
+            or not isinstance(memory_budget, int)
+            or memory_budget <= 0
+        ):
+            raise client_error(
+                InvalidArgumentError,
+                "invalid_argument.sdk.command",
+                f"invalid memory_budget {memory_budget!r}",
+                "pass the total storage memory budget as a positive int of bytes "
+                "(at least 1 MiB), or omit it to derive one from host memory",
+            )
         if cache:
-            if durability is not None or ipc is not None:
+            if durability is not None or ipc is not None or memory_budget is not None:
                 raise client_error(
                     InvalidArgumentError,
                     "invalid_argument.sdk.command",
-                    "durability=/ipc= apply only to durable databases",
+                    "durability=/ipc=/memory_budget= apply only to durable databases",
                     "an in-memory (cache=True) database has neither a durability "
-                    "mode nor multi-process brokering",
+                    "mode nor multi-process brokering, and the SDK does not size "
+                    "one explicitly",
                 )
             self._core = Core.open_cache()
         elif path is not None:
-            self._core = Core.open_durable(str(path), durability, ipc)
+            self._core = Core.open_durable(str(path), durability, ipc, memory_budget)
         else:
             raise client_error(
                 InvalidArgumentError, _NO_DB_CODE, "no database specified", _NO_DB_HINT
@@ -355,6 +369,7 @@ def open(  # noqa: A001 — deliberate builtin shadow at module scope (gzip.open
     space: str | None = None,
     durability: str | None = None,
     ipc: str | None = None,
+    memory_budget: int | None = None,
 ) -> Strata:
     """Opens a Strata database — the canonical entry point.
 
@@ -378,12 +393,28 @@ def open(  # noqa: A001 — deliberate builtin shadow at module scope (gzip.open
     ``"off"`` is a raw exclusive open with no brokering (a second open then
     raises). ``db.admin.ipc_status()`` reports the live topology.
 
+    ``memory_budget`` sizes the storage memory budget of a durable database, in
+    bytes (at least 1 MiB; the engine rejects smaller with
+    ``invalid_argument.engine.persistence``). When omitted the engine derives
+    one at open — 25% of usable host memory, capped at 8 GiB. It applies to
+    the handle that *owns* the store for this open (per open, not persisted);
+    a handle that brokers to an existing owner inherits the owner's budget.
+    ``db.admin.info().memory_budget`` reports what held (``total_bytes`` and a
+    ``source`` of ``"explicit"``, ``"derived_from_host"``, or
+    ``"fixed_default"``).
+
     Never opens the current directory implicitly: with neither ``path`` nor
     ``cache=True`` it raises
     :class:`~stratadb.errors.InvalidArgumentError`.
     """
     return Strata(
-        path, cache=cache, branch=branch, space=space, durability=durability, ipc=ipc
+        path,
+        cache=cache,
+        branch=branch,
+        space=space,
+        durability=durability,
+        ipc=ipc,
+        memory_budget=memory_budget,
     )
 
 

@@ -226,12 +226,23 @@ impl Handle {
     /// or `"always"`. `ipc` selects the multi-process policy: `"host"`
     /// (default — own the store or broker to its owner, hosting a socket for
     /// others when owning), `"client"` (broker on contention, never host), or
-    /// `"off"` (raw exclusive open, no brokering). The Python layer validates
-    /// both strings; the checks here are backstops.
+    /// `"off"` (raw exclusive open, no brokering). `memory_budget` sets the
+    /// total storage memory budget in bytes for the opened database; when
+    /// omitted the engine derives one from host memory at open. The Python
+    /// layer validates all three; the checks here are backstops (the storage
+    /// layer rejects a budget below its minimum with a typed error).
     #[staticmethod]
-    #[pyo3(signature = (path, durability=None, ipc=None))]
-    fn open_durable(path: String, durability: Option<&str>, ipc: Option<&str>) -> PyResult<Self> {
+    #[pyo3(signature = (path, durability=None, ipc=None, memory_budget=None))]
+    fn open_durable(
+        path: String,
+        durability: Option<&str>,
+        ipc: Option<&str>,
+        memory_budget: Option<u64>,
+    ) -> PyResult<Self> {
         let mut options = DurableLocalOpenOptions::new();
+        if let Some(total_bytes) = memory_budget {
+            options = options.with_memory_budget(total_bytes);
+        }
         match durability {
             None | Some("standard") => {}
             Some("always") => options = options.with_durability(DurabilityMode::Always),

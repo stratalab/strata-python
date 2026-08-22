@@ -31,7 +31,8 @@ class AdminNamespace(Namespace):
         the resolved storage memory budget.
 
         ``memory_budget`` reports what the database is sized to run on:
-        ``total_bytes`` and a ``source`` of ``explicit`` (a budget you set),
+        ``total_bytes`` and a ``source`` of ``explicit`` (a budget you set via
+        ``stratadb.open(path, memory_budget=...)``),
         ``derived_from_host`` (auto-derived at open — 25% of usable host
         memory, capped at 8 GiB — with ``usable_host_bytes`` showing what was
         detected), or ``fixed_default`` (the fallback when the host cannot be
