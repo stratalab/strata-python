@@ -9,7 +9,12 @@ class Handle:
     """One open Strata database, over the executor's serialized command wire."""
 
     @staticmethod
-    def open_durable(path: str) -> "Handle": ...
+    def open_durable(
+        path: str,
+        durability: Optional[str] = ...,
+        ipc: Optional[str] = ...,
+        memory_budget: Optional[int] = ...,
+    ) -> "Handle": ...
     @staticmethod
     def open_cache() -> "Handle": ...
     def execute(self, command_json: str) -> str: ...

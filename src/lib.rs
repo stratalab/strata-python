@@ -11,19 +11,151 @@
 //! generated in Python from the executor's IDL catalog; the binding only
 //! opens a handle, ferries one command string across, and reports failures.
 //!
+//! Durable opens route through the executor's transport-transparent
+//! [`Connection`](strata_executor::ipc::Connection) (unix): the first opener
+//! owns the store and may host a socket; later opens broker to the owner, so
+//! multiple processes (or handles) share one durable database. On non-unix
+//! targets the `ipc` module does not exist and a local-only stand-in with the
+//! same surface is used — `ipc="host"/"client"` is rejected in Python first.
+//!
 //! Data-plane only: built without the `hub` (network) and `inference` (model
 //! runtime) executor features, so the wheel is lean and needs no toolchain to
 //! install.
 
 use std::path::PathBuf;
-use std::sync::Mutex;
+use std::sync::RwLock;
 
 use pyo3::create_exception;
 use pyo3::exceptions::{PyException, PyRuntimeError, PyValueError};
 use pyo3::prelude::*;
 use pyo3::wrap_pyfunction;
 
-use strata_executor::{guard_json_integers, Command, Executor, ExecutorError};
+use strata_executor::{
+    guard_json_integers, Command, DurabilityMode, DurableLocalOpenOptions, ExecutorError, IpcMode,
+};
+
+/// Platform shim: one `Inner` connection type with a uniform surface.
+///
+/// On unix the executor's `Connection` brokers durable opens across
+/// processes; elsewhere a minimal local-only twin keeps the exact same
+/// method surface (including the deferred, per-command scope application),
+/// so `Handle` below is platform-independent.
+#[cfg(unix)]
+mod conn {
+    #![allow(
+        clippy::result_large_err,
+        reason = "ExecutorError is the executor's frozen serialized-boundary type; \
+                  the executor deliberately declined to box it, so the size is not ours to change"
+    )]
+    use std::path::PathBuf;
+
+    pub use strata_executor::ipc::Connection as Inner;
+    use strata_executor::{
+        DurableLocalOpenOptions, Executor, ExecutorError, IpcMode, SessionAccess,
+    };
+
+    pub fn open_durable(
+        path: PathBuf,
+        options: DurableLocalOpenOptions,
+        ipc: IpcMode,
+    ) -> Result<Inner, ExecutorError> {
+        // The Python SDK opens full read-write handles; it exposes no read-only
+        // session surface, so it declares the pre-hello default access. A
+        // brokered read-only client is a CLI/server concept (`--read-only`) that
+        // the SDK does not surface yet.
+        Inner::open_durable_local_brokered(path, options, ipc, SessionAccess::ReadWrite)
+    }
+
+    pub fn open_cache() -> Result<Inner, ExecutorError> {
+        Executor::open_cache().map(Inner::cache)
+    }
+}
+
+#[cfg(not(unix))]
+mod conn {
+    #![allow(
+        clippy::result_large_err,
+        reason = "ExecutorError is the executor's frozen serialized-boundary type; \
+                  the executor deliberately declined to box it, so the size is not ours to change"
+    )]
+    use std::path::PathBuf;
+    use std::sync::Mutex;
+
+    use strata_executor::{
+        Command, DurableLocalOpenOptions, Executor, ExecutorError, IpcMode, Output,
+    };
+
+    /// Local-only stand-in for the unix `Connection`: same surface, no
+    /// brokering. Scope is stored and applied per command, mirroring
+    /// `Connection::execute`'s Local arm, so validation timing is identical
+    /// across platforms.
+    pub struct Inner {
+        executor: Mutex<Executor>,
+        scope: Mutex<(String, String)>,
+    }
+
+    impl Inner {
+        fn wrap(executor: Executor) -> Self {
+            let scope = (
+                executor.default_branch().to_owned(),
+                executor.default_space().to_owned(),
+            );
+            Self {
+                executor: Mutex::new(executor),
+                scope: Mutex::new(scope),
+            }
+        }
+
+        pub fn execute(&self, command: Command) -> Result<Output, ExecutorError> {
+            let (branch, space) = self.scope.lock().expect("scope lock poisoned").clone();
+            let mut executor = self.executor.lock().expect("executor lock poisoned");
+            executor.set_default_branch(branch)?;
+            executor.set_default_space(space)?;
+            executor.execute(command)
+        }
+
+        pub fn set_default_branch(&self, branch: String) {
+            self.scope.lock().expect("scope lock poisoned").0 = branch;
+        }
+
+        pub fn set_default_space(&self, space: String) {
+            self.scope.lock().expect("scope lock poisoned").1 = space;
+        }
+
+        #[must_use]
+        pub fn default_branch(&self) -> String {
+            self.scope.lock().expect("scope lock poisoned").0.clone()
+        }
+
+        #[must_use]
+        pub fn default_space(&self) -> String {
+            self.scope.lock().expect("scope lock poisoned").1.clone()
+        }
+
+        pub fn close(self) -> Result<(), ExecutorError> {
+            let mut executor = self
+                .executor
+                .into_inner()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            executor.close()
+        }
+    }
+
+    pub fn open_durable(
+        path: PathBuf,
+        options: DurableLocalOpenOptions,
+        ipc: IpcMode,
+    ) -> Result<Inner, ExecutorError> {
+        // host/client are rejected by the Python layer on non-unix targets;
+        // every reachable mode here means a plain single-process open.
+        let _ = ipc;
+        Executor::open_durable_local_with_options(path, options).map(Inner::wrap)
+    }
+
+    pub fn open_cache() -> Result<Inner, ExecutorError> {
+        Executor::open_cache().map(Inner::wrap)
+    }
+}
 
 create_exception!(
     _stratadb,
@@ -64,38 +196,81 @@ enum CallError {
     Domain(ExecutorError),
 }
 
-/// One open Strata database, wrapping a single executor handle.
+/// One open Strata database, wrapping one connection.
 ///
-/// The executor is `&mut self` per call; the `Mutex` serializes calls on one
-/// handle. Every method takes the lock *inside* `Python::allow_threads`, i.e.
-/// with the GIL released, so a thread waiting on a busy handle never holds the
-/// GIL while it waits — concurrent callers block on the mutex without wedging
-/// the interpreter, and unrelated Python threads keep running (issue #31). A
-/// durable database holds an exclusive process lock — a second `open_durable`
-/// on the same path surfaces the engine's lock error.
+/// The connection's `execute` is `&self` (it synchronizes internally at the
+/// right granularity — the executor mutex locally, the socket client mutex
+/// remotely), so calls take this lock in `read` mode and only `close` takes
+/// `write`. Every lock is taken *inside* `Python::allow_threads`, i.e. with
+/// the GIL released, so a thread waiting on a busy handle never holds the GIL
+/// while it waits (issue #31). A durable database has one owner per path; on
+/// unix additional opens broker to the owner over IPC instead of failing.
 #[pyclass]
 struct Handle {
-    inner: Mutex<Option<Executor>>,
+    inner: RwLock<Option<conn::Inner>>,
+}
+
+impl Handle {
+    fn wrap(inner: conn::Inner) -> Self {
+        Self {
+            inner: RwLock::new(Some(inner)),
+        }
+    }
 }
 
 #[pymethods]
 impl Handle {
     /// Opens a durable database at `path`, creating it if absent.
+    ///
+    /// `durability` selects the commit-durability mode: `"standard"` (default)
+    /// or `"always"`. `ipc` selects the multi-process policy: `"host"`
+    /// (default — own the store or broker to its owner, hosting a socket for
+    /// others when owning), `"client"` (broker on contention, never host), or
+    /// `"off"` (raw exclusive open, no brokering). `memory_budget` sets the
+    /// total storage memory budget in bytes for the opened database; when
+    /// omitted the engine derives one from host memory at open. The Python
+    /// layer validates all three; the checks here are backstops (the storage
+    /// layer rejects a budget below its minimum with a typed error).
     #[staticmethod]
-    fn open_durable(path: String) -> PyResult<Self> {
-        let executor = Executor::open_durable_local(PathBuf::from(path)).map_err(native_error)?;
-        Ok(Self {
-            inner: Mutex::new(Some(executor)),
-        })
+    #[pyo3(signature = (path, durability=None, ipc=None, memory_budget=None))]
+    fn open_durable(
+        path: String,
+        durability: Option<&str>,
+        ipc: Option<&str>,
+        memory_budget: Option<u64>,
+    ) -> PyResult<Self> {
+        let mut options = DurableLocalOpenOptions::new();
+        if let Some(total_bytes) = memory_budget {
+            options = options.with_memory_budget(total_bytes);
+        }
+        match durability {
+            None | Some("standard") => {}
+            Some("always") => options = options.with_durability(DurabilityMode::Always),
+            Some(other) => {
+                return Err(PyValueError::new_err(format!(
+                    "invalid durability {other:?}: expected \"standard\" or \"always\""
+                )))
+            }
+        }
+        let ipc = match ipc {
+            None | Some("host") => IpcMode::Host,
+            Some("client") => IpcMode::Client,
+            Some("off") => IpcMode::Off,
+            Some(other) => {
+                return Err(PyValueError::new_err(format!(
+                    "invalid ipc mode {other:?}: expected \"host\", \"client\", or \"off\""
+                )))
+            }
+        };
+        let inner = conn::open_durable(PathBuf::from(path), options, ipc).map_err(native_error)?;
+        Ok(Self::wrap(inner))
     }
 
-    /// Opens a volatile in-memory database (nothing persists).
+    /// Opens a volatile in-memory database (nothing persists, no brokering).
     #[staticmethod]
     fn open_cache() -> PyResult<Self> {
-        let executor = Executor::open_cache().map_err(native_error)?;
-        Ok(Self {
-            inner: Mutex::new(Some(executor)),
-        })
+        let inner = conn::open_cache().map_err(native_error)?;
+        Ok(Self::wrap(inner))
     }
 
     /// Executes one serialized command and returns its JSON output envelope.
@@ -119,14 +294,13 @@ impl Handle {
         // so an invalid command fails fast before any locking.
         let command: Command = serde_json::from_str(command_json)
             .map_err(|error| PyValueError::new_err(format!("invalid command: {error}")))?;
-        // Release the GIL *before* locking. If a thread blocked on the mutex
-        // held the GIL, the in-flight call could never re-acquire the GIL to
-        // return, wedging the whole interpreter (issue #31). Locking inside
-        // `allow_threads` means a waiter blocks with the GIL released.
+        // Release the GIL *before* locking (issue #31): a reader blocked
+        // behind `close`'s write lock — or, downstream, on the connection's
+        // internal executor/client mutex — waits with the GIL released.
         let outcome = py.allow_threads(|| {
-            let mut guard = self.inner.lock().expect("handle mutex poisoned");
-            let executor = guard.as_mut().ok_or(CallError::Closed)?;
-            executor.execute(command).map_err(CallError::Domain)
+            let guard = self.inner.read().expect("handle lock poisoned");
+            let connection = guard.as_ref().ok_or(CallError::Closed)?;
+            connection.execute(command).map_err(CallError::Domain)
         });
         // Back under the GIL: safe to build `PyErr` and serialize the envelope.
         match outcome {
@@ -139,49 +313,35 @@ impl Handle {
     }
 
     /// Sets the session default branch and/or space used when a command omits
-    /// its own. Raises `ValueError` on an invalid name.
+    /// its own. The names are applied to each subsequent command (and
+    /// validated there — an invalid name surfaces as that command's typed
+    /// error), matching the connection's brokered-scope semantics.
     #[pyo3(signature = (branch=None, space=None))]
-    fn set_scope(&self, py: Python<'_>, branch: Option<String>, space: Option<String>) -> PyResult<()> {
-        // Local carrier: like `CallError`, but with the two name-validation
-        // messages (captured as `String`, since a `PyErr` needs the GIL).
-        enum ScopeError {
-            Closed,
-            Branch(String),
-            Space(String),
-        }
-        let result = py.allow_threads(|| {
-            let mut guard = self.inner.lock().expect("handle mutex poisoned");
-            let executor = guard.as_mut().ok_or(ScopeError::Closed)?;
+    fn set_scope(
+        &self,
+        py: Python<'_>,
+        branch: Option<String>,
+        space: Option<String>,
+    ) -> PyResult<()> {
+        let result: Result<(), ()> = py.allow_threads(|| {
+            let guard = self.inner.read().expect("handle lock poisoned");
+            let connection = guard.as_ref().ok_or(())?;
             if let Some(branch) = branch {
-                executor
-                    .set_default_branch(branch)
-                    .map_err(|error| ScopeError::Branch(error.to_string()))?;
+                connection.set_default_branch(branch);
             }
             if let Some(space) = space {
-                executor
-                    .set_default_space(space)
-                    .map_err(|error| ScopeError::Space(error.to_string()))?;
+                connection.set_default_space(space);
             }
             Ok(())
         });
-        match result {
-            Ok(()) => Ok(()),
-            Err(ScopeError::Closed) => Err(closed_error()),
-            Err(ScopeError::Branch(message)) => {
-                Err(PyValueError::new_err(format!("invalid branch: {message}")))
-            }
-            Err(ScopeError::Space(message)) => {
-                Err(PyValueError::new_err(format!("invalid space: {message}")))
-            }
-        }
+        result.map_err(|()| closed_error())
     }
 
     /// Returns the session default branch.
     fn default_branch(&self, py: Python<'_>) -> PyResult<String> {
         py.allow_threads(|| {
-            let guard = self.inner.lock().expect("handle mutex poisoned");
-            let executor = guard.as_ref().ok_or(())?;
-            Ok(executor.default_branch().to_owned())
+            let guard = self.inner.read().expect("handle lock poisoned");
+            guard.as_ref().map(conn::Inner::default_branch).ok_or(())
         })
         .map_err(|()| closed_error())
     }
@@ -189,19 +349,20 @@ impl Handle {
     /// Returns the session default product space.
     fn default_space(&self, py: Python<'_>) -> PyResult<String> {
         py.allow_threads(|| {
-            let guard = self.inner.lock().expect("handle mutex poisoned");
-            let executor = guard.as_ref().ok_or(())?;
-            Ok(executor.default_space().to_owned())
+            let guard = self.inner.read().expect("handle lock poisoned");
+            guard.as_ref().map(conn::Inner::default_space).ok_or(())
         })
         .map_err(|()| closed_error())
     }
 
-    /// Closes the database handle. Idempotent; further calls raise.
+    /// Closes the database handle: an owner drops its socket (if hosting) and
+    /// closes the store; a brokered client just drops its socket. Idempotent;
+    /// further calls raise.
     fn close(&self, py: Python<'_>) -> PyResult<()> {
         let result: Result<(), String> = py.allow_threads(|| {
-            let mut guard = self.inner.lock().expect("handle mutex poisoned");
-            if let Some(mut executor) = guard.take() {
-                executor.close().map_err(|error| error.to_string())?;
+            let mut guard = self.inner.write().expect("handle lock poisoned");
+            if let Some(connection) = guard.take() {
+                connection.close().map_err(|error| error.to_string())?;
             }
             Ok(())
         });

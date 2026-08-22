@@ -66,13 +66,16 @@ import stratadb
 db = stratadb.open("./app-data")      # durable (creates if absent)
 # db = stratadb.open(cache=True)      # ephemeral, in-memory
 
-# Key-value
+# Key-value — values are str | bytes (reads return bytes; misses return None)
 db.kv.put("greeting", "hello")
 db.kv.get("greeting")                    # b"hello"
 
-# JSON documents
+# Structured data belongs in the JSON primitive (or json.dumps it into kv)
 db.json.set("user:1", "$", {"name": "Ada", "roles": ["admin"]})
 db.json.get("user:1", "$.name")          # "Ada"
+
+# Listing methods return a Page: iterate (auto-paginates) or collect with .all()
+db.json.keys(prefix="user:").all()       # ["user:1"]
 
 # Vectors (similarity search with metadata filters)
 from stratadb import filters
@@ -87,13 +90,29 @@ db.events.append("signup", {"user": "ada"})
 # Graph
 db.graphs.create("social")
 db.graphs.add_node("social", "ada")
+db.graphs.add_node("social", "grace")
 db.graphs.add_edge("social", "ada", "follows", "grace")
 
 db.close()   # or: with stratadb.open("./app-data") as db: ...
 ```
 
-`Strata()` never opens the current directory implicitly: pass a path, set
+`stratadb.open()` never opens the current directory implicitly: pass a path, set
 `STRATA_DB` (`stratadb.from_env()`), or use `cache=True`.
+
+### Upgrading from pre-V1 (0.x)
+
+V1 namespaced the flat 0.x methods. If an example uses `Strata.open` or
+`db.kv_put`, it predates V1 — the current equivalents:
+
+| pre-V1 (0.x) | V1 (this SDK) |
+|---|---|
+| `Strata.open("/path")` | `stratadb.open("/path")` |
+| `db.kv_put` / `kv_get` / `kv_delete` / `kv_list` | `db.kv.put` / `.get` / `.delete` / `.keys()` |
+| `db.json_set` / `json_get` / `json_delete` | `db.json.set` / `.get` / `.delete` |
+| `db.event_append` / `event_get` / `event_list` | `db.events.append` / `.get` / `.list` |
+| `db.vector_create_collection` / `vector_upsert` / `vector_search` | `db.vectors.create_collection` / `.upsert` / `.query` |
+| `db.state_set` / `state_get` / `state_cas` | removed — use `db.kv` or `db.json` (raises `unsupported.sdk.state_removed`) |
+| `db.transaction()` / `begin()` / `commit()` | removed — writes commit individually; use `*_many` batches for multi-write commits |
 
 ## Inference — `db.ai`
 
@@ -139,7 +158,7 @@ db.ai.capability("openai:gpt-4o-mini")   # supported features; no network call
 ## Branches, spaces, and time travel
 
 ```python
-db.branches.fork("main", "experiment")   # copy-on-write branch
+db.branches.fork("default", "experiment")   # copy-on-write branch
 exp = db.at(branch="experiment")          # a scoped view over the same handle
 exp.kv.put("k", "only-on-experiment")
 

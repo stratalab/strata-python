@@ -5,7 +5,25 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from .._results import Page, Sample
+from ..errors import require_field
 from .base import Namespace
+
+
+def _check_bulk_entries(nodes: Optional[list], edges: Optional[list]) -> None:
+    # The generated wire builder indexes entries directly (entry['node_id'],
+    # entry['dst'], ...), so a malformed entry would leak a bare KeyError /
+    # AttributeError that `except StrataError` misses (#64). Validate the
+    # required fields up front via require_field (invalid_argument.sdk.entry).
+    for node in nodes or []:
+        require_field(node, "node_id")
+        binding = node.get("binding") if isinstance(node, dict) else None
+        if binding is not None:
+            target = require_field(binding, "target")
+            for field in ("key", "primitive", "space"):
+                require_field(target, field)
+    for edge in edges or []:
+        for field in ("src", "edge_type", "dst"):
+            require_field(edge, field)
 
 
 class GraphsNamespace(Namespace):
@@ -324,6 +342,7 @@ class GraphsNamespace(Namespace):
             >>> db.graphs.meta("g").node_count
             2
         """
+        _check_bulk_entries(nodes, edges)
         return self._c.graph_bulk_insert(
             graph, nodes=nodes, edges=edges, chunk_size=chunk_size, **self._scope
         )

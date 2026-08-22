@@ -71,6 +71,7 @@ class AdminDatabaseInfo:
     created: bool
     default_branch: str
     durable: bool
+    memory_budget: "AdminMemoryBudget"
     open: bool
     space_count: int
     target: "AdminOpenTarget"
@@ -83,6 +84,7 @@ class AdminDatabaseInfo:
             created=d['created'],
             default_branch=d['default_branch'],
             durable=d['durable'],
+            memory_budget=AdminMemoryBudget.from_wire(d['memory_budget']),
             open=d['open'],
             space_count=d['space_count'],
             target=AdminOpenTarget(d['target']),
@@ -163,6 +165,83 @@ class AdminHealthStatus(str, Enum):
     HEALTHY = 'healthy'
     DEGRADED = 'degraded'
     UNHEALTHY = 'unhealthy'
+
+
+@dataclass
+class AdminIpcClient:
+    """One connected IPC client, as reported by `ipc_status`. Display identity"""
+    access: "SessionAccess"
+    protocol: int
+    name: Optional[str] = None
+    pid: Optional[int] = None
+    version: Optional[str] = None
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "AdminIpcClient":
+        return cls(
+            access=SessionAccess(d['access']),
+            protocol=d['protocol'],
+            name=(None if d.get('name') is None else d['name']),
+            pid=(None if d.get('pid') is None else d['pid']),
+            version=(None if d.get('version') is None else d['version']),
+        )
+
+
+@dataclass
+class AdminIpcStatus:
+    """Multi-process IPC status output."""
+    client_count: int
+    hosting: bool
+    is_owner: bool
+    clients: Optional[List["AdminIpcClient"]] = None
+    owner_pid: Optional[int] = None
+    socket_path: Optional[str] = None
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "AdminIpcStatus":
+        return cls(
+            client_count=d['client_count'],
+            hosting=d['hosting'],
+            is_owner=d['is_owner'],
+            clients=(None if d.get('clients') is None else [AdminIpcClient.from_wire(_x) for _x in (d['clients'] or [])]),
+            owner_pid=(None if d.get('owner_pid') is None else d['owner_pid']),
+            socket_path=(None if d.get('socket_path') is None else d['socket_path']),
+        )
+
+
+@dataclass
+class AdminIpcStop:
+    """Multi-process IPC stop output."""
+    stopped: bool
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "AdminIpcStop":
+        return cls(
+            stopped=d['stopped'],
+        )
+
+
+@dataclass
+class AdminMemoryBudget:
+    """Storage memory budget provenance and total for `admin.info`."""
+    source: "AdminMemoryBudgetSource"
+    total_bytes: int
+    usable_host_bytes: Optional[int] = None
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "AdminMemoryBudget":
+        return cls(
+            source=AdminMemoryBudgetSource(d['source']),
+            total_bytes=d['total_bytes'],
+            usable_host_bytes=(None if d.get('usable_host_bytes') is None else d['usable_host_bytes']),
+        )
+
+
+class AdminMemoryBudgetSource(str, Enum):
+    """How an opened database's storage memory budget was chosen."""
+    EXPLICIT = 'explicit'
+    DERIVED_FROM_HOST = 'derived_from_host'
+    FIXED_DEFAULT = 'fixed_default'
 
 
 @dataclass
@@ -950,6 +1029,14 @@ class BranchStatus(str, Enum):
     DELETED = 'deleted'
 
 
+class CommitDurability(str, Enum):
+    """Per-commit durability, as storage attested it at acknowledgement time."""
+    NOT_DURABLE = 'not_durable'
+    STANDARD = 'standard'
+    ALWAYS = 'always'
+    UNCERTAIN = 'uncertain'
+
+
 class CommitOutcomeStatus(str, Enum):
     """V1 commit outcome status."""
     NOT_APPLICABLE = 'not_applicable'
@@ -963,7 +1050,7 @@ class CommitOutcomeStatus(str, Enum):
 class CommitReceipt:
     """Commit facts returned by mutating operations."""
     delete_count: int
-    durable: bool
+    durability: "CommitDurability"
     put_count: int
     timestamp: int
     version: int
@@ -972,7 +1059,7 @@ class CommitReceipt:
     def from_wire(cls, d: dict) -> "CommitReceipt":
         return cls(
             delete_count=d['delete_count'],
-            durable=d['durable'],
+            durability=CommitDurability(d['durability']),
             put_count=d['put_count'],
             timestamp=d['timestamp'],
             version=d['version'],
@@ -1964,6 +2051,12 @@ class ScanItem:
             value=_wire.b64d(d['value']),
             version=d['version'],
         )
+
+
+class SessionAccess(str, Enum):
+    """The access a session declares at hello. The owner's dispatch gate rejects"""
+    READ = 'read'
+    READ_WRITE = 'read_write'
 
 
 @dataclass

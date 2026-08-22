@@ -51,6 +51,19 @@ def _filter_wire(value: Any) -> Any:
     return value
 
 
+def _vector_arg(vector: Any) -> list:
+    # A non-iterable (e.g. None) would leak a bare TypeError from list() while
+    # the command is still being built, escaping Core.execute's catch (#65).
+    try:
+        return list(vector)
+    except TypeError:
+        raise client_error(
+            InvalidArgumentError,
+            "invalid_argument.sdk.command",
+            f"vector must be an iterable of floats, got {type(vector).__name__}",
+        ) from None
+
+
 def _vector_entries(entries: Any) -> list[dict]:
     out = []
     for entry in entries:
@@ -163,7 +176,7 @@ class VectorsNamespace(Namespace):
             True
         """
         _check_metadata(metadata)
-        return self._c.vector_upsert(collection, key, list(vector), metadata=metadata, **self._scope)
+        return self._c.vector_upsert(collection, key, _vector_arg(vector), metadata=metadata, **self._scope)
 
     def get(self, collection: str, key: str, *, as_of: Optional[int] = None) -> Any:
         """Returns the stored vector + metadata, or ``None`` if absent.
@@ -313,7 +326,7 @@ class VectorsNamespace(Namespace):
             ['a', 'b']
         """
         return self._c.vector_query(
-            collection, list(vector), k, filter=_filter_wire(filter), as_of=as_of, **self._scope
+            collection, _vector_arg(vector), k, filter=_filter_wire(filter), as_of=as_of, **self._scope
         )
 
     def index_query(
@@ -335,7 +348,7 @@ class VectorsNamespace(Namespace):
             ['a', 'b']
         """
         result = self._c.vector_index_query(
-            collection, list(vector), k, filter=_filter_wire(filter), as_of=as_of, **self._scope
+            collection, _vector_arg(vector), k, filter=_filter_wire(filter), as_of=as_of, **self._scope
         )
         return result.matches, result.diagnostics
 

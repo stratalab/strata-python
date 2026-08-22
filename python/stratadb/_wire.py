@@ -11,13 +11,24 @@ from __future__ import annotations
 import base64
 from typing import Any
 
+from .errors import InvalidArgumentError, client_error
+
 
 def b64e(value: str | bytes | bytearray) -> str:
-    """Encodes a key/value to the base64 ``Bytes`` wire form (str -> UTF-8)."""
+    """Encodes a key/value to the base64 ``Bytes`` wire form (str -> UTF-8).
+
+    A wrong-typed key/value raises the typed ``invalid_argument.sdk.command``
+    (never a bare ``TypeError``): this fires while the command is being built,
+    before ``Core.execute``'s catch, so it must be typed at the source (#65).
+    """
     if isinstance(value, str):
         value = value.encode("utf-8")
     if not isinstance(value, (bytes, bytearray)):
-        raise TypeError(f"expected str or bytes, got {type(value).__name__}")
+        raise client_error(
+            InvalidArgumentError,
+            "invalid_argument.sdk.command",
+            f"expected str or bytes, got {type(value).__name__}",
+        )
     return base64.b64encode(bytes(value)).decode("ascii")
 
 

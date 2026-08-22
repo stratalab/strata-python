@@ -21,10 +21,34 @@ db = stratadb.open(cache=True)       # ephemeral, in-memory (nothing persists)
 db = stratadb.from_env()              # path from $STRATA_DB
 with stratadb.open(cache=True) as db:
     ...                                # context manager closes it
+
+# Commit durability: "standard" (default) syncs at the next sync point — an
+# unclean process death can lose the acknowledged tail; "always" syncs every
+# commit before acknowledgement.
+db = stratadb.open("./app-data", durability="always")
+db.kv.put("k", "v").commit.durability   # "always" — what storage attested at ack
+
+# Storage memory budget (bytes, >= 1 MiB). Omitted: derived at open from host
+# memory (25% of usable, capped at 8 GiB). Per open, not persisted.
+db = stratadb.open("./app-data", memory_budget=256 * 1024 * 1024)
+db.admin.info().memory_budget.source    # "explicit" (else "derived_from_host")
+db.admin.info().memory_budget.total_bytes
 ```
 
 `stratadb.open()` never opens the current directory implicitly — pass a path, set
 `STRATA_DB`, or use `cache=True`, or it raises `InvalidArgumentError`.
+
+A durable database has **one owner process at a time**, but you are not limited
+to one handle. On unix, `open()` defaults to `ipc="host"`: the first opener owns
+the store and hosts a Unix-domain socket, and later opens — another handle in
+the same process, or a whole separate process — transparently broker to that
+owner over the socket. So a notebook, a web app's workers, and a one-off script
+can all `stratadb.open("./app-data")` the same path and share one database; the
+owner serializes every writer. `db.admin.ipc_status()` reports the topology
+(`is_owner`, `hosting`, `owner_pid`). Within one process, still prefer sharing a
+single handle across threads (it is concurrency-safe). Pass `ipc="off"` for a
+raw exclusive open (a second open then raises `UnavailableError`); `ipc="client"`
+brokers to an existing owner but never hosts. IPC is unix-only.
 
 ## Key-value — `db.kv`
 
@@ -210,6 +234,28 @@ Exact failure modes worth recognizing up front (match on the `.code`, not the me
   bundled offline/keyless embedder yet. For keyless vector search, upsert literal
   vectors (`db.vectors.upsert(coll, key, [0.1, 0.2, ...])`), as `python -m stratadb.demo`
   does.
+- **Durable opens share, they don't collide (unix).** By default (`ipc="host"`)
+  a second `stratadb.open(path)` — another handle or another process — brokers to
+  the first as the owner rather than raising; `db.admin.ipc_status()` shows who
+  owns it. Opt out with `ipc="off"` for an exclusive open, where a second open
+  raises `UnavailableError` (`unavailable.engine.persistence`) until the owner
+  closes. On non-unix platforms IPC is unavailable and durable opens are always
+  exclusive (`ipc="host"/"client"` raise `InvalidArgumentError`).
+- **Default durability is `"standard"`, not fsync-per-commit.** A commit
+  acknowledged with `receipt.commit.durability == "standard"` becomes durable at
+  the *next sync point* (close, buffer threshold, rotation) — a crash/SIGKILL
+  before then loses the acknowledged tail. Open with
+  `stratadb.open(path, durability="always")` when every acknowledgement must
+  survive process death; then receipts report `"always"`.
+- **`memory_budget=` belongs to the owner.** It sizes storage for the handle
+  that owns the store on this open; a handle that brokers to an existing owner
+  (the `ipc="host"` default on a busy path) inherits the owner's budget and its
+  own `memory_budget=` is ignored — check `db.admin.info().memory_budget`.
+  Budgets below 1 MiB raise `InvalidArgumentError`
+  (`invalid_argument.engine.persistence`); `cache=True` takes no budget.
+- **A closed handle raises typed errors.** Any call after `db.close()` raises
+  `FailedPreconditionError` (`failed_precondition.sdk.handle_closed`); `close()`
+  itself is idempotent.
 - **`db.state` was removed in V1.** Accessing it raises `UnsupportedError`
   (`unsupported.sdk.state_removed`) — use `db.kv` for keyed values or `db.json` for
   structured documents.
@@ -219,7 +265,10 @@ Exact failure modes worth recognizing up front (match on the `.code`, not the me
 `db.admin` reads control-plane facts (never writes): `db.admin.ping()`
 (liveness), `db.admin.info()` (identity + catalog summary), plus
 `db.admin.health()`, `db.admin.metrics()`, `db.admin.describe()`, and
-`db.admin.config()`.
+`db.admin.config()`. `db.admin.ipc_status()` reports the multi-process topology
+— `.is_owner`, `.hosting`, `.owner_pid`, `.socket_path`, `.client_count` (see
+Install & open for `ipc=`); `db.admin.ipc_stop()` stops hosting the broker
+socket (`.stopped`) while the store stays usable in-process.
 
 `db.arrow` bulk-moves a primitive to and from an Arrow/Parquet file. `target`
 is one of `kv`, `json`, `vector`, `graph`, or `event` — vector imports take

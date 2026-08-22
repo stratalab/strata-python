@@ -287,7 +287,7 @@
       "kind": "read.summary",
       "title": "Read database info",
       "summary": "Read database identity and a catalog summary.",
-      "description": "Returns database identity and a catalog summary for one branch: engine version, open target, whether this open created the database, durability, the default branch, the active branch count, and the registered space count for the selected branch. The branch defaults to the handle branch when omitted.\n\nStatus commands return a scalar or compact status payload and do not mutate database state.",
+      "description": "Returns database identity and a catalog summary for one branch: engine version, open target, whether this open created the database, durability, the default branch, the active branch count, the registered space count for the selected branch, and the resolved storage `memory_budget` (its `total_bytes` and its `source` — `explicit`, `derived_from_host`, or `fixed_default`). When no budget is set, the engine derives the default from host memory at open — 25% of usable memory, clamped to a ceiling — so `memory_budget` reveals what the database is actually sized to. The branch defaults to the handle branch when omitted.\n\nStatus commands return a scalar or compact status payload and do not mutate database state.",
       "docs": "/docs/admin/info",
       "cli": {
         "path": [
@@ -332,6 +332,100 @@
       "source": {
         "command": "crates/executor/idl/v1/commands/admin.yaml",
         "prose": "commands/admin.info.md"
+      }
+    },
+    {
+      "id": "admin.ipc_status",
+      "family": "admin",
+      "op": "ipc_status",
+      "kind": "read.summary",
+      "title": "Read IPC status",
+      "summary": "Report this process's multi-process IPC state.",
+      "description": "Reports the same-machine multi-process state for this handle: whether this process owns the store (holds the writer lock) or is a client of another owner, whether it is hosting a broker socket, the socket path and owning process id when one exists, and the number of clients currently connected to the host. A single-process open (cache, or a durable open with IPC off) reports `is_owner: true`, `hosting: false`, and no socket.\n\nStatus commands return a scalar or compact status payload and do not mutate database state.",
+      "docs": "/docs/admin/ipc_status",
+      "cli": {
+        "path": [
+          "ipc",
+          "status"
+        ],
+        "surface": "verb"
+      },
+      "mcp": {
+        "name": "strata_admin_ipc_status",
+        "description": "Use this when the user asks whether this database is being shared across processes — whether this process owns it or is a client, whether a broker socket is hosted, and how many clients are connected."
+      },
+      "feature": "core",
+      "access": "read",
+      "input": "Command::IpcStatus",
+      "output": "Output::IpcStatus",
+      "outputs": [
+        "Output::IpcStatus"
+      ],
+      "wire_status": "stable",
+      "response_model": "StatusResponse<AdminIpcStatus>",
+      "commit": "none",
+      "pagination": "none",
+      "batch": "none",
+      "errors": [
+        {
+          "code": "failed_precondition.engine.runtime_closed",
+          "docs": "https://stratadb.org/e/failed_precondition.engine.runtime_closed"
+        }
+      ],
+      "fixtures": {
+        "request": "requests/v1/admin/ipc_status.json",
+        "response": "responses/v1/admin/ipc_status.json"
+      },
+      "source": {
+        "command": "crates/executor/idl/v1/commands/admin.yaml",
+        "prose": "commands/admin.ipc_status.md"
+      }
+    },
+    {
+      "id": "admin.ipc_stop",
+      "family": "admin",
+      "op": "ipc_stop",
+      "kind": "action.status",
+      "title": "Stop IPC hosting",
+      "summary": "Stop hosting the multi-process broker socket.",
+      "description": "Stops hosting the same-machine broker socket for this store: the listener stops accepting connections and the store is no longer reachable by new clients. Run from a client, it forwards to the owner, which stops hosting (ending that client's own connection). The store stays open in this process; the socket files are unlinked when the owner closes. Idempotent — a process that was not hosting reports `stopped: false`.\n\nStatus commands return a scalar or compact status payload and do not mutate database state.",
+      "docs": "/docs/admin/ipc_stop",
+      "cli": {
+        "path": [
+          "ipc",
+          "stop"
+        ],
+        "surface": "verb"
+      },
+      "mcp": {
+        "name": "strata_admin_ipc_stop",
+        "description": "Use this when the user wants to stop sharing this database across processes — tear down the broker socket so no new clients can attach."
+      },
+      "feature": "core",
+      "access": "write",
+      "input": "Command::IpcStop",
+      "output": "Output::IpcStop",
+      "outputs": [
+        "Output::IpcStop"
+      ],
+      "wire_status": "stable",
+      "response_model": "StatusResponse<AdminIpcStop>",
+      "commit": "none",
+      "pagination": "none",
+      "batch": "none",
+      "errors": [
+        {
+          "code": "failed_precondition.engine.runtime_closed",
+          "docs": "https://stratadb.org/e/failed_precondition.engine.runtime_closed"
+        }
+      ],
+      "fixtures": {
+        "request": "requests/v1/admin/ipc_stop.json",
+        "response": "responses/v1/admin/ipc_stop.json"
+      },
+      "source": {
+        "command": "crates/executor/idl/v1/commands/admin.yaml",
+        "prose": "commands/admin.ipc_stop.md"
       }
     },
     {
