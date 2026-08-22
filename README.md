@@ -25,8 +25,8 @@ print(stratadb.agents_guide())      # the entire surface, offline — read this 
 
 - `python -m stratadb.demo` — a runnable, zero-setup tour that prints every
   primitive's real return shape (doubles as a smoke test).
-- `stratadb.init("path/to/repo")` — scaffold the Strata agent skill and an
-  `AGENTS.md` stanza into a repo so the next agent starts warm.
+- `stratadb.init("path/to/repo")` — scaffold the `strata-python` agent skill and
+  an `AGENTS.md` stanza into a repo so the next agent starts warm.
 - `npx skills add stratalab/strata-agent-skills` — install the full Strata
   skill set (usage, branching, time travel) for Claude Code, Cursor, Codex,
   and friends. The same repo
@@ -190,9 +190,11 @@ Misses are not errors — reads return `None`.
   in the wheel (the SDK-native counterpart to `strata agents guide`).
 - `python -m stratadb.demo` / `stratadb.demo()` — a runnable, zero-setup tour of
   every primitive with real printed output.
-- `stratadb.init(repo_path=".")` — scaffold `.claude/skills/strata/SKILL.md` and an
-  `AGENTS.md` stanza into a repo (idempotent).
-- `stratadb.agents_skill()` — the Claude Code skill markdown (version-stamped).
+- `stratadb.init(repo_path=".")` — scaffold `.claude/skills/strata-python/SKILL.md` and
+  an `AGENTS.md` stanza into a repo (idempotent).
+- `stratadb.agents_skill()` — the `strata-python` skill markdown, vendored verbatim from
+  [strata-agent-skills](https://github.com/stratalab/strata-agent-skills)
+  (`tools/vendor_skill.py` pins the rev in `STRATA_AGENT_SKILLS_REV`).
 - `stratadb.command_index()` — the full command catalog bundled in the wheel.
 - `stratadb.mcp_config(path)` — the MCP client-config snippet (`strata <path> mcp
   serve`; needs the `strata` binary, a separate strata-core install).

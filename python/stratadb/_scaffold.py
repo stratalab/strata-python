@@ -4,7 +4,9 @@ Plants the breadcrumbs a coding agent discovers a library through — the files 
 the repo it's working in — so the *next* agent knows Strata before its first tool
 call, instead of web-searching and probing (#21):
 
-- ``.claude/skills/strata/SKILL.md`` — the version-stamped Claude Code skill.
+- ``.claude/skills/strata-python/SKILL.md`` — the ``strata-python`` agent skill
+  (vendored from strata-agent-skills; ``npx skills add stratalab/strata-agent-skills``
+  installs the rest of the set).
 - an ``AGENTS.md`` stanza — the cross-tool convention (Cursor, Copilot, Codex, …).
 - optionally a ``CLAUDE.md`` pointer stanza.
 
@@ -23,6 +25,7 @@ from typing import List, Tuple
 CREATED = "created"
 UPDATED = "updated"
 UNCHANGED = "unchanged"
+REMOVED = "removed"
 
 _BEGIN = "<!-- strata:begin (managed by stratadb.init — edits inside are overwritten) -->"
 _END = "<!-- strata:end -->"
@@ -41,6 +44,9 @@ graph) over one branch-aware, time-travelling store.
 - **Open:** `import stratadb; db = stratadb.open("./app-data")` (durable) or
   `stratadb.open(cache=True)` (ephemeral, in-memory).
 - **Tour it:** `python -m stratadb.demo` prints every primitive's real output.
+- **Skills:** `.claude/skills/strata-python/SKILL.md` (installed by this scaffold);
+  `npx skills add stratalab/strata-agent-skills` adds `strata`, `strata-branching`,
+  and `strata-time-travel`.
 - **MCP:** `strata ./app-data mcp serve` (config via `stratadb.mcp_config(path)`;
   the `strata` binary is a separate strata-core install).
 {_END}"""
@@ -51,7 +57,7 @@ def _claude_stanza() -> str:
 ## Strata
 
 This repo uses the `stratadb` Python SDK. For the full API, call
-`stratadb.agents_guide()` (or read `.claude/skills/strata/SKILL.md`). Tour the
+`stratadb.agents_guide()` (or read `.claude/skills/strata-python/SKILL.md`). Tour the
 surface with `python -m stratadb.demo`.
 {_END}"""
 
@@ -89,24 +95,51 @@ def _upsert_stanza(path: Path, stanza: str) -> str:
     return UPDATED
 
 
+def _is_legacy_sdk_skill(text: str) -> bool:
+    """The pre-1.0.4 SDK/CLI skill: named ``strata``, version-stamped, no provenance.
+
+    The canonical ``strata`` skill from strata-agent-skills carries a pinned
+    ``strata-core-rev`` in its frontmatter; ours never did.
+    """
+    return (
+        text.startswith("---\nname: strata\n")
+        and "strata-core-rev" not in text
+        and "This skill matches strata" in text
+    )
+
+
 def init(repo_path: str = ".", *, include_claude_md: bool = True) -> List[Tuple[str, str]]:
     """Scaffold Strata's agent breadcrumbs into ``repo_path`` (idempotent).
 
-    Writes ``.claude/skills/strata/SKILL.md`` (the version-stamped skill) and an
-    ``AGENTS.md`` stanza, and — unless ``include_claude_md=False`` — a ``CLAUDE.md``
-    pointer stanza. Stanzas are marker-delimited, so re-running refreshes them in
-    place instead of duplicating.
+    Writes ``.claude/skills/strata-python/SKILL.md`` (the ``strata-python`` skill)
+    and an ``AGENTS.md`` stanza, and — unless ``include_claude_md=False`` — a
+    ``CLAUDE.md`` pointer stanza. Stanzas are marker-delimited, so re-running
+    refreshes them in place instead of duplicating. A ``strata`` skill written by
+    a pre-1.0.4 SDK or CLI is retired (that path belongs to the canonical
+    strata-agent-skills ``strata`` skill, which is left untouched).
 
     Returns a list of ``(relative_path, action)`` where ``action`` is ``"created"``,
-    ``"updated"``, or ``"unchanged"`` — safe to call repeatedly.
+    ``"updated"``, ``"unchanged"``, or ``"removed"`` — safe to call repeatedly.
     """
     import stratadb
 
     root = Path(repo_path)
     results: List[Tuple[str, str]] = []
 
-    skill_path = root / ".claude" / "skills" / "strata" / "SKILL.md"
+    skill_path = root / ".claude" / "skills" / "strata-python" / "SKILL.md"
     results.append((str(skill_path.relative_to(root)), _write_file(skill_path, stratadb.agents_skill())))
+
+    # Earlier releases wrote a Python-first skill named `strata` to the path the
+    # canonical strata-agent-skills `strata` skill now owns (strata-core #2893).
+    # Retire only our own copy so the two never fight.
+    legacy = root / ".claude" / "skills" / "strata" / "SKILL.md"
+    if legacy.exists() and _is_legacy_sdk_skill(legacy.read_text(encoding="utf-8")):
+        legacy.unlink()
+        try:
+            legacy.parent.rmdir()  # only when nothing else lives there
+        except OSError:
+            pass
+        results.append((str(legacy.relative_to(root)), REMOVED))
 
     agents_path = root / "AGENTS.md"
     results.append(("AGENTS.md", _upsert_stanza(agents_path, _agents_stanza())))

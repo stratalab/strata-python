@@ -7,7 +7,10 @@ is guarded.
 """
 
 import json
+import re
 from pathlib import Path
+
+import pytest
 
 import stratadb
 
@@ -55,3 +58,43 @@ def test_agent_guide_covers_every_family():
         if f"db.{FAMILY_TO_NAMESPACE[family]}" not in guide
     ]
     assert not missing, f"agent guide does not cover: {missing}"
+
+
+# --- the guide's Python blocks must run (same drift guard as test_readme.py) ---
+
+GUIDE = ROOT / "python" / "stratadb" / "_data" / "agent-guide.md"
+BLOCKS = re.findall(r"```python\n(.*?)```", GUIDE.read_text(encoding="utf-8"), re.DOTALL)
+
+
+def test_agent_guide_has_python_blocks():
+    assert len(BLOCKS) >= 8, "agent guide lost its Python examples"
+
+
+@pytest.mark.parametrize("index", range(len(BLOCKS)))
+def test_agent_guide_block_runs(index, tmp_path, monkeypatch):
+    """Every snippet in the guide agents read *first* executes against the built
+    SDK. Caught on its first run: the Install & open sequence orphaned a brokered
+    handle by rebinding the owner (unavailable.executor.ipc_transport)."""
+    source = BLOCKS[index]
+    if "db.ai.chat" in source or "db.ai.embed" in source:
+        pytest.skip("inference examples need a provider API key")
+    # Durable opens ("./app-data") and Arrow files land in a scratch cwd;
+    # from_env() needs a target.
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("STRATA_DB", str(tmp_path / "env-db"))
+    source = source.replace("    ...", "    pass")
+
+    db = stratadb.open(cache=True)
+    # Later sections assume prior state; provide the minimum without colliding
+    # with a block that creates the same thing itself.
+    db.kv.put("k", "v0")
+    if 'graphs.create("social")' not in source:
+        db.graphs.create("social")
+    namespace = {"stratadb": stratadb, "db": db}
+    try:
+        exec(compile(source, f"agent-guide.md block {index}", "exec"), namespace)
+    finally:
+        for value in list(namespace.values()):
+            if isinstance(value, stratadb.Strata):
+                value.close()
+        db.close()
