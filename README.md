@@ -4,14 +4,15 @@ The Python SDK for [Strata](https://stratadb.org): an **embedded** multi-model
 database for AI agents. SQLite-shaped, not a server — it links the engine in
 process and opens a file-backed (or in-memory) database directly.
 
-Six primitives — key-value, JSON documents, vectors, an event log, and a graph
+Five primitives — key-value, JSON documents, vectors, an event log, and a graph
 — share one branch-aware, time-travelling storage substrate. The SDK speaks the
 exact same command surface, value shapes, and error codes as the `strata` CLI
 and MCP server, so learning one channel is learning all of them.
 
 ## For coding agents — start here
 
-Install with `pip install stratadb`, then call **`stratadb.agents_guide()`** first.
+Install with `uv add stratadb` (or `pip install stratadb`), then call
+**`stratadb.agents_guide()`** first.
 It returns the complete offline Python usage guide (every namespace, `db.ai`,
 provider keys, branches / time-travel, errors — all runnable Python), so you can
 learn the whole surface without probing it:
@@ -26,6 +27,12 @@ print(stratadb.agents_guide())      # the entire surface, offline — read this 
   primitive's real return shape (doubles as a smoke test).
 - `stratadb.init("path/to/repo")` — scaffold the Strata agent skill and an
   `AGENTS.md` stanza into a repo so the next agent starts warm.
+- `npx skills add stratalab/strata-agent-skills` — install the full Strata
+  skill set (usage, branching, time travel) for Claude Code, Cursor, Codex,
+  and friends. The same repo
+  ([strata-agent-skills](https://github.com/stratalab/strata-agent-skills))
+  carries the one-command workspace setup (CLI + MCP registration + skills);
+  its npm publish is pending, so use the skills command today.
 
 ### Names & surfaces
 
@@ -37,6 +44,7 @@ Strata appears under a few names; here is what each string is and where it's use
 | Python import | `import stratadb` | the SDK this README documents |
 | CLI | `strata` | a separate binary (strata-core); **not** installed by this wheel |
 | MCP server | `strata <db> mcp serve` | snippet via `stratadb.mcp_config(path)` |
+| Agent skills | `npx skills add stratalab/strata-agent-skills` | one-command setup lives in the same repo (npm publish pending) |
 | GitHub repo | `stratalab/strata-python` | this SDK |
 | GitHub org | `stratalab` | |
 | Website / docs | `stratadb.org` | |
@@ -44,7 +52,7 @@ Strata appears under a few names; here is what each string is and where it's use
 ## Install
 
 ```bash
-pip install stratadb
+uv add stratadb        # or: pip install stratadb
 ```
 
 No Rust toolchain required — wheels are prebuilt (`abi3`, one per platform,
