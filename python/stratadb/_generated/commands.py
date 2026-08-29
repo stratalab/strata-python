@@ -181,6 +181,19 @@ class Commands:
         data = self._core.data(cmd)
         return _wire.Record({'branch': models.BranchItem.from_wire(data['branch']), 'cleanup': (None if data.get('cleanup') is None else models.BranchCleanupItem.from_wire(data['cleanup'])), 'deleted': data['deleted'], 'effect': models.MutationEffect.from_wire(data['effect']), 'generation_after': (None if data.get('generation_after') is None else data['generation_after']), 'generation_before': (None if data.get('generation_before') is None else data['generation_before'])})
 
+    def branch_diff(self, branch_a, branch_b, *, at_timestamp=None):
+        """Compare two branches and report the entities that differ across every primitive.
+
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.branch_name, invalid_argument.engine.branch_name_reserved
+        """
+        cmd = {'type': 'branch_diff'}
+        cmd['branch_a'] = branch_a
+        cmd['branch_b'] = branch_b
+        if at_timestamp is not None:
+            cmd['at_timestamp'] = at_timestamp
+        data = self._core.data(cmd)
+        return models.BranchComparisonItem.from_wire(data)
+
     def branch_fork(self, source, branch):
         """Fork a new branch from the current head of a source branch.
 
@@ -234,6 +247,32 @@ class Commands:
         cmd = {'type': 'branch_list'}
         data = self._core.data(cmd)
         return _wire.Record({'cursor': (None if data.get('cursor') is None else data['cursor']), 'has_more': data['has_more'], 'items': [models.BranchItem.from_wire(_x) for _x in (data['items'] or [])]})
+
+    def branch_merge(self, source, target, *, strategy=None):
+        """Promote one branch's changes into another as a single atomic commit.
+
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.branch_name, invalid_argument.engine.branch_name_reserved, conflict.engine.promotion, invalid_argument.engine.branch_point
+        """
+        cmd = {'type': 'branch_merge'}
+        cmd['source'] = source
+        cmd['target'] = target
+        if strategy is not None:
+            cmd['strategy'] = strategy
+        data = self._core.data(cmd)
+        return models.PromotionOutcomeItem.from_wire(data)
+
+    def branch_preview(self, source, target, *, strategy=None):
+        """Preview promoting one branch into another, reporting conflicts without mutating either branch.
+
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.branch_name, invalid_argument.engine.branch_name_reserved, invalid_argument.engine.branch_point
+        """
+        cmd = {'type': 'branch_preview'}
+        cmd['source'] = source
+        cmd['target'] = target
+        if strategy is not None:
+            cmd['strategy'] = strategy
+        data = self._core.data(cmd)
+        return models.BranchPreviewItem.from_wire(data)
 
     def event_append(self, event_type, payload, *, branch=None, space=None):
         """Append one event to the branch event log.

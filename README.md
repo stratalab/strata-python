@@ -162,10 +162,20 @@ db.branches.fork("default", "experiment")   # copy-on-write branch
 exp = db.at(branch="experiment")          # a scoped view over the same handle
 exp.kv.put("k", "only-on-experiment")
 
+db.branches.diff("default", "experiment")      # what differs, per space and primitive (A → B)
+db.branches.preview("experiment", "default")   # the conflicts a merge would hit; mutates nothing
+db.branches.merge("experiment", "default")     # promote as one atomic commit — strict by default;
+                                               # strategy="source_wins" lets the source win conflicts
+
 receipt = db.kv.put("k", "v1")
 db.kv.put("k", "v2")
 db.kv.get("k", as_of=receipt.commit.timestamp)   # b"v1" — every read takes as_of
 ```
+
+`merge` carries the key-value, JSON, and vector changes a fork made since its
+fork point; event streams and graphs are compared but never merged. A `strict`
+merge that hits a conflict raises `errors.ConflictError`
+(`conflict.engine.promotion`) and writes nothing — `preview` first.
 
 ## Errors
 

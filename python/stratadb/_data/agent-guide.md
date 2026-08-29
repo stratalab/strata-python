@@ -202,6 +202,13 @@ db.branches.fork("default", "feature")  # feature starts as a copy of default
 db.branches.list()
 feature = db.at(branch="feature")       # a scoped view; writes target the branch
 feature.kv.put("k", "on-feature")       # diverges from default without touching it
+
+# Bring it back: compare -> preview -> promote. Events and graphs are compare-only.
+db.branches.diff("default", "feature").spaces        # per space + primitive: .added / .removed / .modified (A -> B)
+db.branches.preview("feature", "default").conflicts  # [] here — default has not changed k since the fork
+outcome = db.branches.merge("feature", "default")    # strict (default): one atomic commit; the source is untouched
+outcome.applied, outcome.target_version              # what landed, and the target's new commit version
+db.kv.get("k")                                       # b'on-feature'
 ```
 
 Prefer `fork` when the new branch should start from existing data;
@@ -210,6 +217,19 @@ with `db.branches.fork_at_version(source, name, receipt.commit.version)` or
 `db.branches.fork_at_timestamp(source, name, receipt.commit.timestamp)`.
 (`event.timestamp` is the one wall-clock value, in microseconds;
 `db.events.range_by_time(...)` is the only API that takes wall-clock µs.)
+
+`merge(source, target)` promotes the key-value, JSON, and vector changes the
+source made since its fork point, as one commit, leaving the source unchanged;
+event streams and graphs are **compared but never merged** (they are listed in
+the outcome's `capabilities_unsupported`). `strategy="strict"` (the default)
+raises `ConflictError` (`conflict.engine.promotion`) when both branches changed
+the same entity differently and writes nothing; `strategy="source_wins"`
+applies the source's value or tombstone per conflict and reports each
+overwritten/deleted target entry in `.applied`/`.deleted`. Only branches that
+share fork lineage can be merged — an empty `create()`d branch raises
+`InvalidArgumentError` (`invalid_argument.engine.branch_point`). `preview` runs
+the same three-way comparison read-only, so check its `.conflicts` first when
+the outcome matters.
 
 `db.spaces` manages product spaces (isolated namespaces); `db.at(space=...)`
 scopes a view.
@@ -268,6 +288,13 @@ Exact failure modes worth recognizing up front (match on the `.code`, not the me
   own `memory_budget=` is ignored — check `db.admin.info().memory_budget`.
   Budgets below 1 MiB raise `InvalidArgumentError`
   (`invalid_argument.engine.persistence`); `cache=True` takes no budget.
+- **A strict merge that conflicts changes nothing.** `db.branches.merge()`
+  raises `ConflictError` (`conflict.engine.promotion`, not retryable) if any
+  entity diverged on both branches since the fork point, and applies *none* of
+  the changes — not even the clean ones. Resolve on the source and retry, or
+  pass `strategy="source_wins"` deliberately. Events and graphs never merge
+  (compare-only), and a branch made with `create()` has no fork lineage to
+  merge along (`invalid_argument.engine.branch_point`).
 - **A closed handle raises typed errors.** Any call after `db.close()` raises
   `FailedPreconditionError` (`failed_precondition.sdk.handle_closed`); `close()`
   itself is idempotent.

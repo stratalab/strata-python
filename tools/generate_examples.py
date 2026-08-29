@@ -169,6 +169,9 @@ BINDINGS = {
     "branch.fork_at_version": Binding("branches", "fork_at_version", arg_map={"branch": "name"}),
     "branch.fork_at_timestamp": Binding("branches", "fork_at_timestamp", arg_map={"branch": "name"}),
     "branch.delete": Binding("branches", "delete", arg_map={"branch": "name"}),
+    "branch.diff": Binding("branches", "diff", arg_map={"at_timestamp": "as_of"}),
+    "branch.preview": Binding("branches", "preview"),
+    "branch.merge": Binding("branches", "merge"),
     # space — wire operand `space` maps to the method's `name` param.
     "space.create": Binding("spaces", "create", arg_map={"space": "name"}),
     "space.list": Binding("spaces", "list", "sorted({})", "json"),

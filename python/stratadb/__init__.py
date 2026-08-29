@@ -31,6 +31,7 @@ from . import _stratadb  # native extension
 from . import errors, filters
 from ._core import Core
 from ._generated import Commands
+from ._generated.models import PromotionStrategy
 from .errors import InvalidArgumentError, UnsupportedError, client_error
 from .namespaces.kv import KVNamespace
 from .namespaces.json import JSONNamespace
@@ -483,5 +484,6 @@ __all__ = [
     "command_index",
     "demo",
     "init",
+    "PromotionStrategy",
     "__version__",
 ]
