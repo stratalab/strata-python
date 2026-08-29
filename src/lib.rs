@@ -370,12 +370,6 @@ impl Handle {
     }
 }
 
-/// The offline agent usage guide, embedded from the vendored IDL at build time.
-#[pyfunction]
-fn agents_guide() -> &'static str {
-    include_str!("../idl/v1/agents-guide.md")
-}
-
 /// The engine/SDK version this wheel was built against.
 #[pyfunction]
 fn version() -> &'static str {
@@ -385,7 +379,6 @@ fn version() -> &'static str {
 #[pymodule]
 fn _stratadb(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<Handle>()?;
-    module.add_function(wrap_pyfunction!(agents_guide, module)?)?;
     module.add_function(wrap_pyfunction!(version, module)?)?;
     module.add(
         "StrataNativeError",

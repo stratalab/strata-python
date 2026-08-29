@@ -5,7 +5,8 @@ from __future__ import annotations
 import stratadb
 
 
-SKILL_REL = ".claude/skills/strata/SKILL.md"
+SKILL_REL = ".claude/skills/strata-python/SKILL.md"
+LEGACY_REL = ".claude/skills/strata/SKILL.md"
 
 
 def test_init_creates_breadcrumbs(tmp_path):
@@ -13,7 +14,8 @@ def test_init_creates_breadcrumbs(tmp_path):
     assert results == {SKILL_REL: "created", "AGENTS.md": "created", "CLAUDE.md": "created"}
 
     skill = (tmp_path / SKILL_REL).read_text(encoding="utf-8")
-    assert skill == stratadb.agents_skill()  # version-stamped skill, verbatim
+    assert skill == stratadb.agents_skill()  # the vendored strata-python skill, verbatim
+    assert skill.startswith("---\nname: strata-python\n")
     agents = (tmp_path / "AGENTS.md").read_text(encoding="utf-8")
     assert "stratadb.agents_guide()" in agents
     assert "python -m stratadb.demo" in agents
@@ -62,3 +64,30 @@ def test_init_can_skip_claude_md(tmp_path):
 
 def test_init_is_a_callable():
     assert callable(stratadb.init)
+
+
+def test_init_retires_the_legacy_sdk_strata_skill(tmp_path):
+    # A pre-1.0.4 SDK/CLI wrote a version-stamped `strata` skill with no provenance.
+    legacy = tmp_path / LEGACY_REL
+    legacy.parent.mkdir(parents=True)
+    legacy.write_text(
+        "---\nname: strata\ndescription: old\n---\n\n# StrataDB 1.0.3\n\nThis skill matches strata 1.0.3.\n",
+        encoding="utf-8",
+    )
+    results = dict(stratadb.init(str(tmp_path)))
+    assert results[LEGACY_REL] == "removed"
+    assert not legacy.exists() and not legacy.parent.exists()
+    assert (tmp_path / SKILL_REL).exists()
+    # Idempotent: nothing to retire the second time.
+    assert LEGACY_REL not in dict(stratadb.init(str(tmp_path)))
+
+
+def test_init_leaves_the_canonical_strata_skill_alone(tmp_path):
+    # The strata-agent-skills `strata` skill carries a pinned strata-core-rev; it is not ours.
+    canonical = tmp_path / LEGACY_REL
+    canonical.parent.mkdir(parents=True)
+    text = "---\nname: strata\ndescription: canonical\nmetadata:\n  strata-core-rev: \"abc\"\n---\n\n# Strata\n"
+    canonical.write_text(text, encoding="utf-8")
+    results = dict(stratadb.init(str(tmp_path)))
+    assert LEGACY_REL not in results
+    assert canonical.read_text(encoding="utf-8") == text

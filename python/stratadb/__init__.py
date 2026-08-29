@@ -346,19 +346,20 @@ class Strata:
 
 
 def agents_skill() -> str:
-    """The Claude Code skill for Strata, embedded in the wheel.
+    """The ``strata-python`` agent skill, embedded in the wheel.
 
-    Returns the version-stamped SKILL.md markdown (YAML frontmatter + the
-    condensed Python/CLI playbook). Write it to
-    ``.claude/skills/strata/SKILL.md`` in a repo so agent sessions load it
-    automatically — or run ``strata agents skill --write``, which does the
-    same from the CLI. The template is vendored from strata-core at the
-    pinned rev, so the two surfaces cannot drift.
+    Returns the SKILL.md markdown (YAML frontmatter + the Python playbook),
+    vendored verbatim from stratalab/strata-agent-skills at the rev in
+    ``STRATA_AGENT_SKILLS_REV`` — one agent-facing surface, so the wheel and
+    the skills repo cannot disagree. Write it to
+    ``.claude/skills/strata-python/SKILL.md`` (``stratadb.init()`` does exactly
+    that) and install the rest of the set — ``strata``, ``strata-branching``,
+    ``strata-time-travel`` — with ``npx skills add stratalab/strata-agent-skills``.
     """
     import importlib.resources
 
     resource = importlib.resources.files("stratadb").joinpath("_data", "skill.md")
-    return resource.read_text(encoding="utf-8").replace("{version}", __version__)
+    return resource.read_text(encoding="utf-8")
 
 
 def open(  # noqa: A001 — deliberate builtin shadow at module scope (gzip.open precedent)

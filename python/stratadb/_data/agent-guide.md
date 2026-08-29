@@ -1,9 +1,9 @@
 # stratadb — Python SDK agent guide
 
 Strata is an **embedded** multi-model database (like SQLite/DuckDB — in-process,
-no server). One database exposes six primitives over one branch-aware,
+no server). One database exposes five primitives over one branch-aware,
 time-travelling store: **key-value, JSON documents, vectors, an event log,
-graphs**, plus **inference** (`db.ai`). This guide is the offline, Python-native
+graphs** — plus **inference** (`db.ai`) on the same handle. This guide is the offline, Python-native
 usage reference for the installed version; it is returned by
 `stratadb.agents_guide()`.
 
@@ -17,8 +17,11 @@ Conventions in this guide: every snippet is real, runnable Python. Reads return
 import stratadb
 
 db = stratadb.open("./app-data")     # durable (created if absent)
+db.close()                            # close what you open (or use the context manager)
 db = stratadb.open(cache=True)       # ephemeral, in-memory (nothing persists)
+db.close()
 db = stratadb.from_env()              # path from $STRATA_DB
+db.close()
 with stratadb.open(cache=True) as db:
     ...                                # context manager closes it
 
@@ -27,12 +30,15 @@ with stratadb.open(cache=True) as db:
 # commit before acknowledgement.
 db = stratadb.open("./app-data", durability="always")
 db.kv.put("k", "v").commit.durability   # "always" — what storage attested at ack
+db.close()
 
 # Storage memory budget (bytes, >= 1 MiB). Omitted: derived at open from host
-# memory (25% of usable, capped at 8 GiB). Per open, not persisted.
+# memory (25% of usable, capped at 8 GiB). Per open, not persisted — and it
+# belongs to the handle that owns the store (see gotchas), so open it fresh.
 db = stratadb.open("./app-data", memory_budget=256 * 1024 * 1024)
 db.admin.info().memory_budget.source    # "explicit" (else "derived_from_host")
 db.admin.info().memory_budget.total_bytes
+db.close()
 ```
 
 `stratadb.open()` never opens the current directory implicitly — pass a path, set
@@ -48,7 +54,9 @@ owner serializes every writer. `db.admin.ipc_status()` reports the topology
 (`is_owner`, `hosting`, `owner_pid`). Within one process, still prefer sharing a
 single handle across threads (it is concurrency-safe). Pass `ipc="off"` for a
 raw exclusive open (a second open then raises `UnavailableError`); `ipc="client"`
-brokers to an existing owner but never hosts. IPC is unix-only.
+brokers to an existing owner but never hosts. IPC is unix-only. The owner's
+lifetime bounds its clients: when the owner handle closes, brokered handles
+raise `UnavailableError` until they reopen (see gotchas).
 
 ## Key-value — `db.kv`
 
@@ -62,7 +70,8 @@ db.kv.exists("greeting")               # True
 db.kv.put_many({"a": "1", "b": "2"})
 db.kv.get_many(["a", "b", "x"])        # [b'1', b'2', None]
 db.kv.count()                          # int; count(prefix=...) to scope
-for key in db.kv.iter_keys(prefix="user:"):   # auto-paginates
+db.kv.keys(prefix="user:").all()       # listing methods return a Page: iterate (auto-paginates) or .all()
+for key in db.kv.iter_keys(prefix="user:"):   # plain iterator over keys
     ...
 ```
 
@@ -247,6 +256,12 @@ Exact failure modes worth recognizing up front (match on the `.code`, not the me
   before then loses the acknowledged tail. Open with
   `stratadb.open(path, durability="always")` when every acknowledgement must
   survive process death; then receipts report `"always"`.
+- **Keep the owner alive.** When the owner handle closes — `close()`, its last
+  reference dropped, process exit — every handle that brokered to it raises
+  `UnavailableError` (`unavailable.executor.ipc_transport`, retryable; the hint
+  says to reopen). A fresh `stratadb.open(path)` recovers as the new owner. Share
+  one handle across threads rather than reopening, and never rebind the only
+  reference to the owner while clients depend on it.
 - **`memory_budget=` belongs to the owner.** It sizes storage for the handle
   that owns the store on this open; a handle that brokers to an existing owner
   (the `ipc="host"` default on a busy path) inherits the owner's budget and its
@@ -289,7 +304,7 @@ db.execute({"type": "kv_scan", "limit": 10})   # raw command wire -> {"type","da
 stratadb.command_index()               # full offline command catalog (ids, kinds, docs)
 stratadb.agents_guide()                # this guide
 stratadb.demo()                        # a runnable, zero-setup tour (or: python -m stratadb.demo)
-stratadb.init("path/to/repo")          # scaffold the agent skill + AGENTS.md into a repo
+stratadb.init("path/to/repo")          # scaffold the strata-python skill + AGENTS.md into a repo
 stratadb.__version__                   # the SDK version (engine version: db.admin.ping().version)
 ```
 

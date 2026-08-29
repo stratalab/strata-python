@@ -26,7 +26,7 @@ def test_agents_guide_matches_bundled():
 
 
 def test_version_is_engine_version():
-    assert stratadb.__version__ == "1.0.3"
+    assert stratadb.__version__ == "1.0.4"
 
 
 def test_public_namespaces_present():
@@ -50,12 +50,15 @@ def test_module_exports():
         assert hasattr(stratadb, name)
 
 
-def test_agents_skill_matches_vendored_template():
-    # agents_skill() serves the vendored strata-core skill template with the
-    # wheel's version substituted (drift guard against idl/v1/agents-skill.md).
-    template = (ROOT / "idl" / "v1" / "agents-skill.md").read_text(encoding="utf-8")
+def test_agents_skill_is_the_vendored_strata_python_skill():
+    # agents_skill() serves the strata-agent-skills `strata-python` skill verbatim
+    # (tools/vendor_skill.py pins the rev in STRATA_AGENT_SKILLS_REV).
+    bundled = (ROOT / "python" / "stratadb" / "_data" / "skill.md").read_text(encoding="utf-8")
     skill = stratadb.agents_skill()
-    assert skill == template.replace("{version}", stratadb.__version__)
-    assert skill.startswith("---\nname: strata\ndescription: ")
+    assert skill == bundled
+    assert skill.startswith("---\nname: strata-python\ndescription: ")
+    assert 'stratadb-version-range: "1.x"' in skill and stratadb.__version__.startswith("1.")
     assert "stratadb.open(" in skill
     assert "{version}" not in skill
+    rev = (ROOT / "STRATA_AGENT_SKILLS_REV").read_text(encoding="utf-8").strip()
+    assert len(rev) == 40 and all(c in "0123456789abcdef" for c in rev)
