@@ -978,6 +978,22 @@ class BranchCleanupItem:
 
 
 @dataclass
+class BranchComparisonItem:
+    """The result of comparing two branches, exposed through the command boundary."""
+    branch_a: str
+    branch_b: str
+    spaces: List["SpaceComparisonItem"]
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "BranchComparisonItem":
+        return cls(
+            branch_a=d['branch_a'],
+            branch_b=d['branch_b'],
+            spaces=[SpaceComparisonItem.from_wire(_x) for _x in (d['spaces'] or [])],
+        )
+
+
+@dataclass
 class BranchItem:
     """Branch summary exposed through the command boundary."""
     branch_id: str
@@ -987,6 +1003,7 @@ class BranchItem:
     status: "BranchStatus"
     created_at: Optional[int] = None
     deleted_at: Optional[int] = None
+    merge_parent: Optional["BranchMergeItem"] = None
     parent: Optional["BranchParentItem"] = None
 
     @classmethod
@@ -999,7 +1016,28 @@ class BranchItem:
             status=BranchStatus(d['status']),
             created_at=(None if d.get('created_at') is None else d['created_at']),
             deleted_at=(None if d.get('deleted_at') is None else d['deleted_at']),
+            merge_parent=(None if d.get('merge_parent') is None else BranchMergeItem.from_wire(d['merge_parent'])),
             parent=(None if d.get('parent') is None else BranchParentItem.from_wire(d['parent'])),
+        )
+
+
+@dataclass
+class BranchMergeItem:
+    """Promotion (merge) lineage exposed through the command boundary: the source"""
+    merged_at: int
+    source_branch_id: str
+    source_generation: int
+    source_name: str
+    merged_timestamp: Optional[int] = None
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "BranchMergeItem":
+        return cls(
+            merged_at=d['merged_at'],
+            source_branch_id=d['source_branch_id'],
+            source_generation=d['source_generation'],
+            source_name=d['source_name'],
+            merged_timestamp=(None if d.get('merged_timestamp') is None else d['merged_timestamp']),
         )
 
 
@@ -1020,6 +1058,34 @@ class BranchParentItem:
             generation=d['generation'],
             name=d['name'],
             fork_timestamp=(None if d.get('fork_timestamp') is None else d['fork_timestamp']),
+        )
+
+
+@dataclass
+class BranchPreviewItem:
+    """The result of previewing a promotion of `source` into `target`, exposed"""
+    branch_point: int
+    conflicts: List["PreviewConflictItem"]
+    source: str
+    strategy: "PromotionStrategy"
+    target: str
+    capabilities_covered: Optional[List["ComparedCapability"]] = None
+    capabilities_unsupported: Optional[List["ComparedCapability"]] = None
+    derived_state: Optional[List["DerivedStateReportItem"]] = None
+    spaces_covered: Optional[List[str]] = None
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "BranchPreviewItem":
+        return cls(
+            branch_point=d['branch_point'],
+            conflicts=[PreviewConflictItem.from_wire(_x) for _x in (d['conflicts'] or [])],
+            source=d['source'],
+            strategy=PromotionStrategy(d['strategy']),
+            target=d['target'],
+            capabilities_covered=(None if d.get('capabilities_covered') is None else [ComparedCapability(_x) for _x in (d['capabilities_covered'] or [])]),
+            capabilities_unsupported=(None if d.get('capabilities_unsupported') is None else [ComparedCapability(_x) for _x in (d['capabilities_unsupported'] or [])]),
+            derived_state=(None if d.get('derived_state') is None else [DerivedStateReportItem.from_wire(_x) for _x in (d['derived_state'] or [])]),
+            spaces_covered=(None if d.get('spaces_covered') is None else [_x for _x in (d['spaces_covered'] or [])]),
         )
 
 
@@ -1063,6 +1129,66 @@ class CommitReceipt:
             put_count=d['put_count'],
             timestamp=d['timestamp'],
             version=d['version'],
+        )
+
+
+class ComparedCapability(str, Enum):
+    """The data capability a branch comparison entry belongs to."""
+    KEY_VALUE = 'key_value'
+    JSON = 'json'
+    VECTOR = 'vector'
+    VECTOR_COLLECTION = 'vector_collection'
+    EVENT = 'event'
+    GRAPH_METADATA = 'graph_metadata'
+    GRAPH_NODE = 'graph_node'
+    GRAPH_EDGE = 'graph_edge'
+    GRAPH_ONTOLOGY = 'graph_ontology'
+
+
+@dataclass
+class ComparedEntityItem:
+    """One entity that differs between two branches, exposed through the command"""
+    identity: bytes
+    version: int
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "ComparedEntityItem":
+        return cls(
+            identity=_wire.b64d(d['identity']),
+            version=d['version'],
+        )
+
+
+class ConflictKind(str, Enum):
+    """How two branches diverged on one entity since their branch point."""
+    VALUE_DIVERGENCE = 'value_divergence'
+    MODIFY_DELETE_DIVERGENCE = 'modify_delete_divergence'
+    INCOMPATIBLE_COLLECTION = 'incompatible_collection'
+
+
+class ConflictStrategyResult(str, Enum):
+    """What the selected strategy did with a conflict."""
+    REFUSED = 'refused'
+    SOURCE_WINS = 'source_wins'
+
+
+class DerivedStateDisposition(str, Enum):
+    """Whether a capability's derived-state rows remain correct after a promotion or"""
+    CURRENT = 'current'
+    REBUILD_REQUIRED = 'rebuild_required'
+
+
+@dataclass
+class DerivedStateReportItem:
+    """One capability's derived-state disposition after a promotion or preview."""
+    capability: "ComparedCapability"
+    disposition: "DerivedStateDisposition"
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "DerivedStateReportItem":
+        return cls(
+            capability=ComparedCapability(d['capability']),
+            disposition=DerivedStateDisposition(d['disposition']),
         )
 
 
@@ -2008,6 +2134,90 @@ class MutationEffectKind(str, Enum):
     NOT_FOUND = 'not_found'
 
 
+@dataclass
+class PreviewConflictItem:
+    """One conflicting entity a promotion encountered, exposed through the command"""
+    capability: "ComparedCapability"
+    identity: bytes
+    kind: "ConflictKind"
+    space: str
+    strategy_result: "ConflictStrategyResult"
+    source_value: Optional[bytes] = None
+    target_value: Optional[bytes] = None
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "PreviewConflictItem":
+        return cls(
+            capability=ComparedCapability(d['capability']),
+            identity=_wire.b64d(d['identity']),
+            kind=ConflictKind(d['kind']),
+            space=d['space'],
+            strategy_result=ConflictStrategyResult(d['strategy_result']),
+            source_value=(None if d.get('source_value') is None else _wire.b64d(d['source_value'])),
+            target_value=(None if d.get('target_value') is None else _wire.b64d(d['target_value'])),
+        )
+
+
+@dataclass
+class PromotedEntityItem:
+    """One entity a promotion applied to the target branch, exposed through the"""
+    capability: "ComparedCapability"
+    identity: bytes
+    space: str
+    value: Optional[bytes] = None
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "PromotedEntityItem":
+        return cls(
+            capability=ComparedCapability(d['capability']),
+            identity=_wire.b64d(d['identity']),
+            space=d['space'],
+            value=(None if d.get('value') is None else _wire.b64d(d['value'])),
+        )
+
+
+@dataclass
+class PromotionOutcomeItem:
+    """The result of promoting one branch into another, exposed through the command"""
+    applied: List["PromotedEntityItem"]
+    branch_point: int
+    conflicts: List["PreviewConflictItem"]
+    deleted: List["PromotedEntityItem"]
+    source: str
+    strategy: "PromotionStrategy"
+    target: str
+    capabilities_covered: Optional[List["ComparedCapability"]] = None
+    capabilities_unsupported: Optional[List["ComparedCapability"]] = None
+    derived_state: Optional[List["DerivedStateReportItem"]] = None
+    spaces_covered: Optional[List[str]] = None
+    target_timestamp: Optional[int] = None
+    target_version: Optional[int] = None
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "PromotionOutcomeItem":
+        return cls(
+            applied=[PromotedEntityItem.from_wire(_x) for _x in (d['applied'] or [])],
+            branch_point=d['branch_point'],
+            conflicts=[PreviewConflictItem.from_wire(_x) for _x in (d['conflicts'] or [])],
+            deleted=[PromotedEntityItem.from_wire(_x) for _x in (d['deleted'] or [])],
+            source=d['source'],
+            strategy=PromotionStrategy(d['strategy']),
+            target=d['target'],
+            capabilities_covered=(None if d.get('capabilities_covered') is None else [ComparedCapability(_x) for _x in (d['capabilities_covered'] or [])]),
+            capabilities_unsupported=(None if d.get('capabilities_unsupported') is None else [ComparedCapability(_x) for _x in (d['capabilities_unsupported'] or [])]),
+            derived_state=(None if d.get('derived_state') is None else [DerivedStateReportItem.from_wire(_x) for _x in (d['derived_state'] or [])]),
+            spaces_covered=(None if d.get('spaces_covered') is None else [_x for _x in (d['spaces_covered'] or [])]),
+            target_timestamp=(None if d.get('target_timestamp') is None else d['target_timestamp']),
+            target_version=(None if d.get('target_version') is None else d['target_version']),
+        )
+
+
+class PromotionStrategy(str, Enum):
+    """The conflict-resolution strategy for a promotion, exposed through the command"""
+    STRICT = 'strict'
+    SOURCE_WINS = 'source_wins'
+
+
 class RetryPolicy(str, Enum):
     """V1 retry policy."""
     NEVER = 'never'
@@ -2057,6 +2267,26 @@ class SessionAccess(str, Enum):
     """The access a session declares at hello. The owner's dispatch gate rejects"""
     READ = 'read'
     READ_WRITE = 'read_write'
+
+
+@dataclass
+class SpaceComparisonItem:
+    """The differing entities for one capability within one space. `added` are"""
+    added: List["ComparedEntityItem"]
+    capability: "ComparedCapability"
+    modified: List["ComparedEntityItem"]
+    removed: List["ComparedEntityItem"]
+    space: str
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "SpaceComparisonItem":
+        return cls(
+            added=[ComparedEntityItem.from_wire(_x) for _x in (d['added'] or [])],
+            capability=ComparedCapability(d['capability']),
+            modified=[ComparedEntityItem.from_wire(_x) for _x in (d['modified'] or [])],
+            removed=[ComparedEntityItem.from_wire(_x) for _x in (d['removed'] or [])],
+            space=d['space'],
+        )
 
 
 @dataclass

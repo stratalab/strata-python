@@ -1,5 +1,5 @@
 {
-  "count": 204,
+  "count": 215,
   "errors": [
     {
       "class": "invalid_argument",
@@ -35,6 +35,15 @@
       "hint": "Use a non-empty branch name that does not use reserved prefixes or invalid characters.",
       "message": "The branch name is invalid.",
       "ref": "https://stratadb.org/e/invalid_argument.engine.branch_name_reserved",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.engine.branch_point",
+      "commit_outcome": "not_started",
+      "hint": "Correct the invalid field named by the error message and retry the operation.",
+      "message": "The request contains invalid input.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.branch_point",
       "retry_policy": "never"
     },
     {
@@ -794,6 +803,15 @@
       "retry_policy": "after_state_change"
     },
     {
+      "class": "conflict",
+      "code": "conflict.engine.promotion",
+      "commit_outcome": "not_started",
+      "hint": "Reload current state and retry against the latest branch, space, or collection version.",
+      "message": "The request conflicts with current state.",
+      "ref": "https://stratadb.org/e/conflict.engine.promotion",
+      "retry_policy": "never"
+    },
+    {
       "class": "failed_precondition",
       "code": "failed_precondition.engine.graph_negative_weight",
       "commit_outcome": "not_started",
@@ -1515,6 +1533,15 @@
     },
     {
       "class": "invalid_argument",
+      "code": "invalid_argument.executor.arrow_event",
+      "commit_outcome": "not_started",
+      "hint": "Import an event Arrow file with `event_type` and JSON `payload` columns.",
+      "message": "The Arrow event import file is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.arrow_event",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
       "code": "invalid_argument.executor.arrow_graph",
       "commit_outcome": "not_started",
       "hint": "Provide a graph name and graph-compatible Arrow columns for graph export.",
@@ -1605,6 +1632,69 @@
     },
     {
       "class": "invalid_argument",
+      "code": "invalid_argument.executor.json_number",
+      "commit_outcome": "not_started",
+      "hint": "Use an integer within the i64/u64 range, or encode the value as a string.",
+      "message": "A JSON integer is outside the supported i64/u64 range and would lose precision.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.json_number",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.wire_request",
+      "commit_outcome": "not_started",
+      "hint": "Send a well-formed command object (a `type` tag and the fields that command requires).",
+      "message": "A command request received over the IPC socket was not a valid wire command.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.wire_request",
+      "retry_policy": "never"
+    },
+    {
+      "class": "unavailable",
+      "code": "unavailable.executor.ipc_transport",
+      "commit_outcome": "maybe_committed",
+      "hint": "Reopen the database (the owner may have exited or restarted) and, for a write, confirm whether it applied before retrying.",
+      "message": "The IPC connection to the store owner failed while a command was in flight.",
+      "ref": "https://stratadb.org/e/unavailable.executor.ipc_transport",
+      "retry_policy": "unknown"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.ipc_hello",
+      "commit_outcome": "not_started",
+      "hint": "Send a well-formed hello for protocol revision 2; the refusal message names the revision this owner speaks.",
+      "message": "The IPC hello frame was malformed or requested an unsupported protocol revision.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.ipc_hello",
+      "retry_policy": "never"
+    },
+    {
+      "class": "resource_exhausted",
+      "code": "resource_exhausted.executor.ipc_connections",
+      "commit_outcome": "not_started",
+      "hint": "Retry after another client disconnects, or reduce the number of processes holding connections to this database.",
+      "message": "The store owner is at its IPC connection capacity.",
+      "ref": "https://stratadb.org/e/resource_exhausted.executor.ipc_connections",
+      "retry_policy": "same_request"
+    },
+    {
+      "class": "access_denied",
+      "code": "access_denied.executor.read_only_session",
+      "commit_outcome": "not_started",
+      "hint": "Reopen the connection with read-write access, or use a read-class command.",
+      "message": "The session is read-only and the command is classified as a write.",
+      "ref": "https://stratadb.org/e/access_denied.executor.read_only_session",
+      "retry_policy": "never"
+    },
+    {
+      "class": "unavailable",
+      "code": "unavailable.executor.ipc_deadline",
+      "commit_outcome": "not_started",
+      "hint": "Retry with a larger deadline_ms, or when the database owner is less busy.",
+      "message": "The request's deadline expired while it waited for the execution lane.",
+      "ref": "https://stratadb.org/e/unavailable.executor.ipc_deadline",
+      "retry_policy": "same_request"
+    },
+    {
+      "class": "invalid_argument",
       "code": "invalid_argument.executor.vector_batch_duplicate_key",
       "commit_outcome": "not_started",
       "hint": "Remove duplicate keys so each vector batch item targets a unique key.",
@@ -1673,6 +1763,15 @@
       "hint": "Capture the reference id and report the unregistered executor error code.",
       "message": "An unregistered executor error code was rendered.",
       "ref": "https://stratadb.org/e/internal.executor.unregistered_code",
+      "retry_policy": "unknown"
+    },
+    {
+      "class": "internal",
+      "code": "internal.executor.wire_response",
+      "commit_outcome": "not_applicable",
+      "hint": "Capture the reference id and report the IPC wire response serialization failure.",
+      "message": "An IPC command result could not be serialized into a wire response.",
+      "ref": "https://stratadb.org/e/internal.executor.wire_response",
       "retry_policy": "unknown"
     },
     {

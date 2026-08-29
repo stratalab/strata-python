@@ -781,7 +781,7 @@
       "kind": "mutation.create",
       "title": "Create empty branch",
       "summary": "Create a new empty root branch.",
-      "description": "Creates an empty root branch with no parent and no data. This is not a fork: the new branch starts from nothing, and its `parent` is null. Use `branch.fork` to start from an existing branch's data. Creating a name that already exists fails with `already_exists.engine.branch`; names reserved for engine control data are rejected.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Creates an empty root branch with no parent and no data. This is not a fork: the new branch starts from nothing, and its `parent` is null. Use `branch.fork` to start from an existing branch's data. Creating a name that already exists fails with `already_exists.engine.branch`; names reserved for engine control data are rejected.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/branch/create",
       "cli": {
         "path": [
@@ -849,7 +849,7 @@
       "kind": "mutation.delete",
       "title": "Delete branch",
       "summary": "Delete an active branch and release its storage claims.",
-      "description": "Deletes an active branch and reports the deleted branch summary, generation facts, and storage cleanup counts. The `default` branch refuses deletion with `invalid_argument.engine.branch_delete`. There is no merge in V1: work on a fork is either kept by continuing on that branch or discarded by deleting it.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Deletes an active branch and reports the deleted branch summary, generation facts, and storage cleanup counts. The `default` branch refuses deletion with `invalid_argument.engine.branch_delete`. Deletion discards the branch's work — promote anything worth keeping onto another branch with `branch merge` before deleting, or keep working on the branch instead.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/branch/delete",
       "cli": {
         "path": [
@@ -909,13 +909,76 @@
       }
     },
     {
+      "id": "branch.diff",
+      "family": "branch",
+      "op": "diff",
+      "kind": "read.status",
+      "title": "Compare branches",
+      "summary": "Compare two branches and report the entities that differ across every primitive.",
+      "description": "Compares two branches and reports the authored entities that differ, grouped by\ncapability and space: entries `added` on `branch_b`, `removed` relative to\n`branch_a`, and `modified` on both sides. The comparison is directional from\n`branch_a` to `branch_b`.\n\nEvery data primitive is compared — key-value, JSON documents, vectors, event\nstreams, and graphs. Graph changes are reported per row class: nodes, edges, and\nontology appear as separate capabilities in the result. Derived rows (search and\nvector indexes, graph reverse maps) are omitted. A missing branch is rejected\nwith `not_found.engine.branch`.\n\nStatus commands return a scalar or compact status payload and do not mutate database state.",
+      "docs": "/docs/branch/diff",
+      "cli": {
+        "path": [
+          "branch",
+          "diff"
+        ],
+        "surface": "verb"
+      },
+      "mcp": {
+        "name": "strata_branch_diff",
+        "description": "Use this when the user wants to see what changed between two branches — which keys, documents, vectors, events, or graph nodes/edges/ontology were added, removed, or modified."
+      },
+      "feature": "core",
+      "access": "read",
+      "input": "Command::BranchDiff",
+      "output": "Output::BranchComparison",
+      "outputs": [
+        "Output::BranchComparison"
+      ],
+      "wire_status": "stable",
+      "response_model": "StatusResponse<BranchComparisonItem>",
+      "commit": "none",
+      "pagination": "none",
+      "batch": "none",
+      "errors": [
+        {
+          "code": "failed_precondition.engine.runtime_closed",
+          "docs": "https://stratadb.org/e/failed_precondition.engine.runtime_closed"
+        },
+        {
+          "code": "not_found.engine.branch",
+          "docs": "https://stratadb.org/e/not_found.engine.branch"
+        },
+        {
+          "code": "invalid_argument.engine.branch_name",
+          "docs": "https://stratadb.org/e/invalid_argument.engine.branch_name"
+        },
+        {
+          "code": "invalid_argument.engine.branch_name_reserved",
+          "docs": "https://stratadb.org/e/invalid_argument.engine.branch_name_reserved"
+        }
+      ],
+      "fixtures": {
+        "request": "requests/v1/branches/diff.json",
+        "response": "responses/v1/branches/diff.json",
+        "setup": [
+          "requests/v1/kv/put.json",
+          "requests/v1/branches/create.json"
+        ]
+      },
+      "source": {
+        "command": "crates/executor/idl/v1/commands/branch.yaml",
+        "prose": "commands/branch.diff.md"
+      }
+    },
+    {
       "id": "branch.fork",
       "family": "branch",
       "op": "fork",
       "kind": "mutation.create",
       "title": "Fork branch from current head",
       "summary": "Fork a new branch from the current head of a source branch.",
-      "description": "Forks a new branch from the source branch's current head. The new branch sees all data visible on the source at fork time; later writes on either branch stay isolated. The returned branch summary records the parent name, fork version, and generation.\n\nOn the CLI, all three fork commands share the single verb `strata branch fork <SOURCE> <BRANCH>`: with no flags it runs this command, while `--version` routes to `branch.fork_at_version` and `--timestamp` routes to `branch.fork_at_timestamp` (both wire-surface commands).\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Forks a new branch from the source branch's current head. The new branch sees all data visible on the source at fork time; later writes on either branch stay isolated. The returned branch summary records the parent name, fork version, and generation.\n\nOn the CLI, all three fork commands share the single verb `strata branch fork <SOURCE> <BRANCH>`: with no flags it runs this command, while `--version` routes to `branch.fork_at_version` and `--timestamp` routes to `branch.fork_at_timestamp` (both wire-surface commands).\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/branch/fork",
       "cli": {
         "path": [
@@ -981,7 +1044,7 @@
       "kind": "mutation.create",
       "title": "Fork branch at timestamp",
       "summary": "Fork a new branch from a retained source timestamp.",
-      "description": "Forks a new branch anchored at a retained source timestamp (microseconds, on Strata's logical commit clock). The engine resolves the timestamp to the covering retained commit; the returned parent lineage records both the fork timestamp and the resolved fork version. A timestamp outside retained history fails with `history_unavailable.engine.persistence_history`.\n\nThis command has no dedicated CLI verb: the CLI expresses it as `strata branch fork <SOURCE> <BRANCH> --timestamp <TIMESTAMP>` (one shared `branch fork` verb routes to all three fork commands, so only `branch.fork` owns the CLI path). It remains fully reachable through the generic wire surface — `strata command run`, MCP, and SDKs.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Forks a new branch anchored at a retained source timestamp (microseconds, on Strata's logical commit clock). The engine resolves the timestamp to the covering retained commit; the returned parent lineage records both the fork timestamp and the resolved fork version. A timestamp outside retained history fails with `history_unavailable.engine.persistence_history`.\n\nThis command has no dedicated CLI verb: the CLI expresses it as `strata branch fork <SOURCE> <BRANCH> --timestamp <TIMESTAMP>` (one shared `branch fork` verb routes to all three fork commands, so only `branch.fork` owns the CLI path). It remains fully reachable through the generic wire surface — `strata command run`, MCP, and SDKs.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/branch/fork_at_timestamp",
       "cli": {
         "path": [
@@ -1051,7 +1114,7 @@
       "kind": "mutation.create",
       "title": "Fork branch at version",
       "summary": "Fork a new branch from a retained source commit version.",
-      "description": "Forks a new branch anchored at a retained commit version of the source branch, giving time-travel semantics: the new branch sees exactly the data visible at that version. A version outside retained history fails with `history_unavailable.engine.persistence_history`.\n\nThis command has no dedicated CLI verb: the CLI expresses it as `strata branch fork <SOURCE> <BRANCH> --version <VERSION>` (one shared `branch fork` verb routes to all three fork commands, so only `branch.fork` owns the CLI path). It remains fully reachable through the generic wire surface — `strata command run`, MCP, and SDKs.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Forks a new branch anchored at a retained commit version of the source branch, giving time-travel semantics: the new branch sees exactly the data visible at that version. A version outside retained history fails with `history_unavailable.engine.persistence_history`.\n\nThis command has no dedicated CLI verb: the CLI expresses it as `strata branch fork <SOURCE> <BRANCH> --version <VERSION>` (one shared `branch fork` verb routes to all three fork commands, so only `branch.fork` owns the CLI path). It remains fully reachable through the generic wire surface — `strata command run`, MCP, and SDKs.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/branch/fork_at_version",
       "cli": {
         "path": [
@@ -1227,13 +1290,182 @@
       }
     },
     {
+      "id": "branch.merge",
+      "family": "branch",
+      "op": "merge",
+      "kind": "mutation.merge",
+      "title": "Promote branch",
+      "summary": "Promote one branch's changes into another as a single atomic commit.",
+      "description": "Promotes the `source` branch's changes into the `target` branch as a single\natomic commit, leaving the source unchanged. The branch point is derived from\nthe recorded fork lineage, and a three-way merge applies every change the source\nmade since that point.\n\nMerge applies to key-value, JSON, and vector data. Event streams and graphs are\ncompared (see `branch.diff`) but never merged — divergent append-only and\nstructural data cannot be three-way merged — so a promotion leaves them\nuntouched.\n\nThe `strict` strategy (the default) refuses with `conflict.engine.promotion`,\nmutating nothing, when the two branches changed the same entity differently since\nthe branch point. The `source_wins` strategy applies the source side's value or\ntombstone for each such conflict and reports every overwritten or deleted target\nentry. A promotion that applies nothing writes no commit and leaves the target\nunchanged.\n\nBranches with no shared fork lineage are rejected with\n`invalid_argument.engine.branch_point`; a missing branch with\n`not_found.engine.branch`.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
+      "docs": "/docs/branch/merge",
+      "cli": {
+        "path": [
+          "branch",
+          "merge"
+        ],
+        "surface": "verb"
+      },
+      "mcp": {
+        "name": "strata_branch_merge",
+        "description": "Use this when the user wants to merge or promote one branch into another — applying the source branch's changes to the target."
+      },
+      "feature": "core",
+      "access": "write",
+      "input": "Command::BranchMerge",
+      "output": "Output::BranchMerge",
+      "outputs": [
+        "Output::BranchMerge"
+      ],
+      "wire_status": "stable",
+      "response_model": "MutationAck<PromotionOutcomeItem>",
+      "commit": "commits_on_success",
+      "pagination": "none",
+      "batch": "none",
+      "errors": [
+        {
+          "code": "failed_precondition.engine.runtime_closed",
+          "docs": "https://stratadb.org/e/failed_precondition.engine.runtime_closed"
+        },
+        {
+          "code": "not_found.engine.branch",
+          "docs": "https://stratadb.org/e/not_found.engine.branch"
+        },
+        {
+          "code": "invalid_argument.engine.branch_name",
+          "docs": "https://stratadb.org/e/invalid_argument.engine.branch_name"
+        },
+        {
+          "code": "invalid_argument.engine.branch_name_reserved",
+          "docs": "https://stratadb.org/e/invalid_argument.engine.branch_name_reserved"
+        },
+        {
+          "code": "conflict.engine.promotion",
+          "docs": "https://stratadb.org/e/conflict.engine.promotion"
+        },
+        {
+          "code": "invalid_argument.engine.branch_point",
+          "docs": "https://stratadb.org/e/invalid_argument.engine.branch_point"
+        }
+      ],
+      "fixtures": {
+        "request": "requests/v1/branches/merge.json",
+        "response": "responses/v1/branches/merge.json",
+        "setup": [
+          "requests/v1/kv/put.json",
+          "requests/v1/branches/fork.json",
+          "requests/v1/branches/merge_source_change.json"
+        ],
+        "error_cases": [
+          {
+            "setup": [
+              "requests/v1/kv/put.json",
+              "requests/v1/branches/fork.json",
+              "requests/v1/branches/merge_source_change.json",
+              "requests/v1/branches/merge_target_change.json"
+            ],
+            "request": "requests/v1/branches/merge.json",
+            "expected_error": "responses/v1/errors/branches/merge_conflict.json"
+          },
+          {
+            "setup": [
+              "requests/v1/branches/create.json"
+            ],
+            "request": "requests/v1/branches/merge_unrelated.json",
+            "expected_error": "responses/v1/errors/branches/merge_unrelated.json"
+          }
+        ]
+      },
+      "source": {
+        "command": "crates/executor/idl/v1/commands/branch.yaml",
+        "prose": "commands/branch.merge.md"
+      }
+    },
+    {
+      "id": "branch.preview",
+      "family": "branch",
+      "op": "preview",
+      "kind": "read.status",
+      "title": "Preview branch promotion",
+      "summary": "Preview promoting one branch into another, reporting conflicts without mutating either branch.",
+      "description": "Previews promoting the `source` branch into the `target` branch: it derives the\nbranch point from the recorded fork lineage, runs a three-way comparison, and\nreports the conflicts a promotion would hit — entries both branches changed\ndifferently since the branch point. Preview is read-only: it mutates neither\nbranch.\n\nEach conflict reports what the selected `strategy` would do — `strict` refuses\n(`refused`), `source_wins` overwrites the target with the source value. A preview\nwith no conflicts is clean and a promotion under `strict` would apply. Preview\ncovers the capabilities a promotion applies — key-value, JSON, and vectors;\nevents and graphs are diff-only and never appear as promotion conflicts.\nBranches with no shared fork lineage are rejected with\n`invalid_argument.engine.branch_point`.\n\nStatus commands return a scalar or compact status payload and do not mutate database state.",
+      "docs": "/docs/branch/preview",
+      "cli": {
+        "path": [
+          "branch",
+          "preview"
+        ],
+        "surface": "verb"
+      },
+      "mcp": {
+        "name": "strata_branch_preview",
+        "description": "Use this when the user wants to see what a merge would do — which entries conflict — before promoting one branch into another."
+      },
+      "feature": "core",
+      "access": "read",
+      "input": "Command::BranchPreview",
+      "output": "Output::BranchPreview",
+      "outputs": [
+        "Output::BranchPreview"
+      ],
+      "wire_status": "stable",
+      "response_model": "StatusResponse<BranchPreviewItem>",
+      "commit": "none",
+      "pagination": "none",
+      "batch": "none",
+      "errors": [
+        {
+          "code": "failed_precondition.engine.runtime_closed",
+          "docs": "https://stratadb.org/e/failed_precondition.engine.runtime_closed"
+        },
+        {
+          "code": "not_found.engine.branch",
+          "docs": "https://stratadb.org/e/not_found.engine.branch"
+        },
+        {
+          "code": "invalid_argument.engine.branch_name",
+          "docs": "https://stratadb.org/e/invalid_argument.engine.branch_name"
+        },
+        {
+          "code": "invalid_argument.engine.branch_name_reserved",
+          "docs": "https://stratadb.org/e/invalid_argument.engine.branch_name_reserved"
+        },
+        {
+          "code": "invalid_argument.engine.branch_point",
+          "docs": "https://stratadb.org/e/invalid_argument.engine.branch_point"
+        }
+      ],
+      "fixtures": {
+        "request": "requests/v1/branches/preview.json",
+        "response": "responses/v1/branches/preview.json",
+        "setup": [
+          "requests/v1/kv/put.json",
+          "requests/v1/branches/fork.json",
+          "requests/v1/branches/merge_source_change.json",
+          "requests/v1/branches/merge_target_change.json"
+        ],
+        "error_cases": [
+          {
+            "setup": [
+              "requests/v1/branches/create.json"
+            ],
+            "request": "requests/v1/branches/preview_unrelated.json",
+            "expected_error": "responses/v1/errors/branches/merge_unrelated.json"
+          }
+        ]
+      },
+      "source": {
+        "command": "crates/executor/idl/v1/commands/branch.yaml",
+        "prose": "commands/branch.preview.md"
+      }
+    },
+    {
       "id": "event.append",
       "family": "event",
       "op": "append",
       "kind": "mutation.create",
       "title": "Append event",
       "summary": "Append one event to the branch event log.",
-      "description": "Appends one event to the selected branch and space. Strata assigns the next sequence number, stamps the event with its append timestamp, and links it into the tamper-evident hash chain. Events are immutable once appended.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Appends one event to the selected branch and space. Strata assigns the next sequence number, stamps the event with its append timestamp, and links it into the tamper-evident hash chain. Events are immutable once appended.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/event/append",
       "cli": {
         "path": [
@@ -2384,7 +2616,7 @@
       "kind": "mutation.bulk_delete",
       "title": "Apply graph delete policy",
       "summary": "Apply a delete policy to bound graph facts.",
-      "description": "Applies an explicit policy to every graph node bound to the given entity target: `cascade` deletes the bound nodes and their incident edges, `detach` keeps the nodes but removes their bindings, and `keep_dangling` preserves the bindings so traversal can report the target's status. The acknowledgement reports how many bound nodes the policy covered.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Applies an explicit policy to every graph node bound to the given entity target: `cascade` deletes the bound nodes and their incident edges, `detach` keeps the nodes but removes their bindings, and `keep_dangling` preserves the bindings so traversal can report the target's status. The acknowledgement reports how many bound nodes the policy covered.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/graph/apply_delete_policy",
       "cli": {
         "path": [
@@ -2600,7 +2832,7 @@
       "kind": "mutation.put",
       "title": "Bulk insert graph data",
       "summary": "Bulk-load nodes and edges in chunks.",
-      "description": "Ingests a payload of nodes and edges in chunked commits: nodes first, then edges, so edges may reference nodes from the same payload. Node objects use the key `node_id`; edges use `src`, `edge_type`, `dst`, and optional `weight` (default 1.0) and `properties`. `chunk_size` bounds items per commit (default 512, clamped at 800). The acknowledgement reports inserted counts, the number of chunk commits, and the final chunk's commit receipt.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Ingests a payload of nodes and edges in chunked commits: nodes first, then edges, so edges may reference nodes from the same payload. Node objects use the key `node_id`; edges use `src`, `edge_type`, `dst`, and optional `weight` (default 1.0) and `properties`. `chunk_size` bounds items per commit (default 512, clamped at 800). The acknowledgement reports inserted counts, the number of chunk commits, and the final chunk's commit receipt.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/graph/bulk_insert",
       "cli": {
         "path": [
@@ -2702,7 +2934,7 @@
       "kind": "mutation.create",
       "title": "Create graph",
       "summary": "Create a named graph.",
-      "description": "Creates an empty named graph in the selected space and returns its metadata, including node and edge counts (zero at creation) and the create commit coordinates. A database can hold many graphs; graph names are unique per branch and space. Creating a name that already exists fails with `already_exists.engine.graph`.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Creates an empty named graph in the selected space and returns its metadata, including node and edge counts (zero at creation) and the create commit coordinates. A database can hold many graphs; graph names are unique per branch and space. Creating a name that already exists fails with `already_exists.engine.graph`.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/graph/create",
       "cli": {
         "path": [
@@ -2782,7 +3014,7 @@
       "kind": "mutation.delete",
       "title": "Delete graph",
       "summary": "Delete a graph and its visible data.",
-      "description": "Deletes a named graph and every visible node, edge, binding, and ontology row it owns. Deleting a graph that does not exist is not an error: the acknowledgement reports `deleted: false` with a `not_found` effect. Earlier states remain readable through time travel on other commands.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Deletes a named graph and every visible node, edge, binding, and ontology row it owns. Deleting a graph that does not exist is not an error: the acknowledgement reports `deleted: false` with a `not_found` effect. Earlier states remain readable through time travel on other commands.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/graph/delete",
       "cli": {
         "path": [
@@ -2848,7 +3080,7 @@
       "kind": "mutation.put",
       "title": "Add graph edge",
       "summary": "Add or replace a graph edge.",
-      "description": "Adds a directed edge `src -[edge_type]-> dst` or replaces it if the same triple already exists. Both endpoints must already exist; writing an edge to a missing node fails with `invalid_argument.engine.graph_edge_endpoint`. Weight defaults to 1.0 and must not be negative. Once the graph's ontology is frozen, the edge type and its endpoint object types are validated against the declared link types.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Adds a directed edge `src -[edge_type]-> dst` or replaces it if the same triple already exists. Both endpoints must already exist; writing an edge to a missing node fails with `invalid_argument.engine.graph_edge_endpoint`. Weight defaults to 1.0 and must not be negative. Once the graph's ontology is frozen, the edge type and its endpoint object types are validated against the declared link types.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/graph/edge/add",
       "cli": {
         "path": [
@@ -3033,7 +3265,7 @@
       "kind": "mutation.delete",
       "title": "Remove graph edge",
       "summary": "Remove a graph edge.",
-      "description": "Removes one directed edge by its `(src, edge_type, dst)` triple. The endpoints are untouched. Removing an edge that does not exist is not an error: the acknowledgement reports `deleted: false`.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Removes one directed edge by its `(src, edge_type, dst)` triple. The endpoints are untouched. Removing an edge that does not exist is not an error: the acknowledgement reports `deleted: false`.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/graph/edge/remove",
       "cli": {
         "path": [
@@ -3320,7 +3552,7 @@
       "kind": "mutation.put",
       "title": "Add graph node",
       "summary": "Add or replace a graph node.",
-      "description": "Adds a node to a graph or replaces it if the node id already exists. A node carries optional JSON properties, an optional declared object type (validated once the graph's ontology is frozen), and an optional entity binding that links the node to a row in another primitive. Cross-branch bindings are rejected.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Adds a node to a graph or replaces it if the node id already exists. A node carries optional JSON properties, an optional declared object type (validated once the graph's ontology is frozen), and an optional entity binding that links the node to a row in another primitive. Cross-branch bindings are rejected.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/graph/node/add",
       "cli": {
         "path": [
@@ -3562,7 +3794,7 @@
       "kind": "mutation.delete",
       "title": "Remove graph node",
       "summary": "Remove a graph node and its edges.",
-      "description": "Removes a node and every edge incident to it in one commit. Removing a node that does not exist is not an error: the acknowledgement reports `deleted: false`.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Removes a node and every edge incident to it in one commit. Removing a node that does not exist is not an error: the acknowledgement reports `deleted: false`.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/graph/node/remove",
       "cli": {
         "path": [
@@ -3710,7 +3942,7 @@
       "kind": "mutation.put",
       "title": "Define graph link type",
       "summary": "Define a graph link type.",
-      "description": "Declares a link type in the graph's ontology: a name, its source and target object types, an optional cardinality hint (for example `many-to-one`), and property definitions. Source and target must name declared object types by the time the ontology is frozen. After freezing, this command fails with `failed_precondition.engine.graph_ontology_frozen`.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Declares a link type in the graph's ontology: a name, its source and target object types, an optional cardinality hint (for example `many-to-one`), and property definitions. Source and target must name declared object types by the time the ontology is frozen. After freezing, this command fails with `failed_precondition.engine.graph_ontology_frozen`.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/graph/ontology/define_link_type",
       "cli": {
         "path": [
@@ -3794,7 +4026,7 @@
       "kind": "mutation.put",
       "title": "Define graph object type",
       "summary": "Define a graph object type.",
-      "description": "Declares an object type in the graph's ontology: a name plus property definitions (`value_type`, `required`). While the ontology is a draft, redefining a type replaces it freely. After `graph.ontology.freeze`, the ontology is immutable and this command fails with `failed_precondition.engine.graph_ontology_frozen`.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Declares an object type in the graph's ontology: a name plus property definitions (`value_type`, `required`). While the ontology is a draft, redefining a type replaces it freely. After `graph.ontology.freeze`, the ontology is immutable and this command fails with `failed_precondition.engine.graph_ontology_frozen`.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/graph/ontology/define_object_type",
       "cli": {
         "path": [
@@ -3877,7 +4109,7 @@
       "kind": "mutation.delete",
       "title": "Delete graph link type",
       "summary": "Delete a draft link type.",
-      "description": "Removes a link type from the graph's draft ontology. Deleting a type that was never declared is not an error: the acknowledgement reports `deleted: false`. Once the ontology is frozen this command fails with `failed_precondition.engine.graph_ontology_frozen`.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Removes a link type from the graph's draft ontology. Deleting a type that was never declared is not an error: the acknowledgement reports `deleted: false`. Once the ontology is frozen this command fails with `failed_precondition.engine.graph_ontology_frozen`.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/graph/ontology/delete_link_type",
       "cli": {
         "path": [
@@ -3954,7 +4186,7 @@
       "kind": "mutation.delete",
       "title": "Delete graph object type",
       "summary": "Delete a draft object type.",
-      "description": "Removes an object type from the graph's draft ontology. Deleting a type that was never declared is not an error: the acknowledgement reports `deleted: false`. Once the ontology is frozen this command fails with `failed_precondition.engine.graph_ontology_frozen`.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Removes an object type from the graph's draft ontology. Deleting a type that was never declared is not an error: the acknowledgement reports `deleted: false`. Once the ontology is frozen this command fails with `failed_precondition.engine.graph_ontology_frozen`.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/graph/ontology/delete_object_type",
       "cli": {
         "path": [
@@ -4030,7 +4262,7 @@
       "kind": "mutation.put",
       "title": "Freeze graph ontology",
       "summary": "Freeze the graph ontology.",
-      "description": "Validates the draft ontology and freezes it. Validation requires at least one declared type and rejects link types whose source or target reference undeclared object types (`failed_precondition.engine.graph_ontology_freeze`). After freezing, writes enforce declared node object types, required properties, and link-type endpoint rules; the ontology itself can no longer change (`failed_precondition.engine.graph_ontology_frozen`).\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Validates the draft ontology and freezes it. Validation requires at least one declared type and rejects link types whose source or target reference undeclared object types (`failed_precondition.engine.graph_ontology_freeze`). After freezing, writes enforce declared node object types, required properties, and link-type endpoint rules; the ontology itself can no longer change (`failed_precondition.engine.graph_ontology_frozen`).\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/graph/ontology/freeze",
       "cli": {
         "path": [
@@ -5432,7 +5664,7 @@
       "kind": "mutation.delete",
       "title": "Delete JSON value",
       "summary": "Delete a whole JSON document or one path inside it.",
-      "description": "Deletes the root path `$` to remove the whole document, or a nested path to remove one field or array element. Missing documents and paths produce a no-op delete acknowledgement rather than an error.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Deletes the root path `$` to remove the whole document, or a nested path to remove one field or array element. Missing documents and paths produce a no-op delete acknowledgement rather than an error.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/json/delete",
       "cli": {
         "path": [
@@ -5711,7 +5943,7 @@
       "kind": "mutation.create",
       "title": "Create JSON index",
       "summary": "Create a JSON secondary index on a field path.",
-      "description": "Creates a secondary index over one JSON field path with a numeric, tag, or text kind. Existing documents are indexed at creation and future writes maintain the index automatically. The current wire response is a transitional bare index definition.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Creates a secondary index over one JSON field path with a numeric, tag, or text kind. Existing documents are indexed at creation and future writes maintain the index automatically. The current wire response is a transitional bare index definition.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/json/index/create",
       "cli": {
         "path": [
@@ -5787,7 +6019,7 @@
       "kind": "mutation.delete",
       "title": "Drop JSON index",
       "summary": "Drop a JSON secondary index by name.",
-      "description": "Drops the named JSON secondary index and its stored entries. Documents are unaffected. The current wire response is a transitional boolean status.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Drops the named JSON secondary index and its stored entries. Documents are unaffected. The current wire response is a transitional boolean status.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/json/index/drop",
       "cli": {
         "path": [
@@ -6099,7 +6331,7 @@
       "kind": "mutation.put",
       "title": "Set JSON value",
       "summary": "Set a JSON value at a document path, creating the document when missing.",
-      "description": "Writes a JSON value at a path inside a document, creating the document and any missing intermediate objects when needed. Setting the root path `$` replaces the whole document; setting a nested path like `$.profile.name` updates one field and records a new document version.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Writes a JSON value at a path inside a document, creating the document and any missing intermediate objects when needed. Setting the root path `$` replaces the whole document; setting a nested path like `$.profile.name` updates one field and records a new document version.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/json/set",
       "cli": {
         "path": [
@@ -6541,7 +6773,7 @@
       "kind": "mutation.delete",
       "title": "Delete KV value",
       "summary": "Delete one visible KV key.",
-      "description": "Deletes the current visible value for a KV key. Missing keys produce a no-op delete acknowledgement rather than a read-style missing value.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Deletes the current visible value for a KV key. Missing keys produce a no-op delete acknowledgement rather than a read-style missing value.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/kv/delete",
       "cli": {
         "path": [
@@ -6862,7 +7094,7 @@
       "kind": "mutation.put",
       "title": "Put KV value",
       "summary": "Store or replace a KV value by key.",
-      "description": "Writes a binary value to the selected KV space. If the key already exists, Strata replaces the visible value and records a new version.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Writes a binary value to the selected KV space. If the key already exists, Strata replaces the visible value and records a new version.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/kv/put",
       "cli": {
         "path": [
@@ -7053,7 +7285,7 @@
       "kind": "mutation.create",
       "title": "Create product space",
       "summary": "Create a product space on a branch.",
-      "description": "Creates a product space in the branch catalog. Creation is idempotent: creating a space that already exists succeeds with `created: false` and no mutation effect. Names reserved for engine control data are rejected with `invalid_argument.engine.product_space_reserved`.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Creates a product space in the branch catalog. Creation is idempotent: creating a space that already exists succeeds with `created: false` and no mutation effect. Names reserved for engine control data are rejected with `invalid_argument.engine.product_space_reserved`.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/space/create",
       "cli": {
         "path": [
@@ -7112,7 +7344,7 @@
       "kind": "mutation.delete",
       "title": "Delete product space",
       "summary": "Delete a product space from a branch.",
-      "description": "Drops the product space from the branch catalog. The `default` space refuses deletion with `invalid_argument.engine.space_delete_default`. A space that still contains visible data refuses deletion with `failed_precondition.engine.space_not_empty` unless `force: true` is set, which tombstones the visible rows first and reports the count. Deleting a space that does not exist succeeds with `deleted: false`.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Drops the product space from the branch catalog. The `default` space refuses deletion with `invalid_argument.engine.space_delete_default`. A space that still contains visible data refuses deletion with `failed_precondition.engine.space_not_empty` unless `force: true` is set, which tombstones the visible rows first and reports the count. Deleting a space that does not exist succeeds with `deleted: false`.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/space/delete",
       "cli": {
         "path": [
@@ -7626,7 +7858,7 @@
       "kind": "mutation.create",
       "title": "Create vector collection",
       "summary": "Create a vector collection with a dimension and metric.",
-      "description": "Creates a collection for dense vectors. The dimension and metric become part of the collection contract for future upserts and queries.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Creates a collection for dense vectors. The dimension and metric become part of the collection contract for future upserts and queries.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/vector/collection/create",
       "cli": {
         "path": [
@@ -7708,7 +7940,7 @@
       "kind": "mutation.delete",
       "title": "Delete vector collection",
       "summary": "Delete a vector collection.",
-      "description": "Deletes the selected vector collection from the current branch and space. The current wire response is a transitional boolean status.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Deletes the selected vector collection from the current branch and space. The current wire response is a transitional boolean status.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/vector/collection/delete",
       "cli": {
         "path": [
@@ -7991,7 +8223,7 @@
       "kind": "mutation.delete",
       "title": "Delete vector",
       "summary": "Delete one vector key.",
-      "description": "Deletes one visible vector entry from a collection. Missing keys are represented as no-op mutation acknowledgements.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Deletes one visible vector entry from a collection. Missing keys are represented as no-op mutation acknowledgements.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/vector/delete",
       "cli": {
         "path": [
@@ -8063,7 +8295,7 @@
       "kind": "mutation.bulk_delete",
       "title": "Delete all vectors",
       "summary": "Delete all vectors in a collection.",
-      "description": "Deletes all vectors visible in the selected collection while preserving the collection itself.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Deletes all vectors visible in the selected collection while preserving the collection itself.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/vector/delete_all",
       "cli": {
         "path": [
@@ -8135,7 +8367,7 @@
       "kind": "mutation.bulk_delete",
       "title": "Delete vectors by filter",
       "summary": "Delete vectors matching a metadata filter.",
-      "description": "Scans the collection for visible vectors matching the metadata filter and deletes the matching rows as a bulk mutation.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Scans the collection for visible vectors matching the metadata filter and deletes the matching rows as a bulk mutation.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/vector/delete_by_filter",
       "cli": {
         "path": [
@@ -8586,7 +8818,7 @@
       "kind": "mutation.metadata_update",
       "title": "Update vector metadata",
       "summary": "Patch metadata for one vector.",
-      "description": "Applies a top-level metadata patch to one visible vector. Missing vectors return a no-op mutation acknowledgement.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Applies a top-level metadata patch to one visible vector. Missing vectors return a no-op mutation acknowledgement.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/vector/metadata/update",
       "cli": {
         "path": [
@@ -8886,7 +9118,7 @@
       "kind": "mutation.put",
       "title": "Upsert vector",
       "summary": "Insert or replace one vector.",
-      "description": "Upserts one vector key with a dense embedding and optional metadata. The vector dimension must match the collection configuration.\n\nSuccessful mutations return an acknowledgement that identifies the affected target, the mutation effect, and commit facts when the operation changed stored state.",
+      "description": "Upserts one vector key with a dense embedding and optional metadata. The vector dimension must match the collection configuration.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/vector/upsert",
       "cli": {
         "path": [

@@ -9,12 +9,12 @@ description: >-
   db.graphs, or wants to store agent state, memory, embeddings, events, or
   graphs from Python without a server. Covers opening databases (durable,
   in-memory, durability and IPC modes, memory budget), every db.<namespace>,
-  return shapes (None on miss, receipts, Page), branches via db.at(), as_of
-  reads, typed errors matched on .code, db.ai inference, and the sharp edges
-  that trip agents.
+  return shapes (None on miss, receipts, Page), branches via db.at() and
+  db.branches (fork, diff, preview, merge), as_of reads, typed errors
+  matched on .code, db.ai inference, and the sharp edges that trip agents.
 license: MIT
 metadata:
-  strata-core-rev: "736f855dfcffc3ccf035d55a124681db95a11e1f"
+  strata-core-rev: "dc825d9ba98b1285563870b1b697b21667bd3fba"
   cli-version-range: "1.x"
   stratadb-version-range: "1.x"
 ---
@@ -123,14 +123,23 @@ exp = db.at(branch="experiment")               # scoped view over the same handl
 exp.kv.put("k", "risky")
 db.kv.get("k")                                 # None on default — isolated
 
+db.branches.diff("default", "experiment").spaces   # per space + capability: .added / .removed / .modified
+p = db.branches.preview("experiment", "default")   # read-only three-way; p.conflicts, p.capabilities_unsupported
+out = db.branches.merge("experiment", "default")   # strict (default): ConflictError on divergence, target untouched
+out = db.branches.merge("experiment", "default", strategy="source_wins")  # out.applied / .deleted / .target_version
+
 r = db.kv.put("k", "v1"); db.kv.put("k", "v2")
 db.kv.get("k", as_of=r.commit.timestamp)       # b'v1' — as_of takes a receipt's commit value
 db.branches.fork_at_timestamp("default", "as-it-was", r.commit.timestamp)
 ```
 
-The default branch is `default` (not `main`). There is no merge in V1 — keep
-the fork, re-apply the writes, or delete it. Timestamps are values you were
-given (receipts, history rows), never computed from the clock;
+The default branch is `default` (not `main`). Promotion (`stratadb >= 1.1.0`)
+merges key-value, JSON, and vector data; events and graphs are compared but
+never merged (they show up in `capabilities_unsupported`), and only branches
+with shared fork lineage can be merged (`invalid_argument.engine.branch_point`
+otherwise). `preview()` first when the outcome matters — `strict` refuses on
+any conflict and changes nothing. Timestamps are values you were given
+(receipts, history rows), never computed from the clock;
 `event.timestamp` and `db.events.range_by_time()` are the one wall-clock (µs)
 exception. Outside retained history you get `HistoryUnavailableError`
 (`history_unavailable.engine.persistence_history`) — choose a newer timestamp,
@@ -141,7 +150,8 @@ don't retry in a loop. Patterns: the `strata-branching` and
 
 Every domain failure raises a `stratadb.errors.StrataError` subclass
 (`NotFoundError`, `AlreadyExistsError`, `InvalidArgumentError`,
-`FailedPreconditionError`, `UnavailableError`, `HistoryUnavailableError`, …)
+`FailedPreconditionError`, `ConflictError`, `UnavailableError`,
+`HistoryUnavailableError`, …)
 carrying `.code` (`<class>.<area>.<detail>`), `.hint`, `.ref`
 (`https://stratadb.org/e/<code>`), `.retryable`, and `.retry_policy`. Invalid
 Python-side input raises the same hierarchy (`invalid_argument.sdk.*`), so one
@@ -171,6 +181,8 @@ Codes you will actually meet:
 | `not_found.engine.branch` | `db.at(branch=...)` names a branch that does not exist — check `db.branches.list()` |
 | `already_exists.engine.branch` | the fork/create name is taken |
 | `history_unavailable.engine.persistence_history` | `as_of`, history, or a fork anchor outside retained history |
+| `conflict.engine.promotion` | a `strict` `merge()` hit a conflict and changed nothing — `preview()`, resolve on the source, or `strategy="source_wins"` |
+| `invalid_argument.engine.branch_point` | `preview()`/`merge()` between branches with no shared fork lineage (e.g. a `create()`d root) |
 | `unavailable.engine.persistence` | `ipc="off"` open of a path another handle owns — close it or wait |
 | `unavailable.executor.ipc_transport` | the owner this handle brokered to has closed — reopen the database (see below) |
 | `inference.missing_api_key` | a cloud `db.ai` call with no provider key (`FailedPreconditionError`) |
