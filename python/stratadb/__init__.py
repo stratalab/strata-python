@@ -24,15 +24,16 @@ the way ``gzip.open`` returns a public ``GzipFile``).
 
 from __future__ import annotations
 
+import json
 import os
-from typing import Any
+from typing import Any, Callable
 
 from . import _stratadb  # native extension
 from . import errors, filters
 from ._core import Core
 from ._generated import Commands
-from ._generated.models import PromotionStrategy
-from .errors import InvalidArgumentError, UnsupportedError, client_error
+from ._generated.models import HubCloneProgress, HubDatasetSort, PromotionStrategy
+from .errors import InvalidArgumentError, UnsupportedError, client_error, error_from_payload
 from .namespaces.kv import KVNamespace
 from .namespaces.json import JSONNamespace
 from .namespaces.vectors import VectorsNamespace
@@ -43,6 +44,7 @@ from .namespaces.spaces import SpacesNamespace
 from .namespaces.admin import AdminNamespace
 from .namespaces.arrow import ArrowNamespace
 from .namespaces.ai import AiNamespace
+from .namespaces.hub import HubNamespace
 from ._demo import demo
 from ._scaffold import init
 
@@ -60,7 +62,7 @@ def agents_guide() -> str:
     """The complete offline **Python SDK** usage guide, embedded in the wheel.
 
     A single self-contained reference for coding agents: opening a database, all
-    namespaces (``db.kv``/``json``/``vectors``/``events``/``graphs``/``ai``),
+    namespaces (``db.kv``/``json``/``vectors``/``events``/``graphs``/``ai``/``hub``),
     provider keys, branches/time-travel, errors, and the escape hatch — every
     snippet real, runnable Python. (For the CLI-oriented guide instead, run
     ``strata agents guide``.)
@@ -285,6 +287,16 @@ class Strata:
             self.__dict__["_ai_ns"] = ns
         return ns
 
+    @property
+    def hub(self) -> HubNamespace:
+        """The StrataHub browse namespace — datasets, cards, refs, and the yank
+        list of a hub (read-only; never touches this database's data)."""
+        ns = self.__dict__.get("_hub_ns")
+        if ns is None:
+            ns = HubNamespace(self._commands, self._core, self._branch, self._space)
+            self.__dict__["_hub_ns"] = ns
+        return ns
+
     def at(self, *, branch: str | None = None, space: str | None = None) -> "Strata":
         """Returns a lightweight scoped view over the same database.
 
@@ -439,35 +451,57 @@ def clone(
     *,
     hub_url: str | None = None,
     branch: str | None = None,
+    progress: Callable[[HubCloneProgress], Any] | None = None,
 ) -> Strata:
     """Clones a dataset from a StrataHub into a new durable database.
 
-    Fetches ``dataset`` from the hub (``hub_url``, or the resolver default
-    when omitted), materializes it as a durable database at ``dest`` (which
-    must not exist or be empty), and returns an open handle to it. ``branch``
-    selects the dataset branch to fetch (the dataset's default when omitted).
+    Fetches ``dataset`` from the hub (``hub_url``, or the layered resolver's
+    choice when omitted — ``STRATA_HUB_URL``, then the project and global
+    Strata config files, then ``https://hub.stratahub.io``), materializes it
+    as a durable database at ``dest`` (which must not exist or be empty), and
+    returns an open handle to it. ``branch`` selects the dataset branch to
+    fetch (the dataset's default when omitted); ``db.hub.list_refs(dataset)``
+    lists them. Browse first with ``db.hub`` — on any handle, even
+    ``stratadb.open(cache=True)``.
 
-    The StrataHub client ships in the standard wheel. A minimal build
-    compiled without the hub client instead raises
-    :class:`~stratadb.errors.FailedPreconditionError`
-    (``failed_precondition.executor.hub_clone``).
+    ``progress``, when given, is called with one :class:`stratadb.HubCloneProgress`
+    per event as the clone advances. ``.stage`` runs ``resolved`` (``.branch``,
+    ``.manifest_hash``) → ``manifest_fetched`` (``.object_count``,
+    ``.total_bytes``) → ``object_fetched`` once per object (``.index`` of
+    ``.object_count``, ``.bytes``) → ``importing`` → ``done``. The callback runs
+    on the calling thread between fetches. It cannot cancel the clone: if it
+    raises, the remaining events are dropped, the clone completes, and its
+    exception is then raised from ``clone()`` (the database at ``dest`` is
+    complete but left unopened).
+
+    A ``dest`` that exists and is not empty raises ``FailedPreconditionError``
+    (``failed_precondition.executor.hub_clone``). A dataset or branch the hub
+    does not have surfaces as the hub's 404 through the clone transport —
+    ``UnavailableError`` (``unavailable.executor.hub_transport``), the same as
+    an unreachable hub — so browse with ``db.hub`` first, whose lookups raise
+    ``NotFoundError``. The StrataHub client ships in the standard wheel.
     """
-    # Clone is a standalone operation that creates the database at `dest`; a
-    # transient cache handle only carries the command to the executor.
-    opener = Strata(cache=True)
+    if progress is not None and not callable(progress):
+        raise client_error(
+            InvalidArgumentError,
+            "invalid_argument.sdk.command",
+            f"progress must be callable, got {type(progress).__name__}",
+            "pass a function taking one stratadb.HubCloneProgress event, or omit it",
+        )
+
+    report = None
+    if progress is not None:
+        callback = progress
+
+        def report(envelope_json: str) -> None:
+            callback(HubCloneProgress.from_wire(json.loads(envelope_json)["data"]))
+
+    # Clone is a standalone operation that creates the database at `dest`; the
+    # binding runs it on a scratch executor, so no handle is involved.
     try:
-        command: dict[str, Any] = {
-            "type": "hub_clone",
-            "dataset": dataset,
-            "dest": str(dest),
-        }
-        if hub_url is not None:
-            command["hub_url"] = hub_url
-        if branch is not None:
-            command["branch"] = branch
-        opener.execute(command)
-    finally:
-        opener.close()
+        _stratadb.hub_clone(dataset, str(dest), branch, hub_url, report)
+    except _stratadb.StrataNativeError as exc:
+        raise error_from_payload(exc.args[0] if exc.args else "{}") from None
     return Strata(dest)
 
 
@@ -485,5 +519,7 @@ __all__ = [
     "demo",
     "init",
     "PromotionStrategy",
+    "HubDatasetSort",
+    "HubCloneProgress",
     "__version__",
 ]

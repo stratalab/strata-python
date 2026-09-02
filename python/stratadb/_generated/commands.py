@@ -61,6 +61,21 @@ class Commands:
         data = self._core.data(cmd)
         return models.AdminHealth.from_wire(data)
 
+    def admin_hub_clone(self, dataset, dest, *, hub_url=None, branch=None):
+        """Clone a dataset from a hub into a new local database.
+
+        Errors: failed_precondition.engine.runtime_closed, invalid_argument.executor.hub_dataset, invalid_argument.executor.hub_branch, invalid_argument.executor.hub_feature_disabled, invalid_argument.executor.hub_url, failed_precondition.executor.hub_clone, unavailable.executor.hub_transport
+        """
+        cmd = {'type': 'hub_clone'}
+        cmd['dataset'] = dataset
+        cmd['dest'] = dest
+        if hub_url is not None:
+            cmd['hub_url'] = hub_url
+        if branch is not None:
+            cmd['branch'] = branch
+        data = self._core.data(cmd)
+        return _wire.Record({'branch': data['branch'], 'dataset': data['dataset'], 'dest': data['dest'], 'manifest_hash': data['manifest_hash'], 'object_count': data['object_count'], 'total_bytes': data['total_bytes']})
+
     def admin_info(self, *, branch=None):
         """Read database identity and a catalog summary.
 
@@ -109,6 +124,15 @@ class Commands:
         cmd = {'type': 'ping'}
         data = self._core.data(cmd)
         return _wire.Record({'version': data['version']})
+
+    def admin_remote(self):
+        """Read where this database was cloned from.
+
+        Errors: failed_precondition.engine.runtime_closed
+        """
+        cmd = {'type': 'remote_get'}
+        data = self._core.data(cmd)
+        return _wire.Record({'origin': (None if data.get('origin') is None else models.RemoteOriginInfo.from_wire(data['origin']))})
 
     def arrow_export(self, primitive, format, path, *, collection=None, event_type=None, graph=None, limit=None, prefix=None, branch=None, space=None):
         """Export a product primitive to an Arrow-compatible file.
@@ -1010,6 +1034,83 @@ class Commands:
             cmd['space'] = space
         data = self._core.data(cmd)
         return _wire.Record({'cursor': (None if data.get('cursor') is None else data['cursor']), 'has_more': data['has_more'], 'items': [models.GraphNodeDataOutput.from_wire(_x) for _x in (data['items'] or [])], 'total_count': data['total_count']})
+
+    def hub_get_dataset(self, name, *, hub_url=None):
+        """Read one StrataHub dataset card.
+
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.executor.hub_feature_disabled, invalid_argument.executor.hub_url, unavailable.executor.hub_transport, invalid_argument.executor.hub_dataset, not_found.executor.hub_dataset
+        """
+        cmd = {'type': 'hub_get_dataset'}
+        cmd['name'] = name
+        if hub_url is not None:
+            cmd['hub_url'] = hub_url
+        data = self._core.data(cmd)
+        return models.HubDatasetCard.from_wire(data)
+
+    def hub_info(self, *, hub_url=None):
+        """Read the selected StrataHub's V1 capability advertisement.
+
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.executor.hub_feature_disabled, invalid_argument.executor.hub_url, unavailable.executor.hub_transport
+        """
+        cmd = {'type': 'hub_info'}
+        if hub_url is not None:
+            cmd['hub_url'] = hub_url
+        data = self._core.data(cmd)
+        return models.HubInfo.from_wire(data)
+
+    def hub_list_datasets(self, *, hub_url=None, license=None, limit=None, offset=None, primitives=None, size_max_bytes=None, size_min_bytes=None, sort=None, tags=None, tasks=None):
+        """List datasets from the selected StrataHub.
+
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.executor.hub_feature_disabled, invalid_argument.executor.hub_url, unavailable.executor.hub_transport, invalid_argument.executor.hub_filter
+        """
+        cmd = {'type': 'hub_list_datasets'}
+        if hub_url is not None:
+            cmd['hub_url'] = hub_url
+        if license is not None:
+            cmd['license'] = license
+        if limit is not None:
+            cmd['limit'] = limit
+        if offset is not None:
+            cmd['offset'] = offset
+        if primitives is not None:
+            cmd['primitives'] = [_x for _x in (primitives or [])]
+        if size_max_bytes is not None:
+            cmd['size_max_bytes'] = size_max_bytes
+        if size_min_bytes is not None:
+            cmd['size_min_bytes'] = size_min_bytes
+        if sort is not None:
+            cmd['sort'] = sort
+        if tags is not None:
+            cmd['tags'] = [_x for _x in (tags or [])]
+        if tasks is not None:
+            cmd['tasks'] = [_x for _x in (tasks or [])]
+        data = self._core.data(cmd)
+        return models.HubDatasetPage.from_wire(data)
+
+    def hub_list_refs(self, dataset, *, hub_url=None):
+        """List live refs for a StrataHub dataset.
+
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.executor.hub_feature_disabled, invalid_argument.executor.hub_url, unavailable.executor.hub_transport, invalid_argument.executor.hub_dataset, not_found.executor.hub_dataset
+        """
+        cmd = {'type': 'hub_list_refs'}
+        cmd['dataset'] = dataset
+        if hub_url is not None:
+            cmd['hub_url'] = hub_url
+        data = self._core.data(cmd)
+        return models.HubRefList.from_wire(data)
+
+    def hub_list_yanked(self, *, hub_url=None, since=None):
+        """List yanked refs from the selected StrataHub.
+
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.executor.hub_feature_disabled, invalid_argument.executor.hub_url, unavailable.executor.hub_transport, invalid_argument.executor.hub_since, not_found.executor.hub_resource
+        """
+        cmd = {'type': 'hub_list_yanked'}
+        if hub_url is not None:
+            cmd['hub_url'] = hub_url
+        if since is not None:
+            cmd['since'] = since
+        data = self._core.data(cmd)
+        return models.HubYankedList.from_wire(data)
 
     def json_batch_delete(self, entries, *, branch=None, space=None):
         """Delete multiple JSON documents or paths in one itemwise batch.

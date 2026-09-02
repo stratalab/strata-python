@@ -12,11 +12,13 @@ GENERATED_COMMANDS = [
     'admin.config_key',
     'admin.describe',
     'admin.health',
+    'admin.hub_clone',
     'admin.info',
     'admin.ipc_status',
     'admin.ipc_stop',
     'admin.metrics',
     'admin.ping',
+    'admin.remote',
     'arrow.export',
     'arrow.import',
     'branch.create',
@@ -70,6 +72,11 @@ GENERATED_COMMANDS = [
     'graph.ontology.get',
     'graph.ontology.summary',
     'graph.sample',
+    'hub.get_dataset',
+    'hub.info',
+    'hub.list_datasets',
+    'hub.list_refs',
+    'hub.list_yanked',
     'json.batch_delete',
     'json.batch_exists',
     'json.batch_get',
@@ -128,10 +135,8 @@ GENERATED_COMMANDS = [
 ]
 
 # Commands intentionally not surfaced (coverage guard allowlist).
-UNCOVERED_REASON = 'out of the V1 data-plane surface (requires the inference/hub executor features)'
+UNCOVERED_REASON = 'surfaced by the hand-written db.ai layer, not the generated core'
 UNCOVERED_COMMANDS = [
-    'admin.hub_clone',
-    'admin.remote',
     'inference.cache_status',
     'inference.capability',
     'inference.detokenize',

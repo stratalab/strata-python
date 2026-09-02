@@ -1,7 +1,8 @@
 """StrataHub clone -> durable open pathway.
 
-The hub client ships in the standard wheel; these are gated only on
-``STRATA_HUB_URL`` (a reachable hub) so CI without one skips them. Run with, e.g.::
+The hub client ships in the standard wheel; these run against the hub named by
+``STRATA_HUB_URL`` (else the public default) and skip when it is unreachable —
+see ``conftest.live_hub_url``. Point them at a local hub with, e.g.::
 
     STRATA_HUB_URL=http://127.0.0.1:7431 .venv/bin/python -m pytest tests/test_hub_clone.py
 
@@ -10,20 +11,11 @@ The ``titanic`` dataset is a stable demo fixture on the hub (json + kv).
 
 from __future__ import annotations
 
-import os
-
-import pytest
-
 import stratadb
 
-HUB_URL = os.environ.get("STRATA_HUB_URL")
 
-pytestmark = pytest.mark.skipif(
-    not HUB_URL, reason="set STRATA_HUB_URL to a reachable StrataHub to run clone tests"
-)
-
-
-def test_clone_titanic_into_durable_db(tmp_path):
+def test_clone_titanic_into_durable_db(tmp_path, live_hub_url):
+    HUB_URL = live_hub_url
     dest = tmp_path / "titanic.strata"
     db = stratadb.clone("titanic", dest, hub_url=HUB_URL)
     try:
@@ -46,9 +38,9 @@ def test_clone_titanic_into_durable_db(tmp_path):
         db.close()
 
 
-def test_cloned_db_persists_across_reopen(tmp_path):
+def test_cloned_db_persists_across_reopen(tmp_path, live_hub_url):
     dest = tmp_path / "titanic.strata"
-    stratadb.clone("titanic", dest, hub_url=HUB_URL).close()
+    stratadb.clone("titanic", dest, hub_url=live_hub_url).close()
 
     # A fresh open of the cloned path still reads the data (durable, on disk).
     reopened = stratadb.open(dest)

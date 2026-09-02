@@ -1,6 +1,6 @@
 """Type stubs for the native binding (`_stratadb`)."""
 
-from typing import Optional
+from typing import Callable, Optional
 
 class StrataNativeError(Exception):
     """Raised on a domain failure; carries the error-status JSON as its arg."""
@@ -24,3 +24,10 @@ class Handle:
     def close(self) -> None: ...
 
 def version() -> str: ...
+def hub_clone(
+    dataset: str,
+    dest: str,
+    branch: Optional[str] = ...,
+    hub_url: Optional[str] = ...,
+    progress: Optional[Callable[[str], object]] = ...,
+) -> str: ...

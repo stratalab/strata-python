@@ -15,6 +15,7 @@ from .spaces import SpacesNamespace
 from .admin import AdminNamespace
 from .arrow import ArrowNamespace
 from .ai import AiNamespace
+from .hub import HubNamespace
 
 __all__ = [
     "AiNamespace",
@@ -27,4 +28,5 @@ __all__ = [
     "SpacesNamespace",
     "AdminNamespace",
     "ArrowNamespace",
+    "HubNamespace",
 ]

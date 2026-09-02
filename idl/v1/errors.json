@@ -1,5 +1,5 @@
 {
-  "count": 215,
+  "count": 219,
   "errors": [
     {
       "class": "invalid_argument",
@@ -1466,6 +1466,42 @@
       "hint": "Use a branch name listed by the dataset's refs.",
       "message": "The branch name is not valid.",
       "ref": "https://stratadb.org/e/invalid_argument.executor.hub_branch",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.hub_filter",
+      "commit_outcome": "not_started",
+      "hint": "Use StrataHub V1 filter names and keep list limits in the range 1..=200.",
+      "message": "The hub browse filter or pagination request is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.hub_filter",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.hub_since",
+      "commit_outcome": "not_started",
+      "hint": "Pass --since as an RFC 3339 timestamp such as 2026-09-02T00:00:00Z.",
+      "message": "The hub yanked-list timestamp is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.hub_since",
+      "retry_policy": "never"
+    },
+    {
+      "class": "not_found",
+      "code": "not_found.executor.hub_dataset",
+      "commit_outcome": "not_started",
+      "hint": "Check spelling or list datasets from the selected hub.",
+      "message": "The hub dataset does not exist.",
+      "ref": "https://stratadb.org/e/not_found.executor.hub_dataset",
+      "retry_policy": "never"
+    },
+    {
+      "class": "not_found",
+      "code": "not_found.executor.hub_resource",
+      "commit_outcome": "not_started",
+      "hint": "Check the hub URL and requested StrataHub V1 endpoint.",
+      "message": "The hub resource does not exist.",
+      "ref": "https://stratadb.org/e/not_found.executor.hub_resource",
       "retry_policy": "never"
     },
     {

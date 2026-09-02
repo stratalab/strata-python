@@ -28,6 +28,7 @@ FAMILY_TO_NAMESPACE = {
     "admin": "admin",
     "arrow": "arrow",
     "inference": "ai",
+    "hub": "hub",
 }
 
 
@@ -71,13 +72,16 @@ def test_agent_guide_has_python_blocks():
 
 
 @pytest.mark.parametrize("index", range(len(BLOCKS)))
-def test_agent_guide_block_runs(index, tmp_path, monkeypatch):
+def test_agent_guide_block_runs(index, tmp_path, monkeypatch, request):
     """Every snippet in the guide agents read *first* executes against the built
     SDK. Caught on its first run: the Install & open sequence orphaned a brokered
     handle by rebinding the owner (unavailable.executor.ipc_transport)."""
     source = BLOCKS[index]
     if "db.ai.chat" in source or "db.ai.embed" in source:
         pytest.skip("inference examples need a provider API key")
+    if "db.hub" in source or "stratadb.clone(" in source:
+        # Runs for real against the live hub (skips when none is reachable).
+        monkeypatch.setenv("STRATA_HUB_URL", request.getfixturevalue("live_hub_url"))
     # Durable opens ("./app-data") and Arrow files land in a scratch cwd;
     # from_env() needs a target.
     monkeypatch.chdir(tmp_path)

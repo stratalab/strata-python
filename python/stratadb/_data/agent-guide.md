@@ -234,6 +234,45 @@ the outcome matters.
 `db.spaces` manages product spaces (isolated namespaces); `db.at(space=...)`
 scopes a view.
 
+## StrataHub — `db.hub`, `stratadb.clone`
+
+A StrataHub is a content-addressed dataset registry (the public one,
+`https://hub.stratahub.io`, is the default). Browse it from any handle —
+`db.hub` never touches the handle's own data — then clone what you want into a
+new durable database:
+
+```python
+page = db.hub.list_datasets(tasks="classification", sort="downloads", limit=5)  # HubDatasetPage: .items, .total, .offset, .limit
+[d.name for d in page.items]             # ['titanic', 'iris']
+card = db.hub.get_dataset("titanic")     # HubDatasetCard: .readme, .license, .primitives, .size_bytes, .clone_command, ...
+db.hub.list_refs("titanic").refs         # cloneable branches: .branch, .manifest_hash, .last_updated
+db.hub.list_yanked().items               # the hub's takedown deny-list (since="2026-09-01T00:00:00Z" narrows it)
+db.hub.info().max_dataset_size_bytes     # the hub's protocol version and limits
+
+titanic = stratadb.clone("titanic", "./titanic",
+                         progress=lambda e: print(e.stage.value, e.index, e.object_count))
+titanic.json.get("passenger:1")["name"]  # a complete durable database at ./titanic
+titanic.close()
+```
+
+`list_datasets` filters by `tasks`, `tags`, `primitives` (a string or a list;
+any-of within a dimension, all dimensions must match), `license`, and
+`size_min_bytes` / `size_max_bytes`; sorts by `"downloads"`, `"recent"`,
+`"name"`, or `"size"`; and pages by offset (`limit` 1..200, `offset`) — stop
+when `offset` reaches `.total`. Every method takes `hub_url=`; otherwise the hub
+comes from `STRATA_HUB_URL`, then the project/global Strata config, then the
+default. An unknown dataset raises `NotFoundError`
+(`not_found.executor.hub_dataset`); a bad query, `InvalidArgumentError`
+(`invalid_argument.executor.hub_filter` / `hub_since` / `hub_dataset`); an
+unreachable hub, `UnavailableError` (`unavailable.executor.hub_transport`,
+retryable). `clone(..., progress=)` receives one `stratadb.HubCloneProgress` per
+event — `.stage` runs `resolved` → `manifest_fetched` → `object_fetched` (per
+object: `.index` of `.object_count`, `.bytes`) → `importing` → `done`; the
+callback cannot cancel the clone. Clone fails on a `dest` that exists and is
+not empty (`failed_precondition.executor.hub_clone`), and on a dataset or
+branch the hub does not have (`unavailable.executor.hub_transport` — browse
+first).
+
 ## Errors
 
 Every domain failure raises a `stratadb.errors.StrataError` subclass. Match on

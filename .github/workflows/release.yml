@@ -133,10 +133,40 @@ jobs:
           name: wheels-sdist
           path: dist
 
+  uv-smoke:
+    # Acceptance gate (#74): the wheel must install cleanly under uv — the
+    # installer new Python developers reach for first — not just pip. Installs
+    # the freshly built Linux wheel from the artifact (no index) and runs the
+    # zero-setup tour with it.
+    name: Install under uv
+    runs-on: ubuntu-latest
+    needs: [linux]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: wheels-linux-x86_64-auto
+          path: dist
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.12'
+      - name: uv pip install the wheel and import it
+        run: |
+          uv venv smoke
+          uv pip install --python smoke/bin/python --no-index --find-links dist stratadb
+          smoke/bin/python - <<'EOF'
+          import stratadb
+          with stratadb.open(cache=True) as db:
+              db.kv.put("k", "v")
+              assert db.kv.get("k") == b"v"
+              assert hasattr(db, "hub")
+          print("stratadb", stratadb.__version__, "imports and runs under uv")
+          EOF
+          smoke/bin/python -m stratadb.demo > /dev/null
+
   publish:
     name: Publish to PyPI
     runs-on: ubuntu-latest
-    needs: [linux, macos, windows, sdist]
+    needs: [linux, macos, windows, sdist, uv-smoke]
     environment:
       name: pypi
       url: https://pypi.org/p/stratadb

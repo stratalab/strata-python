@@ -9,7 +9,7 @@ import tempfile
 import pytest
 import stratadb
 
-NAMESPACES = ["kv", "json", "vectors", "events", "graphs", "branches", "spaces", "admin", "arrow", "ai"]
+NAMESPACES = ["kv", "json", "vectors", "events", "graphs", "branches", "spaces", "admin", "arrow", "ai", "hub"]
 OPTIONFLAGS = doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE
 
 
