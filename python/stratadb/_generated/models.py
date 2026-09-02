@@ -1891,6 +1891,308 @@ class HistoryResult:
 
 
 @dataclass
+class HubBranchHighlight:
+    """One branch highlight on a hub dataset card."""
+    is_default: bool
+    name: str
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "HubBranchHighlight":
+        return cls(
+            is_default=d['is_default'],
+            name=d['name'],
+        )
+
+
+@dataclass
+class HubCloneProgress:
+    """Machine-readable clone progress emitted by `strata clone --progress jsonl`."""
+    dataset: str
+    stage: "HubCloneProgressStage"
+    branch: Optional[str] = None
+    bytes: Optional[int] = None
+    index: Optional[int] = None
+    manifest_hash: Optional[str] = None
+    object_count: Optional[int] = None
+    total_bytes: Optional[int] = None
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "HubCloneProgress":
+        return cls(
+            dataset=d['dataset'],
+            stage=HubCloneProgressStage(d['stage']),
+            branch=(None if d.get('branch') is None else d['branch']),
+            bytes=(None if d.get('bytes') is None else d['bytes']),
+            index=(None if d.get('index') is None else d['index']),
+            manifest_hash=(None if d.get('manifest_hash') is None else d['manifest_hash']),
+            object_count=(None if d.get('object_count') is None else d['object_count']),
+            total_bytes=(None if d.get('total_bytes') is None else d['total_bytes']),
+        )
+
+
+class HubCloneProgressStage(str, Enum):
+    """Clone progress stage."""
+    RESOLVED = 'resolved'
+    MANIFEST_FETCHED = 'manifest_fetched'
+    OBJECT_FETCHED = 'object_fetched'
+    IMPORTING = 'importing'
+    DONE = 'done'
+    UNKNOWN = 'unknown'
+
+
+@dataclass
+class HubDatasetCard:
+    """Full dataset card returned by `hub.get_dataset`."""
+    capability_registry_version: int
+    clone_command: str
+    created: str
+    default_branch: str
+    description: str
+    downloads: int
+    engine_version_required: str
+    format_version: str
+    last_updated: str
+    license: str
+    manifest_hash: str
+    name: str
+    owner: str
+    primitives: List[str]
+    readme: str
+    size_bytes: int
+    summary_excerpt: str
+    tags: List[str]
+    tasks: List[str]
+    badge: Optional[str] = None
+    citation: Optional[str] = None
+    frontmatter_extras: Optional[_wire.Record] = None
+    provenance: Optional["HubProvenance"] = None
+    quick_start_snippets: Optional[_wire.Record] = None
+    sample_preview: Optional[Any] = None
+    schema: Optional[Any] = None
+    strata_features: Optional["HubStrataFeatures"] = None
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "HubDatasetCard":
+        return cls(
+            capability_registry_version=d['capability_registry_version'],
+            clone_command=d['clone_command'],
+            created=d['created'],
+            default_branch=d['default_branch'],
+            description=d['description'],
+            downloads=d['downloads'],
+            engine_version_required=d['engine_version_required'],
+            format_version=d['format_version'],
+            last_updated=d['last_updated'],
+            license=d['license'],
+            manifest_hash=d['manifest_hash'],
+            name=d['name'],
+            owner=d['owner'],
+            primitives=[_x for _x in (d['primitives'] or [])],
+            readme=d['readme'],
+            size_bytes=d['size_bytes'],
+            summary_excerpt=d['summary_excerpt'],
+            tags=[_x for _x in (d['tags'] or [])],
+            tasks=[_x for _x in (d['tasks'] or [])],
+            badge=(None if d.get('badge') is None else d['badge']),
+            citation=(None if d.get('citation') is None else d['citation']),
+            frontmatter_extras=(None if d.get('frontmatter_extras') is None else d['frontmatter_extras']),
+            provenance=(None if d.get('provenance') is None else HubProvenance.from_wire(d['provenance'])),
+            quick_start_snippets=(None if d.get('quick_start_snippets') is None else d['quick_start_snippets']),
+            sample_preview=(None if d.get('sample_preview') is None else d['sample_preview']),
+            schema=(None if d.get('schema') is None else d['schema']),
+            strata_features=(None if d.get('strata_features') is None else HubStrataFeatures.from_wire(d['strata_features'])),
+        )
+
+
+@dataclass
+class HubDatasetPage:
+    """Paginated dataset-list output returned by `hub.list_datasets`."""
+    items: List["HubDatasetSummary"]
+    limit: int
+    offset: int
+    total: int
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "HubDatasetPage":
+        return cls(
+            items=[HubDatasetSummary.from_wire(_x) for _x in (d['items'] or [])],
+            limit=d['limit'],
+            offset=d['offset'],
+            total=d['total'],
+        )
+
+
+class HubDatasetSort(str, Enum):
+    """Dataset-list sort key accepted by StrataHub V1."""
+    DOWNLOADS = 'downloads'
+    RECENT = 'recent'
+    NAME = 'name'
+    SIZE = 'size'
+
+
+@dataclass
+class HubDatasetSummary:
+    """One dataset summary returned by `hub.list_datasets`."""
+    default_branch: str
+    description: str
+    downloads: int
+    last_updated: str
+    license: str
+    name: str
+    primitives: List[str]
+    size_bytes: int
+    tags: List[str]
+    tasks: List[str]
+    badge: Optional[str] = None
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "HubDatasetSummary":
+        return cls(
+            default_branch=d['default_branch'],
+            description=d['description'],
+            downloads=d['downloads'],
+            last_updated=d['last_updated'],
+            license=d['license'],
+            name=d['name'],
+            primitives=[_x for _x in (d['primitives'] or [])],
+            size_bytes=d['size_bytes'],
+            tags=[_x for _x in (d['tags'] or [])],
+            tasks=[_x for _x in (d['tasks'] or [])],
+            badge=(None if d.get('badge') is None else d['badge']),
+        )
+
+
+@dataclass
+class HubInfo:
+    """Hub capability advertisement returned by `hub.info`."""
+    hash_algorithm: str
+    max_dataset_size_bytes: int
+    max_manifest_size_bytes: int
+    max_object_size_bytes: int
+    protocol_version: str
+    server_implementation: str
+    server_version: str
+    supported_object_content_types: List[str]
+    telemetry_endpoint_enabled: bool
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "HubInfo":
+        return cls(
+            hash_algorithm=d['hash_algorithm'],
+            max_dataset_size_bytes=d['max_dataset_size_bytes'],
+            max_manifest_size_bytes=d['max_manifest_size_bytes'],
+            max_object_size_bytes=d['max_object_size_bytes'],
+            protocol_version=d['protocol_version'],
+            server_implementation=d['server_implementation'],
+            server_version=d['server_version'],
+            supported_object_content_types=[_x for _x in (d['supported_object_content_types'] or [])],
+            telemetry_endpoint_enabled=d['telemetry_endpoint_enabled'],
+        )
+
+
+@dataclass
+class HubProvenance:
+    """Dataset provenance metadata on a hub dataset card."""
+    curator: str
+    source: str
+    license_text_url: Optional[str] = None
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "HubProvenance":
+        return cls(
+            curator=d['curator'],
+            source=d['source'],
+            license_text_url=(None if d.get('license_text_url') is None else d['license_text_url']),
+        )
+
+
+@dataclass
+class HubRefEntry:
+    """One live hub ref."""
+    branch: str
+    last_updated: str
+    manifest_hash: str
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "HubRefEntry":
+        return cls(
+            branch=d['branch'],
+            last_updated=d['last_updated'],
+            manifest_hash=d['manifest_hash'],
+        )
+
+
+@dataclass
+class HubRefList:
+    """Ref listing returned by `hub.list_refs`."""
+    dataset: str
+    default_branch: str
+    refs: List["HubRefEntry"]
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "HubRefList":
+        return cls(
+            dataset=d['dataset'],
+            default_branch=d['default_branch'],
+            refs=[HubRefEntry.from_wire(_x) for _x in (d['refs'] or [])],
+        )
+
+
+@dataclass
+class HubStrataFeatures:
+    """Strata-specific feature highlights on a hub dataset card."""
+    branches: List["HubBranchHighlight"]
+    multi_primitive_demos: List[str]
+    time_travel_highlights: List[str]
+    example_notebook: Optional[str] = None
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "HubStrataFeatures":
+        return cls(
+            branches=[HubBranchHighlight.from_wire(_x) for _x in (d['branches'] or [])],
+            multi_primitive_demos=[_x for _x in (d['multi_primitive_demos'] or [])],
+            time_travel_highlights=[_x for _x in (d['time_travel_highlights'] or [])],
+            example_notebook=(None if d.get('example_notebook') is None else d['example_notebook']),
+        )
+
+
+@dataclass
+class HubYankedEntry:
+    """One yanked hub ref."""
+    branch: str
+    dataset: str
+    manifest_hash: str
+    reason: str
+    yanked_at: str
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "HubYankedEntry":
+        return cls(
+            branch=d['branch'],
+            dataset=d['dataset'],
+            manifest_hash=d['manifest_hash'],
+            reason=d['reason'],
+            yanked_at=d['yanked_at'],
+        )
+
+
+@dataclass
+class HubYankedList:
+    """Hub yank deny-list returned by `hub.list_yanked`."""
+    generated_at: str
+    items: List["HubYankedEntry"]
+    total: int
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "HubYankedList":
+        return cls(
+            generated_at=d['generated_at'],
+            items=[HubYankedEntry.from_wire(_x) for _x in (d['items'] or [])],
+            total=d['total'],
+        )
+
+
+@dataclass
 class JsonBatchGetItemResult:
     """Positional JSON batch read result payload."""
     found: bool
@@ -2216,6 +2518,44 @@ class PromotionStrategy(str, Enum):
     """The conflict-resolution strategy for a promotion, exposed through the command"""
     STRICT = 'strict'
     SOURCE_WINS = 'source_wins'
+
+
+@dataclass
+class RemoteOriginFrontierInfo:
+    """One fetched branch in the recorded base frontier."""
+    base: str
+    branch: str
+    local_version: Optional[int] = None
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "RemoteOriginFrontierInfo":
+        return cls(
+            base=d['base'],
+            branch=d['branch'],
+            local_version=(None if d.get('local_version') is None else d['local_version']),
+        )
+
+
+@dataclass
+class RemoteOriginInfo:
+    """Serialized view of a database's recorded remote origin."""
+    base_frontier: List["RemoteOriginFrontierInfo"]
+    branch: str
+    dataset: str
+    fetched_at_micros: int
+    manifest_hash: str
+    remote_url: str
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "RemoteOriginInfo":
+        return cls(
+            base_frontier=[RemoteOriginFrontierInfo.from_wire(_x) for _x in (d['base_frontier'] or [])],
+            branch=d['branch'],
+            dataset=d['dataset'],
+            fetched_at_micros=d['fetched_at_micros'],
+            manifest_hash=d['manifest_hash'],
+            remote_url=d['remote_url'],
+        )
 
 
 class RetryPolicy(str, Enum):

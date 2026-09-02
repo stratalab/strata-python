@@ -177,6 +177,25 @@ fork point; event streams and graphs are compared but never merged. A `strict`
 merge that hits a conflict raises `errors.ConflictError`
 (`conflict.engine.promotion`) and writes nothing — `preview` first.
 
+## StrataHub — browse and clone datasets
+
+```python
+page = db.hub.list_datasets(tasks="classification", sort="downloads", limit=5)  # default hub: hub.stratahub.io
+[d.name for d in page.items]                    # ['titanic', 'iris']; page.total counts every match
+card = db.hub.get_dataset("titanic")            # the full card: .readme, .license, .primitives, .clone_command
+db.hub.list_refs("titanic").refs                # cloneable branches, each with its manifest hash
+
+titanic = stratadb.clone("titanic", "./titanic",           # a new durable database, cloned from the hub
+                         progress=lambda e: print(e.stage.value, e.index, e.object_count))
+titanic.json.get("passenger:1")["name"]         # "Braund, Mr. Owen Harris"
+titanic.close()
+```
+
+`db.hub` only reads the hub — it never touches the handle's own data, so any
+handle (even `stratadb.open(cache=True)`) can browse. Pass `hub_url=` or set
+`STRATA_HUB_URL` to target another hub; `db.hub.info()` reports its limits, and
+`db.hub.list_yanked()` its takedown list.
+
 ## Errors
 
 Every failure raises a typed `stratadb.errors.StrataError` subclass carrying a
@@ -215,8 +234,8 @@ Misses are not errors — reads return `None`.
 
 Three layers: handwritten ergonomic **namespaces** over a **generated core**
 (one typed method + model per command, generated from the engine's IDL) over a
-tiny **PyO3 binding** that links the engine in process. Data-plane only —
-generated fresh from the IDL, drift-guarded in CI.
+tiny **PyO3 binding** that links the engine in process. Generated fresh from
+the IDL (only `db.ai`'s inference family is hand-written), drift-guarded in CI.
 
 ## Development
 

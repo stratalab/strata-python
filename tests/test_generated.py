@@ -42,9 +42,11 @@ def test_coverage_accounts_for_every_command():
         assert hasattr(Commands, cid.replace(".", "_")), f"missing method for {cid}"
 
 
-def test_uncovered_is_only_inference_and_hub():
+def test_uncovered_is_only_inference():
+    # db.ai hand-writes the inference family; everything else (the hub browse
+    # family and the hub admin commands included) is generated.
     for cid in catalog.UNCOVERED_COMMANDS:
-        assert cid.startswith("inference.") or cid in {"admin.hub_clone", "admin.remote"}
+        assert cid.startswith("inference.")
 
 
 def test_generator_output_is_deterministic():

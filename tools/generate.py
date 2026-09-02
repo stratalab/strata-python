@@ -12,9 +12,11 @@ Design:
   explicit inline decode — there is no runtime schema-walking.
 
 Determinism: identical inputs produce byte-identical output (the CI drift guard
-re-runs this and diffs). Data-plane only: the ``inference`` family and the two
-``hub`` admin commands are excluded (the wheel is built without those features)
-and recorded in the uncovered-command allowlist for the coverage guard.
+re-runs this and diffs). The ``inference`` family is excluded (``db.ai`` is a
+hand-written, OpenAI-shaped layer over the raw wire) and recorded in the
+uncovered-command allowlist for the coverage guard. The ``hub`` family and the
+hub admin commands (clone, remote origin) are generated like any other: the
+wheel ships the hub client.
 """
 
 from __future__ import annotations
@@ -28,8 +30,8 @@ IDL = ROOT / "idl" / "v1"
 OUT = ROOT / "python" / "stratadb" / "_generated"
 
 EXCLUDED_FAMILIES = {"inference"}
-EXCLUDED_IDS = {"admin.hub_clone", "admin.remote"}
-EXCLUDED_REASON = "out of the V1 data-plane surface (requires the inference/hub executor features)"
+EXCLUDED_IDS: set[str] = set()
+EXCLUDED_REASON = "surfaced by the hand-written db.ai layer, not the generated core"
 
 HEADER = '''"""Generated from the Strata IDL — do not edit by hand.
 

@@ -18,9 +18,10 @@
 //! targets the `ipc` module does not exist and a local-only stand-in with the
 //! same surface is used — `ipc="host"/"client"` is rejected in Python first.
 //!
-//! Data-plane only: built without the `hub` (network) and `inference` (model
-//! runtime) executor features, so the wheel is lean and needs no toolchain to
-//! install.
+//! The one exception to "no per-command Rust" is [`hub_clone`]: the executor
+//! reports clone progress through a callback, which the single-envelope
+//! `execute` wire cannot carry, so the binding threads a Python callable
+//! through to it.
 
 use std::path::PathBuf;
 use std::sync::RwLock;
@@ -31,7 +32,8 @@ use pyo3::prelude::*;
 use pyo3::wrap_pyfunction;
 
 use strata_executor::{
-    guard_json_integers, Command, DurabilityMode, DurableLocalOpenOptions, ExecutorError, IpcMode,
+    guard_json_integers, Command, DurabilityMode, DurableLocalOpenOptions, Executor, ExecutorError,
+    IpcMode, Output,
 };
 
 /// Platform shim: one `Inner` connection type with a uniform surface.
@@ -370,6 +372,87 @@ impl Handle {
     }
 }
 
+/// Clones a hub dataset into a new durable database at `dest` and returns the
+/// `hub_clone_result` envelope as JSON.
+///
+/// `progress`, when given, is a Python callable invoked with each
+/// `hub_clone_progress` envelope (JSON) as the executor reports it. The
+/// callable runs under the GIL; the clone itself runs with the GIL released.
+/// A callable that raises does not abort the clone (the executor's progress
+/// hook cannot cancel): further events are dropped and its exception is
+/// raised once the clone finishes — unless the clone itself failed, whose
+/// domain error takes precedence.
+///
+/// Clone never touches a session database — it runs on a scratch cache
+/// executor, exactly as `strata clone` does — so this is a module function,
+/// not a `Handle` method.
+#[allow(
+    clippy::needless_pass_by_value,
+    reason = "owned Strings cross the allow_threads boundary; borrowing would not"
+)]
+#[allow(
+    clippy::result_large_err,
+    reason = "ExecutorError is the executor's frozen serialized-boundary type; \
+              the executor deliberately declined to box it, so the size is not ours to change"
+)]
+#[pyfunction]
+#[pyo3(signature = (dataset, dest, branch=None, hub_url=None, progress=None))]
+fn hub_clone(
+    py: Python<'_>,
+    dataset: String,
+    dest: String,
+    branch: Option<String>,
+    hub_url: Option<String>,
+    progress: Option<PyObject>,
+) -> PyResult<String> {
+    let mut callback_error: Option<PyErr> = None;
+    let outcome = py.allow_threads(|| {
+        let mut executor = Executor::open_cache().map_err(CallError::Domain)?;
+        let mut report = |output: Output| {
+            let Some(callback) = progress.as_ref() else {
+                return;
+            };
+            if callback_error.is_some() {
+                return;
+            }
+            // Re-acquire the GIL only for the duration of the Python call.
+            Python::with_gil(|py| {
+                let call = serde_json::to_string(&output)
+                    .map_err(|error| {
+                        PyRuntimeError::new_err(format!("progress serialization failed: {error}"))
+                    })
+                    .and_then(|json| callback.call1(py, (json,)).map(|_| ()));
+                if let Err(error) = call {
+                    callback_error = Some(error);
+                }
+            });
+        };
+        let result = executor.execute_hub_clone_with_progress(
+            &dataset,
+            branch.as_deref(),
+            &dest,
+            hub_url,
+            &mut report,
+        );
+        // The scratch executor holds nothing: closing it cannot change the
+        // clone's outcome, so its own close error is not worth reporting.
+        let _ = executor.close();
+        result.map_err(CallError::Domain)
+    });
+    match outcome {
+        Ok(output) => {
+            if let Some(error) = callback_error {
+                return Err(error);
+            }
+            serde_json::to_string(&output).map_err(|error| {
+                PyRuntimeError::new_err(format!("envelope serialization failed: {error}"))
+            })
+        }
+        Err(CallError::Closed) => Err(closed_error()),
+        Err(CallError::Domain(error)) => Err(native_error(error)),
+    }
+}
+
 /// The engine/SDK version this wheel was built against.
 #[pyfunction]
 fn version() -> &'static str {
@@ -380,6 +463,7 @@ fn version() -> &'static str {
 fn _stratadb(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<Handle>()?;
     module.add_function(wrap_pyfunction!(version, module)?)?;
+    module.add_function(wrap_pyfunction!(hub_clone, module)?)?;
     module.add(
         "StrataNativeError",
         module.py().get_type::<StrataNativeError>(),

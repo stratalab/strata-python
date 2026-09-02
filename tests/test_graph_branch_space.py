@@ -116,7 +116,7 @@ def test_space_isolation(db):
 
 
 def test_admin_surface(db):
-    assert db.admin.ping().version == "1.1.0"
+    assert db.admin.ping().version == "1.1.1"
     assert db.admin.info().default_branch == "default"
     assert db.admin.health().status == "healthy"
     assert db.admin.config().target == "cache"

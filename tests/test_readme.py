@@ -29,12 +29,16 @@ def test_readme_has_python_blocks():
 
 
 @pytest.mark.parametrize("index", range(len(BLOCKS)))
-def test_readme_block_runs(index, tmp_path):
+def test_readme_block_runs(index, tmp_path, monkeypatch, request):
     source = BLOCKS[index]
     if "db.ai" in source:
         pytest.skip("inference examples need a provider API key")
+    if "db.hub" in source or "stratadb.clone(" in source:
+        # Runs for real against the live hub (skips when none is reachable).
+        monkeypatch.setenv("STRATA_HUB_URL", request.getfixturevalue("live_hub_url"))
     # The quickstart opens a durable path; run it against a tmp dir instead.
     source = source.replace('"./app-data"', repr(str(tmp_path / "app-data")))
+    source = source.replace('"./titanic"', repr(str(tmp_path / "titanic")))
 
     db = stratadb.open(cache=True)
     # Sections after the quickstart assume prior state; provide the minimum.

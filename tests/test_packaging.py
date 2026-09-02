@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parent.parent
 def test_command_index_is_bundled():
     index = stratadb.command_index()
     assert index["schema_version"] == "strata.idl.v1"
-    assert len(index["commands"]) == 130
+    assert len(index["commands"]) == 135
 
 
 def test_agents_guide_matches_bundled():
@@ -26,7 +26,7 @@ def test_agents_guide_matches_bundled():
 
 
 def test_version_is_engine_version():
-    assert stratadb.__version__ == "1.1.0"
+    assert stratadb.__version__ == "1.1.1"
 
 
 def test_public_namespaces_present():
@@ -41,6 +41,8 @@ def test_public_namespaces_present():
             "spaces",
             "admin",
             "arrow",
+            "ai",
+            "hub",
         ):
             assert hasattr(db, name), f"missing namespace db.{name}"
 
