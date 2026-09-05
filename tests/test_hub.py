@@ -237,7 +237,9 @@ def test_clone_progress_callback_error_is_raised_after_completion(hub, tmp_path)
     assert seen == ["resolved"]
     db = stratadb.open(tmp_path / "titanic")
     try:
-        assert db.json.count() == 30
+        # The dataset's own row count, not a pinned literal — see
+        # tests/test_hub_clone.py on the fixture's re-curation.
+        assert db.json.count() == int(db.kv.get("meta:rows"))
     finally:
         db.close()
 

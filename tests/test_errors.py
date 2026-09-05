@@ -8,10 +8,15 @@ never on message text.
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
 
 import stratadb
 from stratadb import errors
+
+ROOT = Path(__file__).resolve().parent.parent
 
 
 @pytest.fixture()
@@ -124,6 +129,28 @@ def test_malformed_batch_write_op_is_typed(db):
     with pytest.raises(errors.InvalidArgumentError) as excinfo:
         db.graphs.batch_write("bw", [{"type": "upsert_node"}])
     assert excinfo.value.code == "invalid_argument.sdk.command"
+
+
+# --- the class map tracks the engine's error-class enum --------------------
+
+
+def test_every_registry_class_has_a_typed_subclass():
+    # Drift guard for a core re-pin: the bundled registry is the engine's class
+    # list, and a class with no entry here degrades to the StrataError base, so
+    # `except DataLossError` would never fire. (1.2.0 added data_loss.)
+    registry = json.loads((ROOT / "idl" / "v1" / "errors.json").read_text(encoding="utf-8"))
+    classes = {entry["class"] for entry in registry["errors"]}
+    assert classes - set(errors._ERROR_CLASSES) == set()
+
+
+def test_data_loss_is_its_own_class():
+    # strata-core #2749: data_loss.* used to report class "corruption".
+    exc = errors.error_from_status(
+        {"class": "data_loss", "code": "data_loss.engine.kv_value", "message": "unreadable"}
+    )
+    assert isinstance(exc, errors.DataLossError)
+    assert not isinstance(exc, errors.CorruptionError)
+    assert exc.error_class == "data_loss"
 
 
 # --- regression guards: don't over-catch --------------------------------

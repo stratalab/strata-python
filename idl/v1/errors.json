@@ -947,7 +947,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.branch_catalog",
       "commit_outcome": "not_applicable",
       "hint": "Stop writing to the database and inspect recovery diagnostics before continuing.",
@@ -956,7 +956,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.branch_id",
       "commit_outcome": "not_applicable",
       "hint": "Stop writing to the database and inspect recovery diagnostics before continuing.",
@@ -965,7 +965,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.control_name",
       "commit_outcome": "not_applicable",
       "hint": "Stop writing to the database and inspect recovery diagnostics before continuing.",
@@ -974,7 +974,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.control_plane",
       "commit_outcome": "not_applicable",
       "hint": "Stop writing to the database and inspect recovery diagnostics before continuing.",
@@ -983,7 +983,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.control_plane_missing",
       "commit_outcome": "not_applicable",
       "hint": "Stop writing to the database and inspect recovery diagnostics before continuing.",
@@ -992,7 +992,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.event_index_key",
       "commit_outcome": "not_applicable",
       "hint": "Use a valid event type, payload, and metadata within the documented event limits.",
@@ -1001,7 +1001,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.event_key",
       "commit_outcome": "not_applicable",
       "hint": "Use a valid event type, payload, and metadata within the documented event limits.",
@@ -1010,7 +1010,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.event_metadata",
       "commit_outcome": "not_applicable",
       "hint": "Use a valid event type, payload, and metadata within the documented event limits.",
@@ -1019,7 +1019,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.event_record",
       "commit_outcome": "not_applicable",
       "hint": "Use a valid event type, payload, and metadata within the documented event limits.",
@@ -1028,7 +1028,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.graph_binding_key",
       "commit_outcome": "not_applicable",
       "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
@@ -1037,7 +1037,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.graph_binding_record",
       "commit_outcome": "not_applicable",
       "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
@@ -1046,7 +1046,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.graph_edge_key",
       "commit_outcome": "not_applicable",
       "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
@@ -1055,7 +1055,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.graph_edge_record",
       "commit_outcome": "not_applicable",
       "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
@@ -1064,7 +1064,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.graph_index",
       "commit_outcome": "not_applicable",
       "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
@@ -1073,7 +1073,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.graph_key",
       "commit_outcome": "not_applicable",
       "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
@@ -1082,7 +1082,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.graph_metadata",
       "commit_outcome": "not_applicable",
       "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
@@ -1091,7 +1091,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.graph_node_key",
       "commit_outcome": "not_applicable",
       "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
@@ -1100,7 +1100,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.graph_node_record",
       "commit_outcome": "not_applicable",
       "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
@@ -1109,7 +1109,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.graph_ontology_record",
       "commit_outcome": "not_applicable",
       "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
@@ -1118,7 +1118,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.graph_reverse_edge_key",
       "commit_outcome": "not_applicable",
       "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
@@ -1127,7 +1127,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.graph_type_index_key",
       "commit_outcome": "not_applicable",
       "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
@@ -1136,7 +1136,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.graph_type_index_record",
       "commit_outcome": "not_applicable",
       "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
@@ -1145,7 +1145,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.json_document",
       "commit_outcome": "not_applicable",
       "hint": "Use a valid JSON document id and a JSON value within the configured size and depth limits.",
@@ -1154,7 +1154,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.json_index",
       "commit_outcome": "not_applicable",
       "hint": "Use a non-reserved JSON index name and definition compatible with the indexed field.",
@@ -1163,7 +1163,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.json_index_key",
       "commit_outcome": "not_applicable",
       "hint": "Use a non-reserved JSON index name and definition compatible with the indexed field.",
@@ -1172,7 +1172,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.json_key",
       "commit_outcome": "not_applicable",
       "hint": "Stop writing to the database and inspect recovery diagnostics before continuing.",
@@ -1181,7 +1181,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.kv_key",
       "commit_outcome": "not_applicable",
       "hint": "Use non-empty KV keys and keep batch structure within the documented limits.",
@@ -1190,7 +1190,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.kv_value",
       "commit_outcome": "not_applicable",
       "hint": "Use non-empty KV keys and keep batch structure within the documented limits.",
@@ -1199,7 +1199,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.space_catalog",
       "commit_outcome": "not_applicable",
       "hint": "Use an existing non-reserved space, or delete/move contained data before deleting the space.",
@@ -1208,7 +1208,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.vector_artifact",
       "commit_outcome": "not_applicable",
       "hint": "Rebuild vector index artifacts or fall back to exact search before retrying indexed queries.",
@@ -1217,7 +1217,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.vector_artifacts",
       "commit_outcome": "not_applicable",
       "hint": "Rebuild vector index artifacts or fall back to exact search before retrying indexed queries.",
@@ -1226,7 +1226,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.vector_collection",
       "commit_outcome": "not_applicable",
       "hint": "Use the collection dimension, valid vector keys, and metadata/filter values supported by the collection.",
@@ -1235,7 +1235,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.vector_collection_key",
       "commit_outcome": "not_applicable",
       "hint": "Use the collection dimension, valid vector keys, and metadata/filter values supported by the collection.",
@@ -1244,7 +1244,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.vector_index_manifest",
       "commit_outcome": "not_applicable",
       "hint": "Rebuild vector index artifacts or fall back to exact search before retrying indexed queries.",
@@ -1253,7 +1253,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.vector_index_manifest_key",
       "commit_outcome": "not_applicable",
       "hint": "Rebuild vector index artifacts or fall back to exact search before retrying indexed queries.",
@@ -1262,7 +1262,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.vector_key",
       "commit_outcome": "not_applicable",
       "hint": "Use the collection dimension, valid vector keys, and metadata/filter values supported by the collection.",
@@ -1271,7 +1271,7 @@
       "retry_policy": "never"
     },
     {
-      "class": "corruption",
+      "class": "data_loss",
       "code": "data_loss.engine.vector_record",
       "commit_outcome": "not_applicable",
       "hint": "Use the collection dimension, valid vector keys, and metadata/filter values supported by the collection.",
@@ -1505,12 +1505,12 @@
       "retry_policy": "never"
     },
     {
-      "class": "invalid_argument",
-      "code": "invalid_argument.executor.hub_feature_disabled",
+      "class": "unsupported",
+      "code": "unsupported.executor.hub_feature_disabled",
       "commit_outcome": "not_started",
       "hint": "Run a build with the hub feature enabled before using hub clone.",
       "message": "Hub support is not enabled in this build.",
-      "ref": "https://stratadb.org/e/invalid_argument.executor.hub_feature_disabled",
+      "ref": "https://stratadb.org/e/unsupported.executor.hub_feature_disabled",
       "retry_policy": "after_state_change"
     },
     {
@@ -1550,12 +1550,12 @@
       "retry_policy": "never"
     },
     {
-      "class": "invalid_argument",
-      "code": "invalid_argument.executor.arrow_feature_disabled",
+      "class": "unsupported",
+      "code": "unsupported.executor.arrow_feature_disabled",
       "commit_outcome": "not_started",
       "hint": "Run a build with the Arrow feature enabled before using Arrow import or export.",
       "message": "Arrow support is not enabled in this build.",
-      "ref": "https://stratadb.org/e/invalid_argument.executor.arrow_feature_disabled",
+      "ref": "https://stratadb.org/e/unsupported.executor.arrow_feature_disabled",
       "retry_policy": "after_state_change"
     },
     {
