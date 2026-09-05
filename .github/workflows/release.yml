@@ -92,6 +92,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Survive MAX_PATH
+        # Cargo checks out every submodule of a git dependency, and the engine
+        # vendors llama.cpp, whose `tools/ui/...` tree overruns Windows' 260-char
+        # limit under the default CARGO_HOME (core v1.2.0's llama.cpp b10766 is
+        # where this first bit). Short CARGO_HOME buys ~25 chars; core.longpaths
+        # is what libgit2 reads to use the \\?\ prefix at all.
+        shell: pwsh
+        run: |
+          Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' -Name LongPathsEnabled -Value 1 -ErrorAction SilentlyContinue
+          git config --global core.longpaths true
+          "CARGO_HOME=C:\c" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
       - name: Authorize private git dependencies
         # Fine-grained PAT with Contents: read on stratalab/stratahub (the
         # hub client is a private git dep of strata-core's `hub` feature).
