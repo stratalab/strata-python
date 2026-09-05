@@ -123,6 +123,16 @@ class CorruptionError(StrataError):
     """On-disk data failed an integrity check."""
 
 
+class DataLossError(StrataError):
+    """Durable state that should exist cannot be reconstructed.
+
+    Distinct from :class:`CorruptionError` (an integrity violation was
+    detected) in that the data is unrecoverable, not merely inconsistent.
+    The ``data_loss.*`` codes reported ``class = "corruption"`` before
+    engine 1.2.0.
+    """
+
+
 class SerializationError(StrataError):
     """A value could not be serialized or deserialized on the wire."""
 
@@ -145,6 +155,7 @@ _ERROR_CLASSES: dict[str, type[StrataError]] = {
     "unavailable": UnavailableError,
     "io": IoError,
     "corruption": CorruptionError,
+    "data_loss": DataLossError,
     "serialization": SerializationError,
     "internal": InternalError,
 }
@@ -226,6 +237,7 @@ __all__ = [
     "UnavailableError",
     "IoError",
     "CorruptionError",
+    "DataLossError",
     "SerializationError",
     "InternalError",
     "error_from_status",

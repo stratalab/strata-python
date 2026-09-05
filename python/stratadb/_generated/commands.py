@@ -64,7 +64,7 @@ class Commands:
     def admin_hub_clone(self, dataset, dest, *, hub_url=None, branch=None):
         """Clone a dataset from a hub into a new local database.
 
-        Errors: failed_precondition.engine.runtime_closed, invalid_argument.executor.hub_dataset, invalid_argument.executor.hub_branch, invalid_argument.executor.hub_feature_disabled, invalid_argument.executor.hub_url, failed_precondition.executor.hub_clone, unavailable.executor.hub_transport
+        Errors: failed_precondition.engine.runtime_closed, invalid_argument.executor.hub_dataset, invalid_argument.executor.hub_branch, unsupported.executor.hub_feature_disabled, invalid_argument.executor.hub_url, failed_precondition.executor.hub_clone, unavailable.executor.hub_transport
         """
         cmd = {'type': 'hub_clone'}
         cmd['dataset'] = dataset
@@ -137,7 +137,7 @@ class Commands:
     def arrow_export(self, primitive, format, path, *, collection=None, event_type=None, graph=None, limit=None, prefix=None, branch=None, space=None):
         """Export a product primitive to an Arrow-compatible file.
 
-        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.executor.arrow_feature_disabled, invalid_argument.executor.arrow_format, invalid_argument.executor.arrow_empty_export, invalid_argument.executor.arrow_value_column, invalid_argument.executor.arrow_vector_key, invalid_argument.executor.arrow_event, invalid_argument.executor.arrow_graph, invalid_argument.executor.arrow_collection, unavailable.executor.arrow_io, internal.executor.arrow
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, unsupported.executor.arrow_feature_disabled, invalid_argument.executor.arrow_format, invalid_argument.executor.arrow_empty_export, invalid_argument.executor.arrow_value_column, invalid_argument.executor.arrow_vector_key, invalid_argument.executor.arrow_event, invalid_argument.executor.arrow_graph, invalid_argument.executor.arrow_collection, unavailable.executor.arrow_io, internal.executor.arrow
         """
         cmd = {'type': 'arrow_export'}
         cmd['primitive'] = primitive
@@ -163,7 +163,7 @@ class Commands:
     def arrow_import(self, file_path, target, *, collection=None, format=None, graph=None, key_column=None, value_column=None, branch=None, space=None):
         """Import an Arrow-compatible file into a product primitive.
 
-        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.executor.arrow_feature_disabled, invalid_argument.executor.arrow_format, invalid_argument.executor.arrow_input_missing, invalid_argument.executor.arrow_key_column, invalid_argument.executor.arrow_value_column, invalid_argument.executor.arrow_collection, invalid_argument.executor.arrow_embedding_type, invalid_argument.executor.arrow_vector_dimension, invalid_argument.executor.arrow_json_key, invalid_argument.executor.arrow_base64, unavailable.executor.arrow_io, internal.executor.arrow
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, unsupported.executor.arrow_feature_disabled, invalid_argument.executor.arrow_format, invalid_argument.executor.arrow_input_missing, invalid_argument.executor.arrow_key_column, invalid_argument.executor.arrow_value_column, invalid_argument.executor.arrow_collection, invalid_argument.executor.arrow_embedding_type, invalid_argument.executor.arrow_vector_dimension, invalid_argument.executor.arrow_json_key, invalid_argument.executor.arrow_base64, unavailable.executor.arrow_io, internal.executor.arrow
         """
         cmd = {'type': 'arrow_import'}
         cmd['file_path'] = file_path
@@ -1038,7 +1038,7 @@ class Commands:
     def hub_get_dataset(self, name, *, hub_url=None):
         """Read one StrataHub dataset card.
 
-        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.executor.hub_feature_disabled, invalid_argument.executor.hub_url, unavailable.executor.hub_transport, invalid_argument.executor.hub_dataset, not_found.executor.hub_dataset
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, unsupported.executor.hub_feature_disabled, invalid_argument.executor.hub_url, unavailable.executor.hub_transport, invalid_argument.executor.hub_dataset, not_found.executor.hub_dataset
         """
         cmd = {'type': 'hub_get_dataset'}
         cmd['name'] = name
@@ -1050,7 +1050,7 @@ class Commands:
     def hub_info(self, *, hub_url=None):
         """Read the selected StrataHub's V1 capability advertisement.
 
-        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.executor.hub_feature_disabled, invalid_argument.executor.hub_url, unavailable.executor.hub_transport
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, unsupported.executor.hub_feature_disabled, invalid_argument.executor.hub_url, unavailable.executor.hub_transport
         """
         cmd = {'type': 'hub_info'}
         if hub_url is not None:
@@ -1061,7 +1061,7 @@ class Commands:
     def hub_list_datasets(self, *, hub_url=None, license=None, limit=None, offset=None, primitives=None, size_max_bytes=None, size_min_bytes=None, sort=None, tags=None, tasks=None):
         """List datasets from the selected StrataHub.
 
-        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.executor.hub_feature_disabled, invalid_argument.executor.hub_url, unavailable.executor.hub_transport, invalid_argument.executor.hub_filter
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, unsupported.executor.hub_feature_disabled, invalid_argument.executor.hub_url, unavailable.executor.hub_transport, invalid_argument.executor.hub_filter
         """
         cmd = {'type': 'hub_list_datasets'}
         if hub_url is not None:
@@ -1090,7 +1090,7 @@ class Commands:
     def hub_list_refs(self, dataset, *, hub_url=None):
         """List live refs for a StrataHub dataset.
 
-        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.executor.hub_feature_disabled, invalid_argument.executor.hub_url, unavailable.executor.hub_transport, invalid_argument.executor.hub_dataset, not_found.executor.hub_dataset
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, unsupported.executor.hub_feature_disabled, invalid_argument.executor.hub_url, unavailable.executor.hub_transport, invalid_argument.executor.hub_dataset, not_found.executor.hub_dataset
         """
         cmd = {'type': 'hub_list_refs'}
         cmd['dataset'] = dataset
@@ -1102,7 +1102,7 @@ class Commands:
     def hub_list_yanked(self, *, hub_url=None, since=None):
         """List yanked refs from the selected StrataHub.
 
-        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.executor.hub_feature_disabled, invalid_argument.executor.hub_url, unavailable.executor.hub_transport, invalid_argument.executor.hub_since, not_found.executor.hub_resource
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, unsupported.executor.hub_feature_disabled, invalid_argument.executor.hub_url, unavailable.executor.hub_transport, invalid_argument.executor.hub_since, not_found.executor.hub_resource
         """
         cmd = {'type': 'hub_list_yanked'}
         if hub_url is not None:

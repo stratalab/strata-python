@@ -109,6 +109,8 @@ ev = db.events.get(0)                  # -> EventVersionedData(.event, .timestam
 ev.event.event_type, ev.event.payload  # ('signup', {'user': 'ada'})
 for e in db.events.range(start=0):     # ordered replay (a Page of EventVersionedData)
     ...
+db.events.range(0, reverse=True, limit=5)  # the newest 5 — reverse walks the same
+                                       # half-open [start, end) window, newest-first
 db.events.verify_chain().valid         # True — integrity check
 ```
 

@@ -146,6 +146,31 @@ def test_range_and_list_and_types(db):
     assert sorted(db.events.types()) == ["login", "signup"]
 
 
+def test_reverse_range_walks_the_same_window_newest_first(db):
+    # strata-core #2694: a reverse range is the descending view of the same
+    # [start, end) window — anchored at the log start it used to return only
+    # the first event, so a limited reverse read is now "the newest N".
+    for n in range(3):
+        db.events.append("tick", {"n": n})
+    assert [e.event.sequence for e in db.events.range(0, reverse=True)] == [2, 1, 0]
+    assert [e.event.sequence for e in db.events.range(0, reverse=True, limit=2)] == [2, 1]
+    assert [e.event.sequence for e in db.events.range(0, end=2, reverse=True)] == [1, 0]
+
+
+def test_range_by_time_end_is_exclusive(db):
+    # strata-core #2695: the time window is half-open [start_ts, end_ts) like
+    # the sequence-addressed range; an event exactly at end_ts is excluded.
+    for n in range(3):
+        db.events.append("tick", {"n": n})
+    stamps = [db.events.get(seq).event.timestamp for seq in range(3)]
+    end = stamps[-1]
+    inside = [seq for seq, ts in enumerate(stamps) if ts < end]
+    assert [e.event.sequence for e in db.events.range_by_time(stamps[0], end_ts=end)] == inside
+    assert [
+        e.event.sequence for e in db.events.range_by_time(stamps[0], end_ts=end + 1)
+    ] == [0, 1, 2]
+
+
 def test_append_many(db):
     db.events.append_many([("a", {"n": 1}), ("b", {"n": 2})])
     assert db.events.len() == 2

@@ -1207,6 +1207,7 @@ class ErrorClass(str, Enum):
     UNAVAILABLE = 'unavailable'
     IO = 'io'
     CORRUPTION = 'corruption'
+    DATA_LOSS = 'data_loss'
     SERIALIZATION = 'serialization'
     INTERNAL = 'internal'
 

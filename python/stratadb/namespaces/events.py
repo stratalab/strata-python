@@ -122,7 +122,11 @@ class EventsNamespace(Namespace):
         reverse: bool = False,
         event_type: Optional[str] = None,
     ) -> Page:
-        """A page of events by sequence, from ``start`` (to ``end`` if given).
+        """A page of events over the half-open sequence window ``[start, end)``.
+
+        ``reverse=True`` walks that same window newest-first — with ``limit``,
+        the newest N. (Engine 1.2.0 corrected this: a reverse range anchored at
+        the log start used to return only the first event.)
 
         Examples:
             >>> _ = db.events.append("user.created", {"id": 1})
@@ -155,6 +159,11 @@ class EventsNamespace(Namespace):
         event_type: Optional[str] = None,
     ) -> Page:
         """A page of events by **occurrence time** (the one wall-clock axis).
+
+        The window is the half-open ``[start_ts, end_ts)`` in microseconds,
+        matching :meth:`range` — an event exactly at ``end_ts`` is excluded
+        (engine 1.2.0 made this end exclusive; it was inclusive before).
+        ``reverse=True`` walks the same window newest-first.
 
         Examples:
             >>> _ = db.events.append("user.created", {"id": 1})
