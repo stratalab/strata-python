@@ -1120,6 +1120,7 @@ class CommitReceipt:
     put_count: int
     timestamp: int
     version: int
+    committed_at: Optional[int] = None
 
     @classmethod
     def from_wire(cls, d: dict) -> "CommitReceipt":
@@ -1129,6 +1130,7 @@ class CommitReceipt:
             put_count=d['put_count'],
             timestamp=d['timestamp'],
             version=d['version'],
+            committed_at=(None if d.get('committed_at') is None else d['committed_at']),
         )
 
 
@@ -1867,6 +1869,7 @@ class HistoryItem:
     timestamp: int
     tombstone: bool
     version: int
+    committed_at: Optional[int] = None
     value: Optional[bytes] = None
 
     @classmethod
@@ -1875,6 +1878,7 @@ class HistoryItem:
             timestamp=d['timestamp'],
             tombstone=d['tombstone'],
             version=d['version'],
+            committed_at=(None if d.get('committed_at') is None else d['committed_at']),
             value=(None if d.get('value') is None else _wire.b64d(d['value'])),
         )
 
@@ -2231,6 +2235,7 @@ class JsonHistoryItem:
     timestamp: int
     tombstone: bool
     version: int
+    committed_at: Optional[int] = None
     document_version: Optional[int] = None
     value: Optional[Any] = None
 
@@ -2240,6 +2245,7 @@ class JsonHistoryItem:
             timestamp=d['timestamp'],
             tombstone=d['tombstone'],
             version=d['version'],
+            committed_at=(None if d.get('committed_at') is None else d['committed_at']),
             document_version=(None if d.get('document_version') is None else d['document_version']),
             value=(None if d.get('value') is None else d['value']),
         )
@@ -2707,6 +2713,7 @@ class VectorHistoryItem:
     timestamp: int
     tombstone: bool
     version: int
+    committed_at: Optional[int] = None
     data: Optional["VectorData"] = None
     vector_revision: Optional[int] = None
 
@@ -2717,6 +2724,7 @@ class VectorHistoryItem:
             timestamp=d['timestamp'],
             tombstone=d['tombstone'],
             version=d['version'],
+            committed_at=(None if d.get('committed_at') is None else d['committed_at']),
             data=(None if d.get('data') is None else VectorData.from_wire(d['data'])),
             vector_revision=(None if d.get('vector_revision') is None else d['vector_revision']),
         )

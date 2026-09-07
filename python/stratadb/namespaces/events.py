@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from .._results import BatchResult, Page
+from ..clock import TimeLike
 from ..errors import require_field
 from .base import Namespace
 
@@ -71,11 +72,19 @@ class EventsNamespace(Namespace):
             self._c.event_batch_append(_event_entries(entries), **self._scope)
         )
 
-    def get(self, sequence: int, *, as_of: Optional[int] = None) -> Any:
+    def get(self, sequence: int, *, as_of: Optional[int] = None, as_of_time: Optional[TimeLike] = None) -> Any:
         """Returns the event at ``sequence``, or ``None`` if out of range.
 
         The event carries a nondeterministic ``timestamp``/``hash``; access
         stable sub-fields such as ``.event.event_type`` and ``.event.payload``.
+
+        Time travel takes either clock, never both (see :mod:`stratadb.clock`):
+        ``as_of`` is a commit ``timestamp`` — a position on the logical commit
+        timeline — while ``as_of_time`` is a wall-clock instant (a ``datetime``,
+        ``date``, ISO string, or epoch micros) that raises rather than clamping
+        outside the branch's dated history. Neither is ``event.timestamp``,
+        which is the event's own **occurrence** time and the axis
+        :meth:`range_by_time` walks.
 
         Examples:
             >>> _ = db.events.append("user.created", {"id": 1})
@@ -84,7 +93,7 @@ class EventsNamespace(Namespace):
             >>> db.events.get(999) is None
             True
         """
-        result = self._c.event_get(sequence, as_of=as_of, **self._scope)
+        result = self._c.event_get(sequence, **self._temporal(as_of, as_of_time), **self._scope)
         return result.value if result.found else None
 
     def exists(self, sequence: int) -> bool:
@@ -99,7 +108,7 @@ class EventsNamespace(Namespace):
         """
         return self._c.event_exists(sequence, **self._scope)
 
-    def len(self, *, as_of: Optional[int] = None) -> int:
+    def len(self, *, as_of: Optional[int] = None, as_of_time: Optional[TimeLike] = None) -> int:
         """Number of events in the log.
 
         Examples:
@@ -108,7 +117,7 @@ class EventsNamespace(Namespace):
             >>> db.events.len()
             2
         """
-        return self._c.event_count(as_of=as_of, **self._scope).count
+        return self._c.event_count(**self._temporal(as_of, as_of_time), **self._scope).count
 
     def __len__(self) -> int:
         return self.len()
@@ -190,6 +199,7 @@ class EventsNamespace(Namespace):
         limit: Optional[int] = None,
         after_sequence: Optional[int] = None,
         as_of: Optional[int] = None,
+        as_of_time: Optional[TimeLike] = None,
     ) -> Page:
         """A page of events, optionally filtered by type / after a sequence.
 
@@ -201,13 +211,13 @@ class EventsNamespace(Namespace):
         """
         return self._listing(
             lambda cur, lim: self._c.event_list(
-                event_type=event_type, limit=lim, after_sequence=cur, as_of=as_of, **self._scope
+                event_type=event_type, limit=lim, after_sequence=cur, **self._temporal(as_of, as_of_time), **self._scope
             ),
             limit=limit,
             start=after_sequence,
         )
 
-    def types(self, *, as_of: Optional[int] = None) -> list:
+    def types(self, *, as_of: Optional[int] = None, as_of_time: Optional[TimeLike] = None) -> list:
         """The distinct event types present in the log.
 
         Examples:
@@ -216,7 +226,7 @@ class EventsNamespace(Namespace):
             >>> db.events.types()
             ['user.created', 'user.updated']
         """
-        return self._c.event_types(as_of=as_of, **self._scope).items
+        return self._c.event_types(**self._temporal(as_of, as_of_time), **self._scope).items
 
     def verify_chain(self) -> Any:
         """Verifies the hash chain; returns its length, validity, and first invalid link.

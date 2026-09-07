@@ -29,8 +29,9 @@ import os
 from typing import Any, Callable
 
 from . import _stratadb  # native extension
-from . import errors, filters
+from . import clock, errors, filters
 from ._core import Core
+from .clock import TimeLike, to_datetime, to_micros
 from ._generated import Commands
 from ._generated.models import HubCloneProgress, HubDatasetSort, PromotionStrategy
 from .errors import InvalidArgumentError, UnsupportedError, client_error, error_from_payload
@@ -512,6 +513,10 @@ __all__ = [
     "Strata",
     "errors",
     "filters",
+    "clock",
+    "to_micros",
+    "to_datetime",
+    "TimeLike",
     "agents_guide",
     "agents_skill",
     "mcp_config",

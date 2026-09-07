@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, Iterator, Optional, Sequence
 
 from .._results import BatchResult, Page, Sample
+from ..clock import TimeLike
 from .base import PAGE_SIZE, Namespace
 
 
@@ -49,10 +50,15 @@ class KVNamespace(Namespace):
         """
         return self._c.kv_put(key, value, **self._scope)
 
-    def get(self, key: str | bytes, *, as_of: Optional[int] = None) -> Optional[bytes]:
+    def get(self, key: str | bytes, *, as_of: Optional[int] = None, as_of_time: Optional[TimeLike] = None) -> Optional[bytes]:
         """Returns the value bytes, or ``None`` if absent.
 
-        Pass ``as_of`` (a commit timestamp) to read a historical value.
+        Time travel takes either clock, never both (see :mod:`stratadb.clock`):
+        ``as_of`` is a commit ``timestamp`` — a position on the logical commit
+        timeline, never a date; ``as_of_time`` is a wall-clock instant (a
+        ``datetime``, ``date``, ISO string, or epoch micros). An ``as_of_time``
+        outside the branch's dated history raises rather than clamping, so
+        omit both to read the latest.
 
         Examples:
             >>> _ = db.kv.put("greeting", "hello")
@@ -61,12 +67,12 @@ class KVNamespace(Namespace):
             >>> db.kv.get("absent") is None
             True
         """
-        result = self._c.kv_get(key, as_of=as_of, **self._scope)
+        result = self._c.kv_get(key, **self._temporal(as_of, as_of_time), **self._scope)
         return result.value.value if result.found else None
 
-    def get_entry(self, key: str | bytes, *, as_of: Optional[int] = None) -> Any:
+    def get_entry(self, key: str | bytes, *, as_of: Optional[int] = None, as_of_time: Optional[TimeLike] = None) -> Any:
         """Returns the value with its commit metadata (version, timestamp), or ``None``."""
-        result = self._c.kv_get(key, as_of=as_of, **self._scope)
+        result = self._c.kv_get(key, **self._temporal(as_of, as_of_time), **self._scope)
         return result.value if result.found else None
 
     def delete(self, key: str | bytes) -> Any:
@@ -95,6 +101,12 @@ class KVNamespace(Namespace):
     def history(self, key: str | bytes) -> Optional[list]:
         """Full version history (tombstones included), or ``None`` if the key never existed.
 
+        Each row carries ``committed_at`` — the UTC epoch microseconds the
+        commit was applied, or ``None`` for one written before engine 1.2.1 or
+        replayed from an import. Format it with
+        :func:`stratadb.to_datetime`; ``timestamp`` beside it is the commit
+        timeline's counter, not a date.
+
         Examples:
             >>> db.kv.history("absent") is None
             True
@@ -102,7 +114,7 @@ class KVNamespace(Namespace):
         result = self._c.kv_history(key, **self._scope)
         return result.items if result is not None else None
 
-    def count(self, prefix: Optional[str | bytes] = None, *, as_of: Optional[int] = None) -> int:
+    def count(self, prefix: Optional[str | bytes] = None, *, as_of: Optional[int] = None, as_of_time: Optional[TimeLike] = None) -> int:
         """Number of visible keys, optionally under a prefix.
 
         Examples:
@@ -111,7 +123,7 @@ class KVNamespace(Namespace):
             >>> db.kv.count()
             2
         """
-        return self._c.kv_count(prefix=prefix, as_of=as_of, **self._scope)
+        return self._c.kv_count(prefix=prefix, **self._temporal(as_of, as_of_time), **self._scope)
 
     # --- listing / pagination ---
 
@@ -122,30 +134,37 @@ class KVNamespace(Namespace):
         limit: Optional[int] = None,
         cursor: Optional[Any] = None,
         as_of: Optional[int] = None,
+        as_of_time: Optional[TimeLike] = None,
     ) -> Page:
         """One page of keys under ``prefix`` (``bytes`` each).
 
         Examples:
-            >>> _ = db.kv.put_many([{"key": "user:1", "value": "a"}, {"key": "user:2", "value": "b"}, {"key": "other", "value": "c"}])
+            >>> _ = db.kv.put("user:1", "a")
+            >>> _ = db.kv.put("user:2", "b")
+            >>> _ = db.kv.put("other", "c")
             >>> db.kv.keys("user:").items
             [b'user:1', b'user:2']
         """
         return self._listing(
             lambda cur, lim: self._c.kv_list(
-                prefix=prefix, limit=lim, cursor=cur, as_of=as_of, **self._scope
+                prefix=prefix, limit=lim, cursor=cur, **self._temporal(as_of, as_of_time), **self._scope
             ),
             limit=limit,
             start=cursor,
         )
 
     def iter_keys(
-        self, prefix: Optional[str | bytes] = None, *, as_of: Optional[int] = None
+        self,
+        prefix: Optional[str | bytes] = None,
+        *,
+        as_of: Optional[int] = None,
+        as_of_time: Optional[TimeLike] = None,
     ) -> Iterator[bytes]:
         """Iterates every key under ``prefix``, paginating internally."""
         cursor = None
         while True:
             page = self._c.kv_list(
-                prefix=prefix, limit=PAGE_SIZE, cursor=cursor, as_of=as_of, **self._scope
+                prefix=prefix, limit=PAGE_SIZE, cursor=cursor, **self._temporal(as_of, as_of_time), **self._scope
             )
             yield from page.items
             if not page.has_more:
@@ -162,7 +181,8 @@ class KVNamespace(Namespace):
         """One page of full rows (key + value + version) from ``start``/``cursor``.
 
         Examples:
-            >>> _ = db.kv.put_many([{"key": "a", "value": "1"}, {"key": "b", "value": "2"}])
+            >>> _ = db.kv.put("a", "1")
+            >>> _ = db.kv.put("b", "2")
             >>> [row.key for row in db.kv.scan()]
             [b'a', b'b']
         """
@@ -187,7 +207,9 @@ class KVNamespace(Namespace):
         """A deterministic representative sample plus the total count.
 
         Examples:
-            >>> _ = db.kv.put_many([{"key": "a", "value": "1"}, {"key": "b", "value": "2"}, {"key": "c", "value": "3"}])
+            >>> _ = db.kv.put("a", "1")
+            >>> _ = db.kv.put("b", "2")
+            >>> _ = db.kv.put("c", "3")
             >>> db.kv.sample().total_count
             3
         """

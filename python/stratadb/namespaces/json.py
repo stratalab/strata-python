@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Any, Iterator, Optional, Sequence
 
 from .._results import BatchResult, Page, Sample
+from ..clock import TimeLike
 from ..errors import require_field
 from .base import PAGE_SIZE, Namespace
 
@@ -72,11 +73,18 @@ class JSONNamespace(Namespace):
         """
         return self._c.json_set(key, path, value, **self._scope)
 
-    def get(self, key: str, path: str = "$", *, as_of: Optional[int] = None) -> Any:
+    def get(self, key: str, path: str = "$", *, as_of: Optional[int] = None, as_of_time: Optional[TimeLike] = None) -> Any:
         """Returns the JSON value at ``path``, or ``None`` if absent.
 
         (``None`` is also returned for a stored JSON ``null``; use ``get_entry``
         with its ``found`` flag to distinguish the two.)
+
+        Time travel takes either clock, never both (see :mod:`stratadb.clock`):
+        ``as_of`` is a commit ``timestamp`` — a position on the logical commit
+        timeline, never a date; ``as_of_time`` is a wall-clock instant (a
+        ``datetime``, ``date``, ISO string, or epoch micros). An ``as_of_time``
+        outside the branch's dated history raises rather than clamping, so
+        omit both to read the latest.
 
         Examples:
             >>> _ = db.json.set("user", "$", {"name": "alice", "age": 30})
@@ -87,21 +95,23 @@ class JSONNamespace(Namespace):
             >>> db.json.get("absent", "$") is None
             True
         """
-        found, value, _versioned = self._read(key, path, as_of)
+        found, value, _versioned = self._read(key, path, as_of, as_of_time)
         return value if found else None
 
-    def get_entry(self, key: str, path: str = "$", *, as_of: Optional[int] = None) -> Any:
+    def get_entry(self, key: str, path: str = "$", *, as_of: Optional[int] = None, as_of_time: Optional[TimeLike] = None) -> Any:
         """Returns the value with its commit metadata, or ``None`` if absent.
 
         Time-travel (``as_of``) reads carry no version metadata (the engine's
         raw-value envelope), so this returns the bare value in that case.
         """
-        found, value, versioned = self._read(key, path, as_of)
+        found, value, versioned = self._read(key, path, as_of, as_of_time)
         if not found:
             return None
         return versioned if versioned is not None else value
 
-    def _read(self, key: str, path: str, as_of: Optional[int]) -> tuple:
+    def _read(
+        self, key: str, path: str, as_of: Optional[int], as_of_time: Optional[TimeLike] = None
+    ) -> tuple:
         """Runs json_get, tolerating its two output shapes.
 
         json_get is the documented JSON exception: the latest read returns a
@@ -110,8 +120,9 @@ class JSONNamespace(Namespace):
         ``(found, value, versioned_or_None)``.
         """
         cmd = {"type": "json_get", "key": key, "path": path}
-        if as_of is not None:
-            cmd["as_of"] = as_of
+        for field, value in self._temporal(as_of, as_of_time).items():
+            if value is not None:
+                cmd[field] = value
         if self._branch is not None:
             cmd["branch"] = self._branch
         if self._space is not None:
@@ -154,8 +165,15 @@ class JSONNamespace(Namespace):
     def history(self, key: str) -> Optional[list]:
         """Full version history (newest first), or ``None`` if the document never existed.
 
-        Each item exposes ``.value``, ``.version``, ``.timestamp``, and
-        ``.tombstone`` (the same shape as ``db.kv.history``).
+        Each item exposes ``.value``, ``.version``, ``.timestamp``,
+        ``.tombstone``, and ``.committed_at`` (the same shape as
+        ``db.kv.history``).
+
+        Each row carries ``committed_at`` — the UTC epoch microseconds the
+        commit was applied, or ``None`` for one written before engine 1.2.1 or
+        replayed from an import. Format it with
+        :func:`stratadb.to_datetime`; ``timestamp`` beside it is the commit
+        timeline's counter, not a date.
 
         Examples:
             >>> db.json.history("absent") is None
@@ -164,7 +182,7 @@ class JSONNamespace(Namespace):
         result = self._c.json_history(key, **self._scope)
         return list(result) if result is not None else None
 
-    def count(self, prefix: Optional[str] = None, *, as_of: Optional[int] = None) -> int:
+    def count(self, prefix: Optional[str] = None, *, as_of: Optional[int] = None, as_of_time: Optional[TimeLike] = None) -> int:
         """Number of documents, optionally under an id prefix.
 
         Examples:
@@ -173,7 +191,7 @@ class JSONNamespace(Namespace):
             >>> db.json.count()
             2
         """
-        return self._c.json_count(prefix=prefix, as_of=as_of, **self._scope)
+        return self._c.json_count(prefix=prefix, **self._temporal(as_of, as_of_time), **self._scope)
 
     # --- listing / pagination ---
 
@@ -184,28 +202,31 @@ class JSONNamespace(Namespace):
         limit: Optional[int] = None,
         cursor: Optional[Any] = None,
         as_of: Optional[int] = None,
+        as_of_time: Optional[TimeLike] = None,
     ) -> Page:
         """One page of document ids (``str`` each).
 
         Examples:
-            >>> _ = db.json.set_many([{"key": "user:1", "path": "$", "value": {"v": 1}}, {"key": "user:2", "path": "$", "value": {"v": 2}}, {"key": "other", "path": "$", "value": {"v": 3}}])
+            >>> _ = db.json.set("user:1", "$", {"v": 1})
+            >>> _ = db.json.set("user:2", "$", {"v": 2})
+            >>> _ = db.json.set("other", "$", {"v": 3})
             >>> db.json.keys("user:").items
             ['user:1', 'user:2']
         """
         return self._listing(
             lambda cur, lim: self._c.json_list(
-                prefix=prefix, limit=lim, cursor=cur, as_of=as_of, **self._scope
+                prefix=prefix, limit=lim, cursor=cur, **self._temporal(as_of, as_of_time), **self._scope
             ),
             limit=limit,
             start=cursor,
         )
 
-    def iter_keys(self, prefix: Optional[str] = None, *, as_of: Optional[int] = None) -> Iterator[str]:
+    def iter_keys(self, prefix: Optional[str] = None, *, as_of: Optional[int] = None, as_of_time: Optional[TimeLike] = None) -> Iterator[str]:
         """Iterates every document id under ``prefix``, paginating internally."""
         cursor = None
         while True:
             page = self._c.json_list(
-                prefix=prefix, limit=PAGE_SIZE, cursor=cursor, as_of=as_of, **self._scope
+                prefix=prefix, limit=PAGE_SIZE, cursor=cursor, **self._temporal(as_of, as_of_time), **self._scope
             )
             yield from page.items
             if not page.has_more:
@@ -250,7 +271,9 @@ class JSONNamespace(Namespace):
         """A deterministic representative sample plus the total count.
 
         Examples:
-            >>> _ = db.json.set_many([{"key": "a", "path": "$", "value": {"v": 1}}, {"key": "b", "path": "$", "value": {"v": 2}}, {"key": "c", "path": "$", "value": {"v": 3}}])
+            >>> _ = db.json.set("a", "$", {"v": 1})
+            >>> _ = db.json.set("b", "$", {"v": 2})
+            >>> _ = db.json.set("c", "$", {"v": 3})
             >>> db.json.sample().total_count
             3
         """

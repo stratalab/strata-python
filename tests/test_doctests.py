@@ -15,7 +15,16 @@ OPTIONFLAGS = doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE
 
 @pytest.mark.parametrize("name", NAMESPACES)
 def test_namespace_doctests(name):
-    module = importlib.import_module(f"stratadb.namespaces.{name}")
+    _run_doctests(importlib.import_module(f"stratadb.namespaces.{name}"), name)
+
+
+def test_clock_doctests():
+    # stratadb.clock is public surface (as_of_time coercion, committed_at
+    # formatting), so its examples are held to the same standard.
+    _run_doctests(importlib.import_module("stratadb.clock"), "clock")
+
+
+def _run_doctests(module, name):
     runner = doctest.DocTestRunner(optionflags=OPTIONFLAGS)
     finder = doctest.DocTestFinder()
     found = 0

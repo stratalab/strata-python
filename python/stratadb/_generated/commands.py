@@ -137,7 +137,7 @@ class Commands:
     def arrow_export(self, primitive, format, path, *, collection=None, event_type=None, graph=None, limit=None, prefix=None, branch=None, space=None):
         """Export a product primitive to an Arrow-compatible file.
 
-        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, unsupported.executor.arrow_feature_disabled, invalid_argument.executor.arrow_format, invalid_argument.executor.arrow_empty_export, invalid_argument.executor.arrow_value_column, invalid_argument.executor.arrow_vector_key, invalid_argument.executor.arrow_event, invalid_argument.executor.arrow_graph, invalid_argument.executor.arrow_collection, unavailable.executor.arrow_io, internal.executor.arrow
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, unsupported.executor.arrow_feature_disabled, invalid_argument.executor.arrow_format, invalid_argument.executor.arrow_empty_export, invalid_argument.executor.arrow_vector_dimension, invalid_argument.executor.arrow_graph, invalid_argument.executor.arrow_collection, unavailable.executor.arrow_io, internal.executor.arrow
         """
         cmd = {'type': 'arrow_export'}
         cmd['primitive'] = primitive
@@ -163,7 +163,7 @@ class Commands:
     def arrow_import(self, file_path, target, *, collection=None, format=None, graph=None, key_column=None, value_column=None, branch=None, space=None):
         """Import an Arrow-compatible file into a product primitive.
 
-        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, unsupported.executor.arrow_feature_disabled, invalid_argument.executor.arrow_format, invalid_argument.executor.arrow_input_missing, invalid_argument.executor.arrow_key_column, invalid_argument.executor.arrow_value_column, invalid_argument.executor.arrow_collection, invalid_argument.executor.arrow_embedding_type, invalid_argument.executor.arrow_vector_dimension, invalid_argument.executor.arrow_json_key, invalid_argument.executor.arrow_base64, unavailable.executor.arrow_io, internal.executor.arrow
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, unsupported.executor.arrow_feature_disabled, invalid_argument.executor.arrow_format, invalid_argument.executor.arrow_input_missing, invalid_argument.executor.arrow_key_column, invalid_argument.executor.arrow_value_column, invalid_argument.executor.arrow_collection, invalid_argument.executor.arrow_embedding_type, invalid_argument.executor.arrow_encoding, invalid_argument.executor.arrow_json_key, invalid_argument.executor.arrow_non_finite_float, invalid_argument.executor.arrow_base64, invalid_argument.executor.arrow_vector_key, invalid_argument.executor.arrow_event, invalid_argument.executor.arrow_graph, not_found.engine.vector_collection, unavailable.executor.arrow_io, internal.executor.arrow
         """
         cmd = {'type': 'arrow_import'}
         cmd['file_path'] = file_path
@@ -327,7 +327,7 @@ class Commands:
         data = self._core.data(cmd)
         return models.BatchResult9.from_wire(data)
 
-    def event_count(self, *, as_of=None, branch=None, space=None):
+    def event_count(self, *, as_of=None, as_of_time=None, branch=None, space=None):
         """Count visible events in the log.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space
@@ -335,6 +335,8 @@ class Commands:
         cmd = {'type': 'event_count'}
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if branch is not None:
             cmd['branch'] = branch
         if space is not None:
@@ -356,7 +358,7 @@ class Commands:
         data = self._core.data(cmd)
         return data
 
-    def event_get(self, sequence, *, as_of=None, branch=None, space=None):
+    def event_get(self, sequence, *, as_of=None, as_of_time=None, branch=None, space=None):
         """Read one event by sequence number.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space
@@ -365,6 +367,8 @@ class Commands:
         cmd['sequence'] = sequence
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if branch is not None:
             cmd['branch'] = branch
         if space is not None:
@@ -372,7 +376,7 @@ class Commands:
         data = self._core.data(cmd)
         return models.Maybe3.from_wire(data)
 
-    def event_list(self, *, after_sequence=None, as_of=None, event_type=None, limit=None, branch=None, space=None):
+    def event_list(self, *, after_sequence=None, as_of=None, as_of_time=None, event_type=None, limit=None, branch=None, space=None):
         """List events with optional type filter and cursor.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.event_type, invalid_argument.executor.limit
@@ -382,6 +386,8 @@ class Commands:
             cmd['after_sequence'] = after_sequence
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if event_type is not None:
             cmd['event_type'] = event_type
         if limit is not None:
@@ -435,7 +441,7 @@ class Commands:
         data = self._core.data(cmd)
         return _wire.Record({'cursor': (None if data.get('cursor') is None else data['cursor']), 'has_more': data['has_more'], 'items': [models.EventVersionedData.from_wire(_x) for _x in (data['items'] or [])]})
 
-    def event_types(self, *, as_of=None, branch=None, space=None):
+    def event_types(self, *, as_of=None, as_of_time=None, branch=None, space=None):
         """List distinct event types in the log.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space
@@ -443,6 +449,8 @@ class Commands:
         cmd = {'type': 'event_list_types'}
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if branch is not None:
             cmd['branch'] = branch
         if space is not None:
@@ -463,7 +471,7 @@ class Commands:
         data = self._core.data(cmd)
         return models.EventChainVerification.from_wire(data)
 
-    def graph_analytics_bfs(self, graph, start, *, as_of=None, budget=None, direction=None, edge_types=None, max_depth=None, max_nodes=None, branch=None, space=None):
+    def graph_analytics_bfs(self, graph, start, *, as_of=None, as_of_time=None, budget=None, direction=None, edge_types=None, max_depth=None, max_nodes=None, branch=None, space=None):
         """Run a bounded breadth-first traversal.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.graph_name, not_found.engine.graph, invalid_argument.engine.graph_node_id, invalid_argument.engine.graph_edge_type, not_found.engine.graph_node, resource_exhausted.engine.graph_analytics_budget, invalid_argument.executor.graph_analytics_budget
@@ -473,6 +481,8 @@ class Commands:
         cmd['start'] = start
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if budget is not None:
             cmd['budget'] = {'max_edges': (None if budget.get('max_edges') is None else budget['max_edges']), 'max_nodes': (None if budget.get('max_nodes') is None else budget['max_nodes'])}
         if direction is not None:
@@ -490,7 +500,7 @@ class Commands:
         data = self._core.data(cmd)
         return models.GraphBfsData.from_wire(data)
 
-    def graph_analytics_cdlp(self, graph, *, as_of=None, budget=None, direction=None, max_iterations=None, branch=None, space=None):
+    def graph_analytics_cdlp(self, graph, *, as_of=None, as_of_time=None, budget=None, direction=None, max_iterations=None, branch=None, space=None):
         """Detect communities via label propagation.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.graph_name, not_found.engine.graph, resource_exhausted.engine.graph_analytics_budget, invalid_argument.executor.graph_analytics_budget
@@ -499,6 +509,8 @@ class Commands:
         cmd['graph'] = graph
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if budget is not None:
             cmd['budget'] = {'max_edges': (None if budget.get('max_edges') is None else budget['max_edges']), 'max_nodes': (None if budget.get('max_nodes') is None else budget['max_nodes'])}
         if direction is not None:
@@ -512,7 +524,7 @@ class Commands:
         data = self._core.data(cmd)
         return models.GraphCdlpData.from_wire(data)
 
-    def graph_analytics_lcc(self, graph, *, as_of=None, budget=None, branch=None, space=None):
+    def graph_analytics_lcc(self, graph, *, as_of=None, as_of_time=None, budget=None, branch=None, space=None):
         """Compute local clustering coefficients.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.graph_name, not_found.engine.graph, resource_exhausted.engine.graph_analytics_budget, invalid_argument.executor.graph_analytics_budget
@@ -521,6 +533,8 @@ class Commands:
         cmd['graph'] = graph
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if budget is not None:
             cmd['budget'] = {'max_edges': (None if budget.get('max_edges') is None else budget['max_edges']), 'max_nodes': (None if budget.get('max_nodes') is None else budget['max_nodes'])}
         if branch is not None:
@@ -530,7 +544,7 @@ class Commands:
         data = self._core.data(cmd)
         return models.GraphLccData.from_wire(data)
 
-    def graph_analytics_pagerank(self, graph, *, as_of=None, budget=None, damping=None, max_iterations=None, personalization=None, tolerance=None, branch=None, space=None):
+    def graph_analytics_pagerank(self, graph, *, as_of=None, as_of_time=None, budget=None, damping=None, max_iterations=None, personalization=None, tolerance=None, branch=None, space=None):
         """Compute PageRank importance scores.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.graph_name, not_found.engine.graph, invalid_argument.engine.graph_pagerank_options, invalid_argument.engine.graph_personalization, resource_exhausted.engine.graph_analytics_budget, invalid_argument.executor.graph_analytics_budget
@@ -539,6 +553,8 @@ class Commands:
         cmd['graph'] = graph
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if budget is not None:
             cmd['budget'] = {'max_edges': (None if budget.get('max_edges') is None else budget['max_edges']), 'max_nodes': (None if budget.get('max_nodes') is None else budget['max_nodes'])}
         if damping is not None:
@@ -556,7 +572,7 @@ class Commands:
         data = self._core.data(cmd)
         return models.GraphPagerankData.from_wire(data)
 
-    def graph_analytics_sssp(self, graph, source, *, as_of=None, budget=None, direction=None, branch=None, space=None):
+    def graph_analytics_sssp(self, graph, source, *, as_of=None, as_of_time=None, budget=None, direction=None, branch=None, space=None):
         """Compute shortest-path distances from a source.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.graph_name, not_found.engine.graph, invalid_argument.engine.graph_node_id, not_found.engine.graph_node, resource_exhausted.engine.graph_analytics_budget, invalid_argument.executor.graph_analytics_budget
@@ -566,6 +582,8 @@ class Commands:
         cmd['source'] = source
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if budget is not None:
             cmd['budget'] = {'max_edges': (None if budget.get('max_edges') is None else budget['max_edges']), 'max_nodes': (None if budget.get('max_nodes') is None else budget['max_nodes'])}
         if direction is not None:
@@ -577,7 +595,7 @@ class Commands:
         data = self._core.data(cmd)
         return models.GraphSsspData.from_wire(data)
 
-    def graph_analytics_wcc(self, graph, *, as_of=None, budget=None, branch=None, space=None):
+    def graph_analytics_wcc(self, graph, *, as_of=None, as_of_time=None, budget=None, branch=None, space=None):
         """Compute weakly connected components.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.graph_name, not_found.engine.graph, resource_exhausted.engine.graph_analytics_budget, invalid_argument.executor.graph_analytics_budget
@@ -586,6 +604,8 @@ class Commands:
         cmd['graph'] = graph
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if budget is not None:
             cmd['budget'] = {'max_edges': (None if budget.get('max_edges') is None else budget['max_edges']), 'max_nodes': (None if budget.get('max_nodes') is None else budget['max_nodes'])}
         if branch is not None:
@@ -625,7 +645,7 @@ class Commands:
         data = self._core.data(cmd)
         return _wire.Record({'applied': data['applied'], 'commit': (None if data.get('commit') is None else models.CommitReceipt.from_wire(data['commit'])), 'graph': data['graph'], 'items': [models.BatchItem10.from_wire(_x) for _x in (data['items'] or [])], 'mode': models.BatchMode(data['mode']), 'status': models.BatchStatus(data['status'])})
 
-    def graph_bindings(self, target, *, as_of=None, cursor=None, limit=None, branch=None, space=None):
+    def graph_bindings(self, target, *, as_of=None, as_of_time=None, cursor=None, limit=None, branch=None, space=None):
         """Find graph nodes bound to an entity.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.graph_binding
@@ -634,6 +654,8 @@ class Commands:
         cmd['target'] = {'branch': (None if target.get('branch') is None else target['branch']), 'key': target['key'], 'primitive': target['primitive'], 'space': target['space']}
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if cursor is not None:
             cmd['cursor'] = cursor
         if limit is not None:
@@ -714,7 +736,7 @@ class Commands:
         data = self._core.data(cmd)
         return _wire.Record({'commit': models.CommitReceipt.from_wire(data['commit']), 'dst': data['dst'], 'edge_type': data['edge_type'], 'effect': models.MutationEffect.from_wire(data['effect']), 'graph': data['graph'], 'src': data['src']})
 
-    def graph_edge_get(self, graph, src, edge_type, dst, *, as_of=None, branch=None, space=None):
+    def graph_edge_get(self, graph, src, edge_type, dst, *, as_of=None, as_of_time=None, branch=None, space=None):
         """Read one graph edge.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.graph_name, not_found.engine.graph, invalid_argument.engine.graph_node_id, invalid_argument.engine.graph_edge_type
@@ -726,6 +748,8 @@ class Commands:
         cmd['dst'] = dst
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if branch is not None:
             cmd['branch'] = branch
         if space is not None:
@@ -750,7 +774,7 @@ class Commands:
         data = self._core.data(cmd)
         return _wire.Record({'commit': (None if data.get('commit') is None else models.CommitReceipt.from_wire(data['commit'])), 'dst': (None if data.get('dst') is None else data['dst']), 'edge_type': (None if data.get('edge_type') is None else data['edge_type']), 'effect': models.MutationEffect.from_wire(data['effect']), 'graph': data['graph'], 'node_id': (None if data.get('node_id') is None else data['node_id']), 'src': (None if data.get('src') is None else data['src'])})
 
-    def graph_list(self, *, as_of=None, cursor=None, limit=None, branch=None, space=None):
+    def graph_list(self, *, as_of=None, as_of_time=None, cursor=None, limit=None, branch=None, space=None):
         """List graph names.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.graph_name
@@ -758,6 +782,8 @@ class Commands:
         cmd = {'type': 'graph_list'}
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if cursor is not None:
             cmd['cursor'] = cursor
         if limit is not None:
@@ -769,7 +795,7 @@ class Commands:
         data = self._core.data(cmd)
         return _wire.Record({'cursor': (None if data.get('cursor') is None else data['cursor']), 'has_more': data['has_more'], 'items': [_x for _x in (data['items'] or [])]})
 
-    def graph_meta(self, graph, *, as_of=None, branch=None, space=None):
+    def graph_meta(self, graph, *, as_of=None, as_of_time=None, branch=None, space=None):
         """Read graph metadata and counts.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.graph_name, not_found.engine.graph
@@ -778,6 +804,8 @@ class Commands:
         cmd['graph'] = graph
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if branch is not None:
             cmd['branch'] = branch
         if space is not None:
@@ -785,7 +813,7 @@ class Commands:
         data = self._core.data(cmd)
         return (None if data is None else models.GraphInfoData.from_wire(data))
 
-    def graph_neighbors(self, graph, node_id, direction, *, as_of=None, cursor=None, edge_type=None, limit=None, branch=None, space=None):
+    def graph_neighbors(self, graph, node_id, direction, *, as_of=None, as_of_time=None, cursor=None, edge_type=None, limit=None, branch=None, space=None):
         """List a node's neighbors.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.graph_name, not_found.engine.graph, invalid_argument.engine.graph_node_id, invalid_argument.engine.graph_edge_type
@@ -796,6 +824,8 @@ class Commands:
         cmd['direction'] = direction
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if cursor is not None:
             cmd['cursor'] = cursor
         if edge_type is not None:
@@ -830,7 +860,7 @@ class Commands:
         data = self._core.data(cmd)
         return _wire.Record({'commit': models.CommitReceipt.from_wire(data['commit']), 'effect': models.MutationEffect.from_wire(data['effect']), 'graph': data['graph'], 'node_id': data['node_id']})
 
-    def graph_node_get(self, graph, node_id, *, as_of=None, branch=None, space=None):
+    def graph_node_get(self, graph, node_id, *, as_of=None, as_of_time=None, branch=None, space=None):
         """Read one graph node.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.graph_name, not_found.engine.graph, invalid_argument.engine.graph_node_id
@@ -840,6 +870,8 @@ class Commands:
         cmd['node_id'] = node_id
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if branch is not None:
             cmd['branch'] = branch
         if space is not None:
@@ -847,7 +879,7 @@ class Commands:
         data = self._core.data(cmd)
         return models.Maybe4.from_wire(data)
 
-    def graph_node_list(self, graph, *, as_of=None, cursor=None, limit=None, prefix=None, branch=None, space=None):
+    def graph_node_list(self, graph, *, as_of=None, as_of_time=None, cursor=None, limit=None, prefix=None, branch=None, space=None):
         """List graph nodes.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.graph_name, not_found.engine.graph, invalid_argument.engine.graph_node_id
@@ -856,6 +888,8 @@ class Commands:
         cmd['graph'] = graph
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if cursor is not None:
             cmd['cursor'] = cursor
         if limit is not None:
@@ -884,7 +918,7 @@ class Commands:
         data = self._core.data(cmd)
         return _wire.Record({'commit': (None if data.get('commit') is None else models.CommitReceipt.from_wire(data['commit'])), 'dst': (None if data.get('dst') is None else data['dst']), 'edge_type': (None if data.get('edge_type') is None else data['edge_type']), 'effect': models.MutationEffect.from_wire(data['effect']), 'graph': data['graph'], 'node_id': (None if data.get('node_id') is None else data['node_id']), 'src': (None if data.get('src') is None else data['src'])})
 
-    def graph_nodes_by_type(self, graph, object_type, *, as_of=None, cursor=None, limit=None, branch=None, space=None):
+    def graph_nodes_by_type(self, graph, object_type, *, as_of=None, as_of_time=None, cursor=None, limit=None, branch=None, space=None):
         """List nodes declaring an object type.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.graph_name, not_found.engine.graph, invalid_argument.engine.graph_type_name, invalid_argument.engine.graph_node_id
@@ -894,6 +928,8 @@ class Commands:
         cmd['object_type'] = object_type
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if cursor is not None:
             cmd['cursor'] = cursor
         if limit is not None:
@@ -987,7 +1023,7 @@ class Commands:
         data = self._core.data(cmd)
         return _wire.Record({'commit': models.CommitReceipt.from_wire(data['commit']), 'graph': data['graph'], 'link_types': data['link_types'], 'object_types': data['object_types']})
 
-    def graph_ontology_get(self, graph, *, as_of=None, branch=None, space=None):
+    def graph_ontology_get(self, graph, *, as_of=None, as_of_time=None, branch=None, space=None):
         """Read the graph ontology.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.graph_name, not_found.engine.graph
@@ -996,6 +1032,8 @@ class Commands:
         cmd['graph'] = graph
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if branch is not None:
             cmd['branch'] = branch
         if space is not None:
@@ -1003,7 +1041,7 @@ class Commands:
         data = self._core.data(cmd)
         return (None if data is None else models.GraphOntologyData.from_wire(data))
 
-    def graph_ontology_summary(self, graph, *, as_of=None, branch=None, space=None):
+    def graph_ontology_summary(self, graph, *, as_of=None, as_of_time=None, branch=None, space=None):
         """Read the ontology with usage counts.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.graph_name, not_found.engine.graph
@@ -1012,6 +1050,8 @@ class Commands:
         cmd['graph'] = graph
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if branch is not None:
             cmd['branch'] = branch
         if space is not None:
@@ -1168,7 +1208,7 @@ class Commands:
         data = self._core.data(cmd)
         return models.BatchResult3.from_wire(data)
 
-    def json_count(self, *, as_of=None, prefix=None, branch=None, space=None):
+    def json_count(self, *, as_of=None, as_of_time=None, prefix=None, branch=None, space=None):
         """Count visible JSON documents.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.json_document_id
@@ -1176,6 +1216,8 @@ class Commands:
         cmd = {'type': 'json_count'}
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if prefix is not None:
             cmd['prefix'] = prefix
         if branch is not None:
@@ -1214,7 +1256,7 @@ class Commands:
         data = self._core.data(cmd)
         return data
 
-    def json_get(self, key, path, *, as_of=None, branch=None, space=None):
+    def json_get(self, key, path, *, as_of=None, as_of_time=None, branch=None, space=None):
         """Read the current or historical JSON value at a document path.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.json_document_id, invalid_argument.engine.json_path, invalid_argument.engine.json_path_too_long
@@ -1224,6 +1266,8 @@ class Commands:
         cmd['path'] = path
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if branch is not None:
             cmd['branch'] = branch
         if space is not None:
@@ -1288,7 +1332,7 @@ class Commands:
         data = self._core.data(cmd)
         return _wire.Record({'cursor': (None if data.get('cursor') is None else data['cursor']), 'has_more': data['has_more'], 'items': [models.JsonIndexDefinition.from_wire(_x) for _x in (data['items'] or [])]})
 
-    def json_list(self, *, as_of=None, cursor=None, limit=None, prefix=None, branch=None, space=None):
+    def json_list(self, *, as_of=None, as_of_time=None, cursor=None, limit=None, prefix=None, branch=None, space=None):
         """List JSON document keys with optional prefix filtering.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.json_document_id
@@ -1296,6 +1340,8 @@ class Commands:
         cmd = {'type': 'json_list'}
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if cursor is not None:
             cmd['cursor'] = cursor
         if limit is not None:
@@ -1415,7 +1461,7 @@ class Commands:
         data = self._core.data(cmd)
         return models.BatchResult.from_wire(data)
 
-    def kv_count(self, *, as_of=None, prefix=None, branch=None, space=None):
+    def kv_count(self, *, as_of=None, as_of_time=None, prefix=None, branch=None, space=None):
         """Count visible KV keys.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.kv_key
@@ -1423,6 +1469,8 @@ class Commands:
         cmd = {'type': 'kv_count'}
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if prefix is not None:
             cmd['prefix'] = _wire.b64e(prefix)
         if branch is not None:
@@ -1460,7 +1508,7 @@ class Commands:
         data = self._core.data(cmd)
         return data
 
-    def kv_get(self, key, *, as_of=None, branch=None, space=None):
+    def kv_get(self, key, *, as_of=None, as_of_time=None, branch=None, space=None):
         """Read the current or historical value for one KV key.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.kv_key, history_unavailable.engine.persistence_history
@@ -1469,6 +1517,8 @@ class Commands:
         cmd['key'] = _wire.b64e(key)
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if branch is not None:
             cmd['branch'] = branch
         if space is not None:
@@ -1490,7 +1540,7 @@ class Commands:
         data = self._core.data(cmd)
         return (None if data is None else models.HistoryResult.from_wire(data))
 
-    def kv_list(self, *, as_of=None, cursor=None, limit=None, prefix=None, branch=None, space=None):
+    def kv_list(self, *, as_of=None, as_of_time=None, cursor=None, limit=None, prefix=None, branch=None, space=None):
         """List KV keys with optional prefix filtering.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.kv_key
@@ -1498,6 +1548,8 @@ class Commands:
         cmd = {'type': 'kv_list'}
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if cursor is not None:
             cmd['cursor'] = _wire.b64e(cursor)
         if limit is not None:
@@ -1726,7 +1778,7 @@ class Commands:
         data = self._core.data(cmd)
         return _wire.Record({'cursor': (None if data.get('cursor') is None else data['cursor']), 'has_more': data['has_more'], 'items': [models.VectorCollectionInfo.from_wire(_x) for _x in (data['items'] or [])]})
 
-    def vector_count(self, collection, *, as_of=None, branch=None, space=None):
+    def vector_count(self, collection, *, as_of=None, as_of_time=None, branch=None, space=None):
         """Count visible vectors in a collection.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.vector_collection, invalid_argument.engine.vector_key, not_found.engine.vector_collection
@@ -1735,6 +1787,8 @@ class Commands:
         cmd['collection'] = collection
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if branch is not None:
             cmd['branch'] = branch
         if space is not None:
@@ -1801,7 +1855,7 @@ class Commands:
         data = self._core.data(cmd)
         return data
 
-    def vector_get(self, collection, key, *, as_of=None, branch=None, space=None):
+    def vector_get(self, collection, key, *, as_of=None, as_of_time=None, branch=None, space=None):
         """Read one vector by key.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.vector_collection, invalid_argument.engine.vector_key, not_found.engine.vector_collection
@@ -1811,6 +1865,8 @@ class Commands:
         cmd['key'] = key
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if branch is not None:
             cmd['branch'] = branch
         if space is not None:
@@ -1833,7 +1889,7 @@ class Commands:
         data = self._core.data(cmd)
         return (None if data is None else models.VectorHistoryResult.from_wire(data))
 
-    def vector_index_query(self, collection, query, k, *, as_of=None, filter=None, branch=None, space=None):
+    def vector_index_query(self, collection, query, k, *, as_of=None, as_of_time=None, filter=None, branch=None, space=None):
         """Search vectors and return index diagnostics.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.vector_collection, invalid_argument.engine.vector_key, not_found.engine.vector_collection, invalid_argument.engine.vector_filter, invalid_argument.executor.vector_limit
@@ -1844,6 +1900,8 @@ class Commands:
         cmd['k'] = k
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if filter is not None:
             cmd['filter'] = {'conditions': [{'field': _x['field'], 'op': _x['op'], 'value': _x['value']} for _x in (filter['conditions'] or [])]}
         if branch is not None:
@@ -1853,7 +1911,7 @@ class Commands:
         data = self._core.data(cmd)
         return models.VectorIndexQueryResult.from_wire(data)
 
-    def vector_keys(self, collection, *, as_of=None, cursor=None, limit=None, prefix=None, branch=None, space=None):
+    def vector_keys(self, collection, *, as_of=None, as_of_time=None, cursor=None, limit=None, prefix=None, branch=None, space=None):
         """List vector keys in a collection.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.vector_collection, invalid_argument.engine.vector_key, not_found.engine.vector_collection
@@ -1862,6 +1920,8 @@ class Commands:
         cmd['collection'] = collection
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if cursor is not None:
             cmd['cursor'] = cursor
         if limit is not None:
@@ -1891,7 +1951,7 @@ class Commands:
         data = self._core.data(cmd)
         return _wire.Record({'collection': data['collection'], 'commit': (None if data.get('commit') is None else models.CommitReceipt.from_wire(data['commit'])), 'effect': models.MutationEffect.from_wire(data['effect']), 'key': data['key'], 'vector_revision': (None if data.get('vector_revision') is None else data['vector_revision'])})
 
-    def vector_query(self, collection, query, k, *, as_of=None, filter=None, branch=None, space=None):
+    def vector_query(self, collection, query, k, *, as_of=None, as_of_time=None, filter=None, branch=None, space=None):
         """Search a vector collection.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.vector_collection, invalid_argument.engine.vector_key, not_found.engine.vector_collection, invalid_argument.engine.vector_filter, invalid_argument.executor.vector_limit
@@ -1902,6 +1962,8 @@ class Commands:
         cmd['k'] = k
         if as_of is not None:
             cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if filter is not None:
             cmd['filter'] = {'conditions': [{'field': _x['field'], 'op': _x['op'], 'value': _x['value']} for _x in (filter['conditions'] or [])]}
         if branch is not None:

@@ -57,3 +57,46 @@ def test_event_roundtrip_rederives_log(db, tmp_path):
     assert db.events.len() == before + 2
     # sequence/timestamp/hash are reassigned by the append, so the chain still verifies.
     assert db.events.verify_chain().valid
+
+
+# --- engine 1.2.1's import/export corrections, from the SDK's side ---------
+
+
+def test_nested_documents_survive_a_round_trip(db, tmp_path):
+    # strata-core #3063/#3075/#3091: nested objects, lists and map/dictionary
+    # columns used to come back as the Display string of the Arrow cell
+    # ("{n: 1}"), not as data. This is the user-visible half of that fix.
+    document = {
+        "name": "ada",
+        "tags": ["analytical", "engine"],
+        "meta": {"born": 1815, "notes": {"fields": [1, 2, 3]}},
+    }
+    path = str(tmp_path / "json.parquet")
+    db.json.set("doc", "$", document)
+    db.arrow.export("json", path)
+    db.json.delete("doc")
+    db.arrow.import_("json", path)
+
+    assert db.json.get("doc", "$") == document
+    assert db.json.get("doc", "$.meta.notes.fields") == [1, 2, 3]
+
+
+def test_vector_export_to_csv_is_refused_up_front(db, tmp_path):
+    # strata-core #3082: CSV cannot carry an embedding, and the export used to
+    # loop writing a truncated file instead of saying so.
+    db.vectors.create_collection("docs", 2)
+    db.vectors.upsert("docs", "k", [1.0, 0.0])
+    with pytest.raises(stratadb.errors.InvalidArgumentError) as excinfo:
+        db.arrow.export("vector", str(tmp_path / "docs.csv"), format="csv", collection="docs")
+    assert excinfo.value.code == "invalid_argument.executor.arrow_format"
+
+
+def test_csv_import_keeps_text_keys_as_text(db, tmp_path):
+    # strata-core #3077: CSV import re-inferred column types, so a zero-padded
+    # text key ("007") arrived as the integer 7 and the row was unfindable.
+    path = tmp_path / "kv.csv"
+    path.write_text("key,value\n007,hello\n042,world\n")
+    db.arrow.import_("kv", str(path), format="csv")
+
+    assert db.kv.get("007") == b"hello"
+    assert db.kv.get("042") == b"world"
