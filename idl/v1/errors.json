@@ -1,5 +1,5 @@
 {
-  "count": 219,
+  "count": 222,
   "errors": [
     {
       "class": "invalid_argument",
@@ -1515,6 +1515,15 @@
     },
     {
       "class": "invalid_argument",
+      "code": "invalid_argument.executor.as_of_conflict",
+      "commit_outcome": "not_started",
+      "hint": "Pass a commit timestamp (as_of) or a wall-clock instant (as_of_time), not both.",
+      "message": "Both as_of and as_of_time were supplied.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.as_of_conflict",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
       "code": "invalid_argument.executor.arrow_base64",
       "commit_outcome": "not_started",
       "hint": "Provide valid base64-encoded Arrow bytes or use a file path import.",
@@ -1547,6 +1556,15 @@
       "hint": "Use a fixed-size list, list, or JSON array of numeric values for vector embeddings.",
       "message": "The Arrow embedding column type is invalid.",
       "ref": "https://stratadb.org/e/invalid_argument.executor.arrow_embedding_type",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.arrow_encoding",
+      "commit_outcome": "not_started",
+      "hint": "Declare a 'utf8' or 'base64' key_encoding/value_encoding, or omit the encoding column.",
+      "message": "The Arrow key/value cell encoding is not supported.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.arrow_encoding",
       "retry_policy": "never"
     },
     {
@@ -1610,6 +1628,15 @@
       "hint": "Include a non-null string or binary key column in the Arrow input.",
       "message": "The Arrow key column is invalid.",
       "ref": "https://stratadb.org/e/invalid_argument.executor.arrow_key_column",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
+      "code": "invalid_argument.executor.arrow_non_finite_float",
+      "commit_outcome": "not_started",
+      "hint": "Replace or drop the NaN/infinity float values before importing to a JSON target.",
+      "message": "A float column holds a non-finite value (NaN or infinity) that JSON cannot represent.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.arrow_non_finite_float",
       "retry_policy": "never"
     },
     {

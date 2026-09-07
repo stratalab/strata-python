@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, Callable
 
 from .._results import Page
+from ..clock import TimeLike, to_micros
 from ..errors import InvalidArgumentError, client_error
 
 # Page size used when auto-paginating a listing that was called without an
@@ -37,6 +38,27 @@ class Namespace:
     @property
     def _scope(self) -> dict[str, Any]:
         return {"branch": self._branch, "space": self._space}
+
+    def _temporal(self, as_of: Any, as_of_time: Any) -> dict[str, Any]:
+        """The time-travel arguments for one call, as wire kwargs.
+
+        Keeps Strata's two clocks apart (see :mod:`stratadb.clock`): ``as_of``
+        is a position on the logical commit timeline (an int), ``as_of_time`` a
+        wall-clock instant, coerced here from a ``datetime``/``date``/ISO
+        string. A ``datetime`` handed to ``as_of`` is the confusing mistake
+        worth naming, so it is rejected with a pointer rather than a serde
+        failure. Supplying both is the engine's call to refuse
+        (``invalid_argument.executor.as_of_conflict``), so both go on the wire.
+        """
+        if as_of is not None and (not isinstance(as_of, int) or isinstance(as_of, bool)):
+            raise client_error(
+                InvalidArgumentError,
+                "invalid_argument.sdk.as_of_kind",
+                f"as_of takes a commit timestamp (an int), got {type(as_of).__name__}",
+                "as_of is a position on the commit timeline, not a date — pass "
+                "as_of_time= for a wall-clock instant",
+            )
+        return {"as_of": as_of, "as_of_time": to_micros(as_of_time)}
 
     def _check_limit(self, limit: Any) -> None:
         """Rejects a non-positive ``limit`` (#41).

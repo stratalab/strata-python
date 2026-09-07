@@ -199,6 +199,20 @@ receipt = db.kv.put("k", "v1")         # -> Record; receipt.commit.version == re
 db.kv.put("k", "v2")
 db.kv.get("k", as_of=receipt.commit.timestamp)   # b'v1' — as_of takes the logical commit value, not wall-clock µs
 
+# The other clock: when it actually happened (engine 1.2.1+).
+receipt.commit.committed_at                        # UTC epoch µs, or None for a commit written before 1.2.1
+stratadb.to_datetime(receipt.commit.committed_at)  # -> aware UTC datetime; .astimezone() for local
+db.kv.get("k", as_of_time=receipt.commit.committed_at)  # b'v1' — the commit at or before that instant
+# as_of_time also takes a datetime, a date, or an ISO string ("2026-09-05 15:00"),
+# but only reaches instants inside this branch's dated history — see the gotchas.
+```
+
+Every read that takes `as_of` also takes `as_of_time`; passing both raises
+`InvalidArgumentError` (`invalid_argument.executor.as_of_conflict`). `history`
+rows carry `committed_at` too.
+
+```python
+
 # fork() copies the source branch (copy-on-write); create() makes an EMPTY branch.
 db.branches.fork("default", "feature")  # feature starts as a copy of default
 db.branches.list()
@@ -217,8 +231,9 @@ Prefer `fork` when the new branch should start from existing data;
 `db.branches.create(name)` makes an **empty** branch. Fork a point in history
 with `db.branches.fork_at_version(source, name, receipt.commit.version)` or
 `db.branches.fork_at_timestamp(source, name, receipt.commit.timestamp)`.
-(`event.timestamp` is the one wall-clock value, in microseconds;
-`db.events.range_by_time(...)` is the only API that takes wall-clock µs.)
+(`event.timestamp` is the event's own **occurrence** time in microseconds, the
+axis `db.events.range_by_time(...)` walks — distinct from a commit's
+`committed_at`, which every read's `as_of_time` addresses.)
 
 `merge(source, target)` promotes the key-value, JSON, and vector changes the
 source made since its fork point, as one commit, leaving the source unchanged;
@@ -293,6 +308,12 @@ except errors.NotFoundError as e:
 
 Exact failure modes worth recognizing up front (match on the `.code`, not the message):
 
+- **`as_of_time` does not clamp.** An instant outside the branch's dated history
+  raises `HistoryUnavailableError` (`history_unavailable.engine.persistence_history`)
+  at *both* ends — including `datetime.now()`, which is past the newest commit.
+  Omit both clocks to read the latest state. The dated window is only as wide as
+  the database's own history, and commits written before engine 1.2.1 have no
+  instant at all (`committed_at is None`).
 - **`open()` needs an explicit target.** `stratadb.open()` with neither a path nor
   `cache=True` raises `InvalidArgumentError` (`invalid_argument.cli.no_database`) —
   Strata never opens the current directory implicitly. Pass a path, set `STRATA_DB`

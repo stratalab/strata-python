@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from .._results import Page, Sample
+from ..clock import TimeLike
 from ..errors import require_field
 from .base import Namespace
 
@@ -63,7 +64,9 @@ class GraphsNamespace(Namespace):
         """
         return self._c.graph_delete(name, **self._scope)
 
-    def list(self) -> list:
+    def list(
+        self, *, as_of: Optional[int] = None, as_of_time: Optional[TimeLike] = None
+    ) -> list:
         """Lists the graphs (with node/edge counts).
 
         Examples:
@@ -71,9 +74,11 @@ class GraphsNamespace(Namespace):
             >>> db.graphs.list()
             ['social']
         """
-        return list(self._c.graph_list(**self._scope).items)
+        return list(self._c.graph_list(**self._temporal(as_of, as_of_time), **self._scope).items)
 
-    def meta(self, name: str) -> Any:
+    def meta(
+        self, name: str, *, as_of: Optional[int] = None, as_of_time: Optional[TimeLike] = None
+    ) -> Any:
         """Returns a graph's metadata (node/edge counts, timestamps).
 
         Examples:
@@ -83,7 +88,7 @@ class GraphsNamespace(Namespace):
             >>> db.graphs.meta("social").node_count
             2
         """
-        return self._c.graph_meta(name, **self._scope)
+        return self._c.graph_meta(name, **self._temporal(as_of, as_of_time), **self._scope)
 
     # --- nodes ---
 
@@ -113,7 +118,7 @@ class GraphsNamespace(Namespace):
             **self._scope,
         )
 
-    def get_node(self, graph: str, node_id: str, *, as_of: Optional[int] = None) -> Any:
+    def get_node(self, graph: str, node_id: str, *, as_of: Optional[int] = None, as_of_time: Optional[TimeLike] = None) -> Any:
         """Returns a node, or ``None`` if absent.
 
         Examples:
@@ -124,7 +129,7 @@ class GraphsNamespace(Namespace):
             >>> db.graphs.get_node("social", "absent") is None
             True
         """
-        result = self._c.graph_node_get(graph, node_id, as_of=as_of, **self._scope)
+        result = self._c.graph_node_get(graph, node_id, **self._temporal(as_of, as_of_time), **self._scope)
         return result.value if result.found else None
 
     def remove_node(self, graph: str, node_id: str) -> Any:
@@ -146,6 +151,7 @@ class GraphsNamespace(Namespace):
         limit: Optional[int] = None,
         cursor: Optional[Any] = None,
         as_of: Optional[int] = None,
+        as_of_time: Optional[TimeLike] = None,
         prefix: Optional[str] = None,
     ) -> Page:
         """One page of a graph's nodes.
@@ -159,7 +165,7 @@ class GraphsNamespace(Namespace):
         """
         return self._listing(
             lambda cur, lim: self._c.graph_node_list(
-                graph, limit=lim, cursor=cur, as_of=as_of, prefix=prefix, **self._scope
+                graph, limit=lim, cursor=cur, **self._temporal(as_of, as_of_time), prefix=prefix, **self._scope
             ),
             limit=limit,
             start=cursor,
@@ -192,7 +198,14 @@ class GraphsNamespace(Namespace):
         )
 
     def get_edge(
-        self, graph: str, src: str, edge_type: str, dst: str, *, as_of: Optional[int] = None
+        self,
+        graph: str,
+        src: str,
+        edge_type: str,
+        dst: str,
+        *,
+        as_of: Optional[int] = None,
+        as_of_time: Optional[TimeLike] = None,
     ) -> Any:
         """Returns an edge, or ``None`` if absent.
 
@@ -206,7 +219,7 @@ class GraphsNamespace(Namespace):
             >>> db.graphs.get_edge("social", "alice", "knows", "absent") is None
             True
         """
-        result = self._c.graph_edge_get(graph, src, edge_type, dst, as_of=as_of, **self._scope)
+        result = self._c.graph_edge_get(graph, src, edge_type, dst, **self._temporal(as_of, as_of_time), **self._scope)
         return result.value if result.found else None
 
     def remove_edge(self, graph: str, src: str, edge_type: str, dst: str) -> Any:
@@ -235,6 +248,7 @@ class GraphsNamespace(Namespace):
         limit: Optional[int] = None,
         cursor: Optional[Any] = None,
         as_of: Optional[int] = None,
+        as_of_time: Optional[TimeLike] = None,
     ) -> Page:
         """A page of a node's neighbors (``direction`` is outgoing/incoming/both).
 
@@ -258,7 +272,7 @@ class GraphsNamespace(Namespace):
                 edge_type=edge_type,
                 limit=lim,
                 cursor=cur,
-                as_of=as_of,
+                **self._temporal(as_of, as_of_time),
                 **self._scope,
             ),
             limit=limit,
@@ -266,7 +280,13 @@ class GraphsNamespace(Namespace):
         )
 
     def bindings_for_entity(
-        self, primitive: str, key: str, *, space: Optional[str] = None
+        self,
+        primitive: str,
+        key: str,
+        *,
+        space: Optional[str] = None,
+        as_of: Optional[int] = None,
+        as_of_time: Optional[TimeLike] = None,
     ) -> Page:
         """Graph nodes bound to a product entity (``primitive`` is kv/json/vector/event/graph).
 
@@ -284,7 +304,9 @@ class GraphsNamespace(Namespace):
         if self._branch is not None:
             target["branch"] = self._branch
         return self._listing(
-            lambda cur, lim: self._c.graph_bindings(target, limit=lim, cursor=cur, **self._scope),
+            lambda cur, lim: self._c.graph_bindings(
+                target, limit=lim, cursor=cur, **self._temporal(as_of, as_of_time), **self._scope
+            ),
             limit=None,
         )
 
@@ -355,6 +377,7 @@ class GraphsNamespace(Namespace):
         limit: Optional[int] = None,
         cursor: Optional[Any] = None,
         as_of: Optional[int] = None,
+        as_of_time: Optional[TimeLike] = None,
     ) -> Page:
         """A page of nodes of a given object type.
 
@@ -367,7 +390,7 @@ class GraphsNamespace(Namespace):
         """
         return self._listing(
             lambda cur, lim: self._c.graph_nodes_by_type(
-                graph, object_type, limit=lim, cursor=cur, as_of=as_of, **self._scope
+                graph, object_type, limit=lim, cursor=cur, **self._temporal(as_of, as_of_time), **self._scope
             ),
             limit=limit,
             start=cursor,
@@ -423,6 +446,7 @@ class GraphAnalytics(Namespace):
         personalization: Optional[dict] = None,
         budget: Optional[dict] = None,
         as_of: Optional[int] = None,
+        as_of_time: Optional[TimeLike] = None,
     ) -> Any:
         """PageRank importance scores (``.ranks`` maps node id to score).
 
@@ -443,7 +467,7 @@ class GraphAnalytics(Namespace):
             tolerance=tolerance,
             personalization=personalization,
             budget=budget,
-            as_of=as_of,
+            **self._temporal(as_of, as_of_time),
             **self._scope,
         )
 
@@ -458,6 +482,7 @@ class GraphAnalytics(Namespace):
         max_nodes: Optional[int] = None,
         budget: Optional[dict] = None,
         as_of: Optional[int] = None,
+        as_of_time: Optional[TimeLike] = None,
     ) -> Any:
         """Breadth-first traversal from ``start`` (``.visited``, ``.depths``, ``.edges``).
 
@@ -479,7 +504,7 @@ class GraphAnalytics(Namespace):
             max_depth=max_depth,
             max_nodes=max_nodes,
             budget=budget,
-            as_of=as_of,
+            **self._temporal(as_of, as_of_time),
             **self._scope,
         )
 
@@ -491,6 +516,7 @@ class GraphAnalytics(Namespace):
         direction: Optional[str] = None,
         budget: Optional[dict] = None,
         as_of: Optional[int] = None,
+        as_of_time: Optional[TimeLike] = None,
     ) -> Any:
         """Single-source shortest paths from ``source`` (``.distances``).
 
@@ -505,10 +531,10 @@ class GraphAnalytics(Namespace):
             ['a', 'b', 'c']
         """
         return self._c.graph_analytics_sssp(
-            graph, source, direction=direction, budget=budget, as_of=as_of, **self._scope
+            graph, source, direction=direction, budget=budget, **self._temporal(as_of, as_of_time), **self._scope
         )
 
-    def wcc(self, graph: str, *, budget: Optional[dict] = None, as_of: Optional[int] = None) -> Any:
+    def wcc(self, graph: str, *, budget: Optional[dict] = None, as_of: Optional[int] = None, as_of_time: Optional[TimeLike] = None) -> Any:
         """Weakly-connected components (``.components`` maps node id to component).
 
         Examples:
@@ -521,7 +547,7 @@ class GraphAnalytics(Namespace):
             >>> db.graphs.analytics.wcc("g").component_count
             1
         """
-        return self._c.graph_analytics_wcc(graph, budget=budget, as_of=as_of, **self._scope)
+        return self._c.graph_analytics_wcc(graph, budget=budget, **self._temporal(as_of, as_of_time), **self._scope)
 
     def cdlp(
         self,
@@ -531,6 +557,7 @@ class GraphAnalytics(Namespace):
         max_iterations: Optional[int] = None,
         budget: Optional[dict] = None,
         as_of: Optional[int] = None,
+        as_of_time: Optional[TimeLike] = None,
     ) -> Any:
         """Community detection by label propagation (``.labels``).
 
@@ -549,11 +576,11 @@ class GraphAnalytics(Namespace):
             direction=direction,
             max_iterations=max_iterations,
             budget=budget,
-            as_of=as_of,
+            **self._temporal(as_of, as_of_time),
             **self._scope,
         )
 
-    def lcc(self, graph: str, *, budget: Optional[dict] = None, as_of: Optional[int] = None) -> Any:
+    def lcc(self, graph: str, *, budget: Optional[dict] = None, as_of: Optional[int] = None, as_of_time: Optional[TimeLike] = None) -> Any:
         """Local clustering coefficient per node (``.coefficients``).
 
         Examples:
@@ -566,7 +593,7 @@ class GraphAnalytics(Namespace):
             >>> sorted(db.graphs.analytics.lcc("g").coefficients)
             ['a', 'b', 'c']
         """
-        return self._c.graph_analytics_lcc(graph, budget=budget, as_of=as_of, **self._scope)
+        return self._c.graph_analytics_lcc(graph, budget=budget, **self._temporal(as_of, as_of_time), **self._scope)
 
 
 class GraphOntology(Namespace):
@@ -652,7 +679,7 @@ class GraphOntology(Namespace):
         """
         return self._c.graph_ontology_freeze(graph, **self._scope)
 
-    def get(self, graph: str, *, as_of: Optional[int] = None) -> Any:
+    def get(self, graph: str, *, as_of: Optional[int] = None, as_of_time: Optional[TimeLike] = None) -> Any:
         """The full ontology, or ``None`` if none is defined.
 
         Examples:
@@ -661,9 +688,9 @@ class GraphOntology(Namespace):
             >>> db.graphs.ontology.get("g").status
             'draft'
         """
-        return self._c.graph_ontology_get(graph, as_of=as_of, **self._scope)
+        return self._c.graph_ontology_get(graph, **self._temporal(as_of, as_of_time), **self._scope)
 
-    def summary(self, graph: str, *, as_of: Optional[int] = None) -> Any:
+    def summary(self, graph: str, *, as_of: Optional[int] = None, as_of_time: Optional[TimeLike] = None) -> Any:
         """A summary of the ontology (types and their node counts), or ``None``.
 
         Examples:
@@ -672,4 +699,4 @@ class GraphOntology(Namespace):
             >>> [o.name for o in db.graphs.ontology.summary("g").object_types]
             ['person']
         """
-        return self._c.graph_ontology_summary(graph, as_of=as_of, **self._scope)
+        return self._c.graph_ontology_summary(graph, **self._temporal(as_of, as_of_time), **self._scope)

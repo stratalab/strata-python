@@ -169,8 +169,19 @@ db.branches.merge("experiment", "default")     # promote as one atomic commit �
 
 receipt = db.kv.put("k", "v1")
 db.kv.put("k", "v2")
-db.kv.get("k", as_of=receipt.commit.timestamp)   # b"v1" — every read takes as_of
+db.kv.get("k", as_of=receipt.commit.timestamp)   # b"v1" — the logical commit timeline
+db.kv.get("k", as_of_time=receipt.commit.committed_at)   # b"v1" — real UTC time
+stratadb.to_datetime(receipt.commit.committed_at)        # when that commit happened
 ```
+
+Two clocks, and they are not interchangeable: `timestamp` is a position on the
+logical commit timeline (a counter, never a date) that `as_of` addresses;
+`committed_at` is the UTC instant the commit was applied, which `as_of_time`
+addresses and `stratadb.to_datetime` formats. `as_of_time` takes a `datetime`,
+a `date`, an ISO 8601 string, or raw epoch microseconds; it refuses rather than
+clamps outside the branch's dated history (so `datetime.now()` raises — omit
+both clocks to read the latest). Passing both raises
+`invalid_argument.executor.as_of_conflict`.
 
 `merge` carries the key-value, JSON, and vector changes a fork made since its
 fork point; event streams and graphs are compared but never merged. A `strict`

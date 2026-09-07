@@ -6,6 +6,7 @@ from typing import Any, Iterator, Optional, Sequence, Tuple
 
 from .. import filters as _filters
 from .._results import BatchResult, Page
+from ..clock import TimeLike
 from ..errors import InvalidArgumentError, client_error, require_field
 from .base import PAGE_SIZE, Namespace
 
@@ -145,7 +146,7 @@ class VectorsNamespace(Namespace):
                 return info
         return page.items[0] if page.items else None
 
-    def count(self, name: str, *, as_of: Optional[int] = None) -> int:
+    def count(self, name: str, *, as_of: Optional[int] = None, as_of_time: Optional[TimeLike] = None) -> int:
         """Number of vectors in a collection.
 
         Examples:
@@ -155,7 +156,7 @@ class VectorsNamespace(Namespace):
             >>> db.vectors.count("docs")
             2
         """
-        return self._c.vector_count(name, as_of=as_of, **self._scope)
+        return self._c.vector_count(name, **self._temporal(as_of, as_of_time), **self._scope)
 
     # --- vectors ---
 
@@ -178,7 +179,7 @@ class VectorsNamespace(Namespace):
         _check_metadata(metadata)
         return self._c.vector_upsert(collection, key, _vector_arg(vector), metadata=metadata, **self._scope)
 
-    def get(self, collection: str, key: str, *, as_of: Optional[int] = None) -> Any:
+    def get(self, collection: str, key: str, *, as_of: Optional[int] = None, as_of_time: Optional[TimeLike] = None) -> Any:
         """Returns the stored vector + metadata, or ``None`` if absent.
 
         Examples:
@@ -189,11 +190,17 @@ class VectorsNamespace(Namespace):
             >>> db.vectors.get("docs", "absent") is None
             True
         """
-        result = self._c.vector_get(collection, key, as_of=as_of, **self._scope)
+        result = self._c.vector_get(collection, key, **self._temporal(as_of, as_of_time), **self._scope)
         return result.value if result.found else None
 
     def history(self, collection: str, key: str) -> Optional[list]:
         """Full version history for a key, or ``None`` if it never existed.
+
+        Each row carries ``committed_at`` — the UTC epoch microseconds the
+        commit was applied, or ``None`` for one written before engine 1.2.1 or
+        replayed from an import. Format it with
+        :func:`stratadb.to_datetime`; ``timestamp`` beside it is the commit
+        timeline's counter, not a date.
 
         Examples:
             >>> _ = db.vectors.create_collection("docs", 3, metric="cosine")
@@ -223,6 +230,7 @@ class VectorsNamespace(Namespace):
         limit: Optional[int] = None,
         cursor: Optional[Any] = None,
         as_of: Optional[int] = None,
+        as_of_time: Optional[TimeLike] = None,
     ) -> Page:
         """One page of keys in a collection (``str`` each).
 
@@ -235,18 +243,18 @@ class VectorsNamespace(Namespace):
         """
         return self._listing(
             lambda cur, lim: self._c.vector_keys(
-                collection, limit=lim, cursor=cur, as_of=as_of, **self._scope
+                collection, limit=lim, cursor=cur, **self._temporal(as_of, as_of_time), **self._scope
             ),
             limit=limit,
             start=cursor,
         )
 
-    def iter_keys(self, collection: str, *, as_of: Optional[int] = None) -> Iterator[str]:
+    def iter_keys(self, collection: str, *, as_of: Optional[int] = None, as_of_time: Optional[TimeLike] = None) -> Iterator[str]:
         """Iterates every key in ``collection``, paginating internally."""
         cursor = None
         while True:
             page = self._c.vector_keys(
-                collection, limit=PAGE_SIZE, cursor=cursor, as_of=as_of, **self._scope
+                collection, limit=PAGE_SIZE, cursor=cursor, **self._temporal(as_of, as_of_time), **self._scope
             )
             yield from page.items
             if not page.has_more:
@@ -313,6 +321,7 @@ class VectorsNamespace(Namespace):
         k: int = 10,
         filter: Any = None,
         as_of: Optional[int] = None,
+        as_of_time: Optional[TimeLike] = None,
     ) -> list:
         """Returns the ``k`` nearest matches, optionally metadata-filtered.
 
@@ -326,7 +335,7 @@ class VectorsNamespace(Namespace):
             ['a', 'b']
         """
         return self._c.vector_query(
-            collection, _vector_arg(vector), k, filter=_filter_wire(filter), as_of=as_of, **self._scope
+            collection, _vector_arg(vector), k, filter=_filter_wire(filter), **self._temporal(as_of, as_of_time), **self._scope
         )
 
     def index_query(
@@ -337,6 +346,7 @@ class VectorsNamespace(Namespace):
         k: int = 10,
         filter: Any = None,
         as_of: Optional[int] = None,
+        as_of_time: Optional[TimeLike] = None,
     ) -> Tuple[list, Any]:
         """Like ``query`` but also returns index diagnostics: ``(matches, diagnostics)``.
 
@@ -348,7 +358,7 @@ class VectorsNamespace(Namespace):
             ['a', 'b']
         """
         result = self._c.vector_index_query(
-            collection, _vector_arg(vector), k, filter=_filter_wire(filter), as_of=as_of, **self._scope
+            collection, _vector_arg(vector), k, filter=_filter_wire(filter), **self._temporal(as_of, as_of_time), **self._scope
         )
         return result.matches, result.diagnostics
 
