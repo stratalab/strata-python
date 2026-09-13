@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parent.parent
 def test_command_index_is_bundled():
     index = stratadb.command_index()
     assert index["schema_version"] == "strata.idl.v1"
-    assert len(index["commands"]) == 135
+    assert len(index["commands"]) == 137
 
 
 def test_agents_guide_matches_bundled():
@@ -26,7 +26,7 @@ def test_agents_guide_matches_bundled():
 
 
 def test_version_is_engine_version():
-    assert stratadb.__version__ == "1.2.1"
+    assert stratadb.__version__ == "1.2.2"
 
 
 def test_public_namespaces_present():

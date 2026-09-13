@@ -80,7 +80,7 @@
         "Output::ConfigValue"
       ],
       "wire_status": "stable",
-      "response_model": "Maybe<String>",
+      "response_model": "Maybe<string>",
       "commit": "none",
       "pagination": "none",
       "batch": "none",
@@ -242,7 +242,7 @@
         "Output::HubCloneProgress"
       ],
       "wire_status": "stable",
-      "response_model": "StatusResponse<HubClone>",
+      "response_model": "StatusResponse<HubCloneResult>",
       "commit": "none",
       "pagination": "none",
       "batch": "none",
@@ -523,7 +523,7 @@
         "Output::Pong"
       ],
       "wire_status": "stable",
-      "response_model": "StatusResponse<PingInfo>",
+      "response_model": "StatusResponse<AdminPing>",
       "commit": "none",
       "pagination": "none",
       "batch": "none",
@@ -569,7 +569,7 @@
       "outputs": [
         "Output::RemoteOriginResult"
       ],
-      "wire_status": "stable",
+      "wire_status": "transitional",
       "response_model": "Maybe<RemoteOriginInfo>",
       "commit": "none",
       "pagination": "none",
@@ -618,7 +618,7 @@
         "Output::ArrowExportResult"
       ],
       "wire_status": "stable",
-      "response_model": "StatusResponse<ArrowExport>",
+      "response_model": "StatusResponse<ArrowExportResult>",
       "commit": "none",
       "pagination": "none",
       "batch": "none",
@@ -707,7 +707,7 @@
         "Output::ArrowImportResult"
       ],
       "wire_status": "stable",
-      "response_model": "StatusResponse<ArrowImport>",
+      "response_model": "StatusResponse<ArrowImportResult>",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -832,7 +832,7 @@
         "Output::Branch"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<BranchItem>",
+      "response_model": "StatusResponse<BranchItem>",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -901,7 +901,7 @@
         "Output::BranchDeleteResult"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<BranchDelete>",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -1032,7 +1032,7 @@
         "Output::Branch"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<BranchItem>",
+      "response_model": "StatusResponse<BranchItem>",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -1095,7 +1095,7 @@
         "Output::Branch"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<BranchItem>",
+      "response_model": "StatusResponse<BranchItem>",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -1162,7 +1162,7 @@
         "Output::Branch"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<BranchItem>",
+      "response_model": "StatusResponse<BranchItem>",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -1296,7 +1296,7 @@
         "Output::Branches"
       ],
       "wire_status": "stable",
-      "response_model": "Page<BranchItem, String>",
+      "response_model": "Page<BranchItem>",
       "commit": "none",
       "pagination": "cursor",
       "batch": "none",
@@ -1347,7 +1347,7 @@
         "Output::BranchMerge"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<PromotionOutcomeItem>",
+      "response_model": "StatusResponse<PromotionOutcomeItem>",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -1518,7 +1518,7 @@
         "Output::EventAppendResult"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<EventAppend>",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -1588,7 +1588,7 @@
         "Output::EventBatchAppendResults"
       ],
       "wire_status": "stable",
-      "response_model": "BatchResult<EventBatchAppendItem>",
+      "response_model": "BatchResult<EventBatchAppendItemResult>",
       "commit": "itemwise_shared_commit",
       "pagination": "none",
       "batch": "itemwise",
@@ -1659,8 +1659,8 @@
       "outputs": [
         "Output::EventCount"
       ],
-      "wire_status": "stable",
-      "response_model": "StatusValue<u64>",
+      "wire_status": "transitional",
+      "response_model": "StatusValue<integer>",
       "commit": "none",
       "pagination": "none",
       "batch": "none",
@@ -1720,7 +1720,7 @@
         "Output::Bool"
       ],
       "wire_status": "stable",
-      "response_model": "StatusValue<bool>",
+      "response_model": "StatusValue<boolean>",
       "commit": "none",
       "pagination": "none",
       "batch": "none",
@@ -1839,7 +1839,7 @@
         "Output::EventRecords"
       ],
       "wire_status": "stable",
-      "response_model": "Page<EventVersionedData, u64>",
+      "response_model": "Page<EventVersionedData>",
       "commit": "none",
       "pagination": "cursor",
       "batch": "none",
@@ -1908,7 +1908,7 @@
         "Output::EventRangeResult"
       ],
       "wire_status": "stable",
-      "response_model": "Page<EventVersionedData, u64>",
+      "response_model": "Page<EventVersionedData>",
       "commit": "none",
       "pagination": "cursor",
       "batch": "none",
@@ -1977,7 +1977,7 @@
         "Output::EventRangeResult"
       ],
       "wire_status": "stable",
-      "response_model": "Page<EventVersionedData, u64>",
+      "response_model": "Page<EventVersionedData>",
       "commit": "none",
       "pagination": "cursor",
       "batch": "none",
@@ -2046,7 +2046,7 @@
         "Output::EventTypeList"
       ],
       "wire_status": "stable",
-      "response_model": "Page<String, String>",
+      "response_model": "Page<string>",
       "commit": "none",
       "pagination": "cursor",
       "batch": "none",
@@ -2106,7 +2106,7 @@
         "Output::EventChainVerification"
       ],
       "wire_status": "stable",
-      "response_model": "StatusValue<EventChainVerification>",
+      "response_model": "StatusResponse<EventChainVerification>",
       "commit": "none",
       "pagination": "none",
       "batch": "none",
@@ -2677,7 +2677,7 @@
         "Output::GraphDeletePolicyResult"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<GraphDeletePolicyApply>",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -2824,7 +2824,7 @@
         "Output::GraphBindingPage"
       ],
       "wire_status": "stable",
-      "response_model": "Page<GraphBindingHit, String>",
+      "response_model": "Page<GraphBindingHit>",
       "commit": "none",
       "pagination": "cursor",
       "batch": "none",
@@ -2887,8 +2887,8 @@
       "outputs": [
         "Output::GraphBulkInsertResult"
       ],
-      "wire_status": "stable",
-      "response_model": "MutationAck<GraphBulkInsert>",
+      "wire_status": "transitional",
+      "response_model": "MutationAck",
       "commit": "chunked_commits",
       "pagination": "none",
       "batch": "none",
@@ -2991,7 +2991,7 @@
         "Output::GraphCreateResult"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<GraphInfoData>",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -3072,7 +3072,7 @@
         "Output::GraphDeleteResult"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<GraphDelete>",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -3139,7 +3139,7 @@
         "Output::GraphEdgeWriteResult"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<GraphEdgeWrite>",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -3326,7 +3326,7 @@
         "Output::GraphDeleteResult"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<GraphDelete>",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -3404,7 +3404,7 @@
         "Output::GraphNamePage"
       ],
       "wire_status": "stable",
-      "response_model": "Page<String, String>",
+      "response_model": "Page<string>",
       "commit": "none",
       "pagination": "cursor",
       "batch": "none",
@@ -3537,7 +3537,7 @@
         "Output::GraphNeighborPage"
       ],
       "wire_status": "stable",
-      "response_model": "Page<GraphNeighborHit, String>",
+      "response_model": "Page<GraphNeighborHit>",
       "commit": "none",
       "pagination": "cursor",
       "batch": "none",
@@ -3617,7 +3617,7 @@
         "Output::GraphNodeWriteResult"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<GraphNodeWrite>",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -3788,7 +3788,7 @@
         "Output::GraphNodePage"
       ],
       "wire_status": "stable",
-      "response_model": "Page<GraphNodeDataOutput, String>",
+      "response_model": "Page<GraphNodeDataOutput>",
       "commit": "none",
       "pagination": "cursor",
       "batch": "none",
@@ -3862,7 +3862,7 @@
         "Output::GraphDeleteResult"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<GraphDelete>",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -3934,7 +3934,7 @@
         "Output::GraphNodePage"
       ],
       "wire_status": "stable",
-      "response_model": "Page<GraphNodeDataOutput, String>",
+      "response_model": "Page<GraphNodeDataOutput>",
       "commit": "none",
       "pagination": "cursor",
       "batch": "none",
@@ -4013,7 +4013,7 @@
         "Output::GraphOntologyWriteResult"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<GraphOntologyWrite>",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -4098,7 +4098,7 @@
         "Output::GraphOntologyWriteResult"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<GraphOntologyWrite>",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -4182,7 +4182,7 @@
         "Output::GraphOntologyDeleteResult"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<GraphOntologyDelete>",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -4260,7 +4260,7 @@
         "Output::GraphOntologyDeleteResult"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<GraphOntologyDelete>",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -4336,8 +4336,8 @@
       "outputs": [
         "Output::GraphOntologyFreezeResult"
       ],
-      "wire_status": "stable",
-      "response_model": "MutationAck<GraphOntologyFreeze>",
+      "wire_status": "transitional",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -5060,11 +5060,21 @@
         {
           "code": "inference.invalid_request",
           "docs": "https://stratadb.org/e/inference.invalid_request"
+        },
+        {
+          "code": "inference.io_failure",
+          "docs": "https://stratadb.org/e/inference.io_failure"
         }
       ],
       "fixtures": {
         "request": "requests/v1/inference/capability.json",
-        "response": "responses/v1/inference/capability.json"
+        "response": "responses/v1/inference/capability.json",
+        "error_cases": [
+          {
+            "request": "requests/v1/inference/capability_malformed_spec.json",
+            "expected_error": "responses/v1/errors/inference/invalid_request.json"
+          }
+        ]
       },
       "source": {
         "command": "crates/executor/idl/v1/commands/inference.yaml",
@@ -5100,7 +5110,7 @@
         "Output::InferenceText"
       ],
       "wire_status": "stable",
-      "response_model": "DetokenizedText",
+      "response_model": "string",
       "commit": "none",
       "pagination": "none",
       "batch": "none",
@@ -5114,12 +5124,24 @@
           "docs": "https://stratadb.org/e/not_found.engine.branch"
         },
         {
+          "code": "inference.invalid_request",
+          "docs": "https://stratadb.org/e/inference.invalid_request"
+        },
+        {
           "code": "inference.unsupported_operation",
           "docs": "https://stratadb.org/e/inference.unsupported_operation"
         },
         {
           "code": "inference.missing_model",
           "docs": "https://stratadb.org/e/inference.missing_model"
+        },
+        {
+          "code": "inference.unknown_model",
+          "docs": "https://stratadb.org/e/inference.unknown_model"
+        },
+        {
+          "code": "inference.io_failure",
+          "docs": "https://stratadb.org/e/inference.io_failure"
         },
         {
           "code": "inference.model_load_failed",
@@ -5186,12 +5208,24 @@
           "docs": "https://stratadb.org/e/not_found.engine.branch"
         },
         {
+          "code": "inference.invalid_request",
+          "docs": "https://stratadb.org/e/inference.invalid_request"
+        },
+        {
           "code": "inference.unsupported_operation",
           "docs": "https://stratadb.org/e/inference.unsupported_operation"
         },
         {
           "code": "inference.missing_model",
           "docs": "https://stratadb.org/e/inference.missing_model"
+        },
+        {
+          "code": "inference.unknown_model",
+          "docs": "https://stratadb.org/e/inference.unknown_model"
+        },
+        {
+          "code": "inference.io_failure",
+          "docs": "https://stratadb.org/e/inference.io_failure"
         },
         {
           "code": "inference.model_load_failed",
@@ -5202,12 +5236,36 @@
           "docs": "https://stratadb.org/e/inference.local_runtime_failed"
         },
         {
+          "code": "inference.registry_corrupt",
+          "docs": "https://stratadb.org/e/inference.registry_corrupt"
+        },
+        {
           "code": "inference.missing_api_key",
           "docs": "https://stratadb.org/e/inference.missing_api_key"
         },
         {
+          "code": "inference.provider_auth_failed",
+          "docs": "https://stratadb.org/e/inference.provider_auth_failed"
+        },
+        {
           "code": "inference.provider_unavailable",
           "docs": "https://stratadb.org/e/inference.provider_unavailable"
+        },
+        {
+          "code": "inference.provider_timeout",
+          "docs": "https://stratadb.org/e/inference.provider_timeout"
+        },
+        {
+          "code": "inference.provider_rate_limited",
+          "docs": "https://stratadb.org/e/inference.provider_rate_limited"
+        },
+        {
+          "code": "inference.provider_quota_exhausted",
+          "docs": "https://stratadb.org/e/inference.provider_quota_exhausted"
+        },
+        {
+          "code": "inference.provider_model_not_found",
+          "docs": "https://stratadb.org/e/inference.provider_model_not_found"
         },
         {
           "code": "inference.provider_malformed_response",
@@ -5220,15 +5278,25 @@
         {
           "code": "inference.unsupported_parameter",
           "docs": "https://stratadb.org/e/inference.unsupported_parameter"
-        },
-        {
-          "code": "inference.registry_corrupt",
-          "docs": "https://stratadb.org/e/inference.registry_corrupt"
         }
       ],
       "fixtures": {
         "request": "requests/v1/inference/embed.json",
-        "response": "responses/v1/inference/embed.json"
+        "response": "responses/v1/inference/embed.json",
+        "error_cases": [
+          {
+            "request": "requests/v1/inference/embed_unknown_model.json",
+            "expected_error": "responses/v1/errors/inference/unknown_model.json"
+          },
+          {
+            "request": "requests/v1/inference/embed_malformed_spec.json",
+            "expected_error": "responses/v1/errors/inference/invalid_request.json"
+          },
+          {
+            "request": "requests/v1/inference/embed_wrong_task.json",
+            "expected_error": "responses/v1/errors/inference/unsupported_operation.json"
+          }
+        ]
       },
       "source": {
         "command": "crates/executor/idl/v1/commands/inference.yaml",
@@ -5278,6 +5346,10 @@
           "docs": "https://stratadb.org/e/not_found.engine.branch"
         },
         {
+          "code": "inference.invalid_request",
+          "docs": "https://stratadb.org/e/inference.invalid_request"
+        },
+        {
           "code": "inference.unsupported_operation",
           "docs": "https://stratadb.org/e/inference.unsupported_operation"
         },
@@ -5286,12 +5358,24 @@
           "docs": "https://stratadb.org/e/inference.missing_model"
         },
         {
+          "code": "inference.unknown_model",
+          "docs": "https://stratadb.org/e/inference.unknown_model"
+        },
+        {
+          "code": "inference.io_failure",
+          "docs": "https://stratadb.org/e/inference.io_failure"
+        },
+        {
           "code": "inference.model_load_failed",
           "docs": "https://stratadb.org/e/inference.model_load_failed"
         },
         {
           "code": "inference.local_runtime_failed",
           "docs": "https://stratadb.org/e/inference.local_runtime_failed"
+        },
+        {
+          "code": "inference.registry_corrupt",
+          "docs": "https://stratadb.org/e/inference.registry_corrupt"
         },
         {
           "code": "inference.missing_api_key",
@@ -5314,8 +5398,12 @@
           "docs": "https://stratadb.org/e/inference.provider_rate_limited"
         },
         {
-          "code": "inference.invalid_request",
-          "docs": "https://stratadb.org/e/inference.invalid_request"
+          "code": "inference.provider_quota_exhausted",
+          "docs": "https://stratadb.org/e/inference.provider_quota_exhausted"
+        },
+        {
+          "code": "inference.provider_model_not_found",
+          "docs": "https://stratadb.org/e/inference.provider_model_not_found"
         },
         {
           "code": "inference.provider_malformed_response",
@@ -5328,15 +5416,21 @@
         {
           "code": "inference.unsupported_parameter",
           "docs": "https://stratadb.org/e/inference.unsupported_parameter"
-        },
-        {
-          "code": "inference.registry_corrupt",
-          "docs": "https://stratadb.org/e/inference.registry_corrupt"
         }
       ],
       "fixtures": {
         "request": "requests/v1/inference/generate.json",
-        "response": "responses/v1/inference/generate.json"
+        "response": "responses/v1/inference/generate.json",
+        "error_cases": [
+          {
+            "request": "requests/v1/inference/generate_unknown_model.json",
+            "expected_error": "responses/v1/errors/inference/unknown_model.json"
+          },
+          {
+            "request": "requests/v1/inference/generate_wrong_task.json",
+            "expected_error": "responses/v1/errors/inference/unsupported_operation.json"
+          }
+        ]
       },
       "source": {
         "command": "crates/executor/idl/v1/commands/inference.yaml",
@@ -5373,7 +5467,7 @@
         "Output::InferenceModels"
       ],
       "wire_status": "stable",
-      "response_model": "Page<ModelInfo, String>",
+      "response_model": "Page<ModelInfo>",
       "commit": "none",
       "pagination": "cursor",
       "batch": "none",
@@ -5426,7 +5520,7 @@
         "Output::InferenceModels"
       ],
       "wire_status": "stable",
-      "response_model": "Page<ModelInfo, String>",
+      "response_model": "Page<ModelInfo>",
       "commit": "none",
       "pagination": "cursor",
       "batch": "none",
@@ -5456,7 +5550,7 @@
       "kind": "inference.runtime_op",
       "title": "Download a model",
       "summary": "Download an inference model locally.",
-      "description": "Resolves a catalog name or model spec and downloads the model artifact into the local model directory, returning the resolved local path. Honors `STRATA_MODELS_DIR` for the destination and `STRATA_HF_ENDPOINT` and `STRATA_HF_TOKEN` (or `HF_TOKEN`) for gated HuggingFace repositories. Downloading requires network access and a build with the local execution feature; cloud-only builds return `inference.unsupported_operation`.",
+      "description": "Resolves a catalog name or model spec and downloads the model artifact into the local model directory, returning the resolved local path. A model that is already present is not downloaded again: the command returns its path in every build, with or without network access. Honors `STRATA_MODELS_DIR` for the destination and `STRATA_HF_ENDPOINT` and `STRATA_HF_TOKEN` (or `HF_TOKEN`) for gated HuggingFace repositories. The spec is resolved before anything else is checked: a malformed spec returns `inference.invalid_request`, a cloud provider spec returns `inference.unsupported_operation` (there is nothing to download), and a name that is not in the catalog returns `inference.missing_model`. A missing model is downloaded only when the runtime has network access and the build can download; otherwise the command returns `inference.download_disabled`.",
       "docs": "/docs/inference/models/pull",
       "cli": {
         "path": [
@@ -5493,12 +5587,24 @@
           "docs": "https://stratadb.org/e/not_found.engine.branch"
         },
         {
+          "code": "inference.invalid_request",
+          "docs": "https://stratadb.org/e/inference.invalid_request"
+        },
+        {
+          "code": "inference.unsupported_operation",
+          "docs": "https://stratadb.org/e/inference.unsupported_operation"
+        },
+        {
           "code": "inference.download_disabled",
           "docs": "https://stratadb.org/e/inference.download_disabled"
         },
         {
           "code": "inference.missing_model",
           "docs": "https://stratadb.org/e/inference.missing_model"
+        },
+        {
+          "code": "inference.unknown_model",
+          "docs": "https://stratadb.org/e/inference.unknown_model"
         },
         {
           "code": "inference.download_failed",
@@ -5519,7 +5625,17 @@
       ],
       "fixtures": {
         "request": "requests/v1/inference/models_pull.json",
-        "response": "responses/v1/inference/models_pull.json"
+        "response": "responses/v1/inference/models_pull.json",
+        "error_cases": [
+          {
+            "request": "requests/v1/inference/models_pull_unknown_model.json",
+            "expected_error": "responses/v1/errors/inference/unknown_model.json"
+          },
+          {
+            "request": "requests/v1/inference/models_pull_cloud_model.json",
+            "expected_error": "responses/v1/errors/inference/unsupported_operation.json"
+          }
+        ]
       },
       "source": {
         "command": "crates/executor/idl/v1/commands/inference.yaml",
@@ -5569,12 +5685,24 @@
           "docs": "https://stratadb.org/e/not_found.engine.branch"
         },
         {
+          "code": "inference.invalid_request",
+          "docs": "https://stratadb.org/e/inference.invalid_request"
+        },
+        {
           "code": "inference.unsupported_operation",
           "docs": "https://stratadb.org/e/inference.unsupported_operation"
         },
         {
           "code": "inference.missing_model",
           "docs": "https://stratadb.org/e/inference.missing_model"
+        },
+        {
+          "code": "inference.unknown_model",
+          "docs": "https://stratadb.org/e/inference.unknown_model"
+        },
+        {
+          "code": "inference.io_failure",
+          "docs": "https://stratadb.org/e/inference.io_failure"
         },
         {
           "code": "inference.model_load_failed",
@@ -5591,11 +5719,69 @@
       ],
       "fixtures": {
         "request": "requests/v1/inference/rank.json",
-        "response": "responses/v1/inference/rank.json"
+        "response": "responses/v1/inference/rank.json",
+        "error_cases": [
+          {
+            "request": "requests/v1/inference/rank_wrong_task.json",
+            "expected_error": "responses/v1/errors/inference/unsupported_operation.json"
+          }
+        ]
       },
       "source": {
         "command": "crates/executor/idl/v1/commands/inference.yaml",
         "prose": "commands/inference.rank.md"
+      }
+    },
+    {
+      "id": "inference.status",
+      "family": "inference",
+      "op": "status",
+      "kind": "inference.runtime_op",
+      "title": "Report inference readiness",
+      "summary": "Report what this binary can do before anything is attempted.",
+      "description": "Reports the inference facts that are knowable up front: whether this build can execute local models and download them, which providers are compiled in, which of those have an API key and where it was found, and how many catalogued models are already on disk.\n\nReleased binaries ship the cloud providers and leave local model execution out, so `local_execution` is false in them and every catalogued local model is unavailable until `strata inference install-local` adds it; `local_remedy` says so. Knowing that from `status` is the point: previously the only way to find out was to run an operation and read the failure.\n\n`key_source` names where a key was read from: the environment variable, or the config file's path when the key was set with `strata config set <provider>.api_key`. The runtime asks the environment first and the config file second, and reports the one that answered, so `key_source` is exactly what a `generate` or `embed` call would use. The key itself is never returned.\n\n`base_url` is the endpoint a call to the provider would reach, and `base_url_source` names what redirected it: the provider's own environment variable (`base_url_env_var` — `OPENAI_BASE_URL`, `ANTHROPIC_BASE_URL`, `GOOGLE_GEMINI_BASE_URL`, with the same meaning as in each provider's SDK), or the config file's path when it was set with `strata config set <provider>.base_url`. The environment wins over the file, as for a key. When neither is set, `base_url` is the provider's public endpoint and `base_url_source` is absent. A provider that is not reached over HTTP reports none of the three.\n\nThe model directory is shared by every database on the machine, so a model downloaded once is available to all of them.",
+      "docs": "/docs/inference/status",
+      "cli": {
+        "path": [
+          "inference",
+          "status"
+        ],
+        "surface": "verb"
+      },
+      "mcp": {
+        "name": "strata_inference_status",
+        "description": "Use this when the user asks whether inference will work, which providers or models are available, or why an inference command failed."
+      },
+      "feature": "core",
+      "access": "read",
+      "input": "Command::InferenceStatus",
+      "wire": "inference_status",
+      "output": "Output::InferenceStatus",
+      "outputs": [
+        "Output::InferenceStatus"
+      ],
+      "wire_status": "stable",
+      "response_model": "InferenceStatus",
+      "commit": "none",
+      "pagination": "none",
+      "batch": "none",
+      "errors": [
+        {
+          "code": "failed_precondition.engine.runtime_closed",
+          "docs": "https://stratadb.org/e/failed_precondition.engine.runtime_closed"
+        },
+        {
+          "code": "not_found.engine.branch",
+          "docs": "https://stratadb.org/e/not_found.engine.branch"
+        }
+      ],
+      "fixtures": {
+        "request": "requests/v1/inference/status.json",
+        "response": "responses/v1/inference/status.json"
+      },
+      "source": {
+        "command": "crates/executor/idl/v1/commands/inference.yaml",
+        "prose": "commands/inference.status.md"
       }
     },
     {
@@ -5627,7 +5813,7 @@
         "Output::InferenceTokenIds"
       ],
       "wire_status": "stable",
-      "response_model": "TokenIds",
+      "response_model": "integer[]",
       "commit": "none",
       "pagination": "none",
       "batch": "none",
@@ -5641,12 +5827,24 @@
           "docs": "https://stratadb.org/e/not_found.engine.branch"
         },
         {
+          "code": "inference.invalid_request",
+          "docs": "https://stratadb.org/e/inference.invalid_request"
+        },
+        {
           "code": "inference.unsupported_operation",
           "docs": "https://stratadb.org/e/inference.unsupported_operation"
         },
         {
           "code": "inference.missing_model",
           "docs": "https://stratadb.org/e/inference.missing_model"
+        },
+        {
+          "code": "inference.unknown_model",
+          "docs": "https://stratadb.org/e/inference.unknown_model"
+        },
+        {
+          "code": "inference.io_failure",
+          "docs": "https://stratadb.org/e/inference.io_failure"
         },
         {
           "code": "inference.model_load_failed",
@@ -5663,7 +5861,13 @@
       ],
       "fixtures": {
         "request": "requests/v1/inference/tokenize.json",
-        "response": "responses/v1/inference/tokenize.json"
+        "response": "responses/v1/inference/tokenize.json",
+        "error_cases": [
+          {
+            "request": "requests/v1/inference/tokenize_unknown_model.json",
+            "expected_error": "responses/v1/errors/inference/unknown_model.json"
+          }
+        ]
       },
       "source": {
         "command": "crates/executor/idl/v1/commands/inference.yaml",
@@ -5699,7 +5903,7 @@
         "Output::InferenceUnloadResult"
       ],
       "wire_status": "stable",
-      "response_model": "UnloadResult",
+      "response_model": "InferenceUnloadResult",
       "commit": "none",
       "pagination": "none",
       "batch": "none",
@@ -5747,7 +5951,7 @@
         "Output::JsonBatchResults"
       ],
       "wire_status": "stable",
-      "response_model": "BatchResult<JsonMutationItem>",
+      "response_model": "BatchResult<JsonBatchItemResult>",
       "commit": "itemwise_shared_commit",
       "pagination": "none",
       "batch": "itemwise",
@@ -5881,7 +6085,7 @@
         "Output::JsonBatchGetResults"
       ],
       "wire_status": "stable",
-      "response_model": "BatchResult<Maybe<JsonValue>>",
+      "response_model": "BatchResult<JsonBatchGetItemResult>",
       "commit": "none",
       "pagination": "none",
       "batch": "itemwise",
@@ -5948,7 +6152,7 @@
         "Output::JsonBatchResults"
       ],
       "wire_status": "stable",
-      "response_model": "BatchResult<JsonMutationItem>",
+      "response_model": "BatchResult<JsonBatchItemResult>",
       "commit": "itemwise_shared_commit",
       "pagination": "none",
       "batch": "itemwise",
@@ -6044,7 +6248,7 @@
         "Output::Uint"
       ],
       "wire_status": "stable",
-      "response_model": "StatusValue<u64>",
+      "response_model": "StatusValue<integer>",
       "commit": "none",
       "pagination": "none",
       "batch": "none",
@@ -6107,7 +6311,7 @@
         "Output::JsonDeleteResult"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<JsonDelete>",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -6179,7 +6383,7 @@
         "Output::Bool"
       ],
       "wire_status": "stable",
-      "response_model": "StatusValue<bool>",
+      "response_model": "StatusValue<boolean>",
       "commit": "none",
       "pagination": "none",
       "batch": "none",
@@ -6239,7 +6443,6 @@
       "wire": "json_get",
       "output": "Output::JsonVersionedValue",
       "outputs": [
-        "Output::JsonValue",
         "Output::JsonVersionedValue"
       ],
       "wire_status": "stable",
@@ -6276,9 +6479,6 @@
       "fixtures": {
         "request": "requests/v1/json/get.json",
         "response": "responses/v1/json/get_versioned_found.json",
-        "responses": [
-          "responses/v1/json/get_found.json"
-        ],
         "setup": [
           "requests/v1/json/set.json"
         ],
@@ -6288,7 +6488,7 @@
               "requests/v1/json/set.json"
             ],
             "request": "requests/v1/json/get_as_of.json",
-            "response": "responses/v1/json/get_found.json"
+            "response": "responses/v1/json/get_versioned_found.json"
           }
         ]
       },
@@ -6391,7 +6591,7 @@
         "Output::JsonIndexDefinition"
       ],
       "wire_status": "transitional",
-      "response_model": "MutationAck<JsonIndexCreate>",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -6468,7 +6668,7 @@
         "Output::Bool"
       ],
       "wire_status": "transitional",
-      "response_model": "MutationAck<JsonIndexDrop>",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -6536,7 +6736,7 @@
         "Output::JsonIndexList"
       ],
       "wire_status": "stable",
-      "response_model": "Page<JsonIndexDefinition, String>",
+      "response_model": "Page<JsonIndexDefinition>",
       "commit": "none",
       "pagination": "cursor",
       "batch": "none",
@@ -6595,7 +6795,7 @@
         "Output::JsonListResult"
       ],
       "wire_status": "stable",
-      "response_model": "Page<String, String>",
+      "response_model": "Page<string>",
       "commit": "none",
       "pagination": "cursor",
       "batch": "none",
@@ -6721,7 +6921,7 @@
         "Output::JsonScanResult"
       ],
       "wire_status": "stable",
-      "response_model": "Page<JsonSampleItem, String>",
+      "response_model": "Page<JsonSampleItem>",
       "commit": "none",
       "pagination": "cursor",
       "batch": "none",
@@ -6784,7 +6984,7 @@
         "Output::JsonWriteResult"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<JsonWrite>",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -6878,7 +7078,7 @@
         "Output::BatchResults"
       ],
       "wire_status": "stable",
-      "response_model": "BatchResult<KvMutationItem>",
+      "response_model": "BatchResult<BatchItemResult>",
       "commit": "itemwise_shared_commit",
       "pagination": "none",
       "batch": "itemwise",
@@ -7012,7 +7212,7 @@
         "Output::BatchGetResults"
       ],
       "wire_status": "stable",
-      "response_model": "BatchResult<Maybe<Bytes>>",
+      "response_model": "BatchResult<BatchGetItemResult>",
       "commit": "none",
       "pagination": "none",
       "batch": "itemwise",
@@ -7075,7 +7275,7 @@
         "Output::BatchResults"
       ],
       "wire_status": "stable",
-      "response_model": "BatchResult<KvMutationItem>",
+      "response_model": "BatchResult<BatchItemResult>",
       "commit": "itemwise_shared_commit",
       "pagination": "none",
       "batch": "itemwise",
@@ -7153,7 +7353,7 @@
         "Output::Uint"
       ],
       "wire_status": "stable",
-      "response_model": "StatusValue<u64>",
+      "response_model": "StatusValue<integer>",
       "commit": "none",
       "pagination": "none",
       "batch": "none",
@@ -7216,7 +7416,7 @@
         "Output::DeleteResult"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<KvDelete>",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -7276,7 +7476,7 @@
         "Output::Bool"
       ],
       "wire_status": "stable",
-      "response_model": "StatusValue<bool>",
+      "response_model": "StatusValue<boolean>",
       "commit": "none",
       "pagination": "none",
       "batch": "none",
@@ -7477,7 +7677,7 @@
         "Output::KeysPage"
       ],
       "wire_status": "stable",
-      "response_model": "Page<Bytes, Bytes>",
+      "response_model": "Page<Bytes>",
       "commit": "none",
       "pagination": "cursor",
       "batch": "none",
@@ -7542,7 +7742,7 @@
         "Output::WriteResult"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<KvWrite>",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -7671,7 +7871,7 @@
         "Output::KvScanResult"
       ],
       "wire_status": "stable",
-      "response_model": "Page<ScanItem, Bytes>",
+      "response_model": "Page<ScanItem>",
       "commit": "none",
       "pagination": "cursor",
       "batch": "none",
@@ -7736,7 +7936,7 @@
         "Output::SpaceCreateResult"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<SpaceCreate>",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -7796,7 +7996,7 @@
         "Output::SpaceDeleteResult"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<SpaceDelete>",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -7877,7 +8077,7 @@
         "Output::Bool"
       ],
       "wire_status": "stable",
-      "response_model": "StatusValue<bool>",
+      "response_model": "StatusValue<boolean>",
       "commit": "none",
       "pagination": "none",
       "batch": "none",
@@ -7940,7 +8140,7 @@
         "Output::SpaceList"
       ],
       "wire_status": "stable",
-      "response_model": "Page<String, String>",
+      "response_model": "Page<string>",
       "commit": "none",
       "pagination": "cursor",
       "batch": "none",
@@ -7991,7 +8191,7 @@
         "Output::VectorBatchDeleteResults"
       ],
       "wire_status": "stable",
-      "response_model": "BatchResult<VectorMutationItem>",
+      "response_model": "BatchResult<VectorBatchItemResult>",
       "commit": "itemwise_shared_commit",
       "pagination": "none",
       "batch": "itemwise",
@@ -8137,7 +8337,7 @@
         "Output::VectorBatchGetResults"
       ],
       "wire_status": "stable",
-      "response_model": "BatchResult<Maybe<VectorVersionedData>>",
+      "response_model": "BatchResult<VectorBatchGetItemResult>",
       "commit": "none",
       "pagination": "none",
       "batch": "itemwise",
@@ -8210,7 +8410,7 @@
         "Output::VectorBatchUpsertResults"
       ],
       "wire_status": "stable",
-      "response_model": "BatchResult<VectorMutationItem>",
+      "response_model": "BatchResult<VectorBatchItemResult>",
       "commit": "itemwise_shared_commit",
       "pagination": "none",
       "batch": "itemwise",
@@ -8278,8 +8478,8 @@
       "op": "collection.create",
       "kind": "mutation.create",
       "title": "Create vector collection",
-      "summary": "Create a vector collection with a dimension and metric.",
-      "description": "Creates a collection for dense vectors. The dimension and metric become part of the collection contract for future upserts and queries.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
+      "summary": "Create a vector collection with a dimension, metric, and optionally the model that produces its vectors.",
+      "description": "Creates a collection for dense vectors. The dimension and metric become part of the collection contract for future upserts and queries. Passing `embedding_model` records which model produces the collection's vectors: it lets `text` be embedded for upserts and queries, and lets a query embedded with a different model be refused rather than silently compared. A collection created without one can declare it later with `vector.collection.set_embedding_model`.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/vector/collection/create",
       "cli": {
         "path": [
@@ -8302,7 +8502,7 @@
         "Output::VectorCollectionList"
       ],
       "wire_status": "transitional",
-      "response_model": "MutationAck<VectorCollectionCreate>",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -8336,6 +8536,10 @@
           "docs": "https://stratadb.org/e/invalid_argument.engine.vector_dimension"
         },
         {
+          "code": "invalid_argument.engine.embedding_model",
+          "docs": "https://stratadb.org/e/invalid_argument.engine.embedding_model"
+        },
+        {
           "code": "invalid_argument.executor.vector_dimension",
           "docs": "https://stratadb.org/e/invalid_argument.executor.vector_dimension"
         }
@@ -8347,6 +8551,10 @@
           {
             "request": "requests/v1/vector/collection_create_zero_dim.json",
             "expected_error": "responses/v1/errors/vector/collection_create_zero_dim.json"
+          },
+          {
+            "request": "requests/v1/vector/collection_create_empty_model.json",
+            "expected_error": "responses/v1/errors/vector/embedding_model_empty.json"
           }
         ]
       },
@@ -8385,7 +8593,7 @@
         "Output::Bool"
       ],
       "wire_status": "transitional",
-      "response_model": "MutationAck<VectorCollectionDelete>",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -8457,7 +8665,7 @@
         "Output::VectorCollectionList"
       ],
       "wire_status": "stable",
-      "response_model": "Page<VectorCollectionInfo, String>",
+      "response_model": "Page<VectorCollectionInfo>",
       "commit": "none",
       "pagination": "cursor",
       "batch": "none",
@@ -8497,6 +8705,106 @@
       "source": {
         "command": "crates/executor/idl/v1/commands/vector.yaml",
         "prose": "commands/vector.collection.list.md"
+      }
+    },
+    {
+      "id": "vector.collection.set_embedding_model",
+      "family": "vector",
+      "op": "collection.set_embedding_model",
+      "kind": "mutation.put",
+      "title": "Declare vector collection embedding model",
+      "summary": "Declare the embedding model a vector collection's vectors come from.",
+      "description": "Records, once, which embedding model produces this collection's vectors. A declaration, not a verification: a stored vector carries no model, so this takes the caller's word for the vectors present; from then on `text` on upsert and query is embedded with this model and no other, and a collection with no recorded model cannot embed `text` at all. A vector supplied directly is not checked against the record — it cannot be — so supplying one remains the caller's statement that the recorded model produced it. Declaring the model a collection already records is a no-op and commits nothing. Declaring a different one is refused with `failed_precondition.engine.embedding_model_mismatch`: the stored vectors came from the recorded model, so create a separate collection for the other one. The current wire response uses the collection-list output with one item.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
+      "docs": "/docs/vector/collection/set_embedding_model",
+      "cli": {
+        "path": [
+          "vector",
+          "collection",
+          "set-embedding-model"
+        ],
+        "surface": "verb"
+      },
+      "mcp": {
+        "name": "strata_vector_collection_set_embedding_model",
+        "description": "Use this when a collection has no recorded embedding model and the user wants to store or search it by text."
+      },
+      "feature": "core",
+      "access": "write",
+      "input": "Command::VectorSetEmbeddingModel",
+      "wire": "vector_set_embedding_model",
+      "output": "Output::VectorCollectionList",
+      "outputs": [
+        "Output::VectorCollectionList"
+      ],
+      "wire_status": "transitional",
+      "response_model": "MutationAck",
+      "commit": "commits_on_success",
+      "pagination": "none",
+      "batch": "none",
+      "errors": [
+        {
+          "code": "failed_precondition.engine.runtime_closed",
+          "docs": "https://stratadb.org/e/failed_precondition.engine.runtime_closed"
+        },
+        {
+          "code": "not_found.engine.branch",
+          "docs": "https://stratadb.org/e/not_found.engine.branch"
+        },
+        {
+          "code": "invalid_argument.engine.product_space",
+          "docs": "https://stratadb.org/e/invalid_argument.engine.product_space"
+        },
+        {
+          "code": "invalid_argument.engine.vector_collection",
+          "docs": "https://stratadb.org/e/invalid_argument.engine.vector_collection"
+        },
+        {
+          "code": "invalid_argument.engine.vector_key",
+          "docs": "https://stratadb.org/e/invalid_argument.engine.vector_key"
+        },
+        {
+          "code": "not_found.engine.vector_collection",
+          "docs": "https://stratadb.org/e/not_found.engine.vector_collection"
+        },
+        {
+          "code": "invalid_argument.engine.embedding_model",
+          "docs": "https://stratadb.org/e/invalid_argument.engine.embedding_model"
+        },
+        {
+          "code": "failed_precondition.engine.embedding_model_mismatch",
+          "docs": "https://stratadb.org/e/failed_precondition.engine.embedding_model_mismatch"
+        }
+      ],
+      "fixtures": {
+        "request": "requests/v1/vector/collection_set_embedding_model.json",
+        "response": "responses/v1/vector/collection_set_embedding_model.json",
+        "setup": [
+          "requests/v1/vector/collection_create.json"
+        ],
+        "error_cases": [
+          {
+            "setup": [
+              "requests/v1/vector/collection_create.json"
+            ],
+            "request": "requests/v1/vector/collection_set_embedding_model_empty.json",
+            "expected_error": "responses/v1/errors/vector/embedding_model_empty.json"
+          },
+          {
+            "setup": [
+              "requests/v1/vector/collection_create_with_model.json"
+            ],
+            "request": "requests/v1/vector/collection_set_embedding_model_other.json",
+            "expected_error": "responses/v1/errors/vector/embedding_model_mismatch.json"
+          },
+          {
+            "request": "requests/v1/vector/collection_set_embedding_model.json",
+            "expected_error": "responses/v1/errors/vector/collection_missing.json"
+          }
+        ]
+      },
+      "source": {
+        "command": "crates/executor/idl/v1/commands/vector.yaml",
+        "prose": "commands/vector.collection.set_embedding_model.md"
       }
     },
     {
@@ -8600,7 +8908,7 @@
         "Output::Uint"
       ],
       "wire_status": "stable",
-      "response_model": "StatusValue<u64>",
+      "response_model": "StatusValue<integer>",
       "commit": "none",
       "pagination": "none",
       "batch": "none",
@@ -8671,7 +8979,7 @@
         "Output::VectorDeleteResult"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<VectorDelete>",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -8744,7 +9052,7 @@
         "Output::VectorBulkDeleteResult"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<VectorBulkDelete>",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -8817,7 +9125,7 @@
         "Output::VectorBulkDeleteResult"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<VectorBulkDelete>",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -8894,7 +9202,7 @@
         "Output::Bool"
       ],
       "wire_status": "stable",
-      "response_model": "StatusValue<bool>",
+      "response_model": "StatusValue<boolean>",
       "commit": "none",
       "pagination": "none",
       "batch": "none",
@@ -9196,7 +9504,7 @@
         "Output::VectorKeyPage"
       ],
       "wire_status": "stable",
-      "response_model": "Page<String, String>",
+      "response_model": "Page<string>",
       "commit": "none",
       "pagination": "cursor",
       "batch": "none",
@@ -9269,7 +9577,7 @@
         "Output::VectorMetadataUpdateResult"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<VectorMetadataUpdate>",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -9324,7 +9632,7 @@
       "kind": "read.search",
       "title": "Query vectors",
       "summary": "Search a vector collection.",
-      "description": "Runs vector search through the engine planner and returns the best matches with scores and optional metadata.\n\nSearch responses return a bounded list of matches ordered by the engine. They are not cursor pages unless a later command explicitly advertises pagination.",
+      "description": "Runs vector search through the engine planner and returns the best matches with scores and optional metadata. With `text` instead of a query vector, the text is embedded through the collection's recorded model on the same inference path as `inference.embed`, so the `inference.*` failures listed below apply only to that form; a supplied vector never reaches the inference runtime.\n\nSearch responses return a bounded list of matches ordered by the engine. They are not cursor pages unless a later command explicitly advertises pagination.",
       "docs": "/docs/vector/query",
       "cli": {
         "path": [
@@ -9382,6 +9690,86 @@
         {
           "code": "invalid_argument.executor.vector_limit",
           "docs": "https://stratadb.org/e/invalid_argument.executor.vector_limit"
+        },
+        {
+          "code": "invalid_argument.executor.vector_input",
+          "docs": "https://stratadb.org/e/invalid_argument.executor.vector_input"
+        },
+        {
+          "code": "failed_precondition.engine.embedding_model_missing",
+          "docs": "https://stratadb.org/e/failed_precondition.engine.embedding_model_missing"
+        },
+        {
+          "code": "inference.invalid_request",
+          "docs": "https://stratadb.org/e/inference.invalid_request"
+        },
+        {
+          "code": "inference.unsupported_operation",
+          "docs": "https://stratadb.org/e/inference.unsupported_operation"
+        },
+        {
+          "code": "inference.missing_model",
+          "docs": "https://stratadb.org/e/inference.missing_model"
+        },
+        {
+          "code": "inference.unknown_model",
+          "docs": "https://stratadb.org/e/inference.unknown_model"
+        },
+        {
+          "code": "inference.io_failure",
+          "docs": "https://stratadb.org/e/inference.io_failure"
+        },
+        {
+          "code": "inference.model_load_failed",
+          "docs": "https://stratadb.org/e/inference.model_load_failed"
+        },
+        {
+          "code": "inference.local_runtime_failed",
+          "docs": "https://stratadb.org/e/inference.local_runtime_failed"
+        },
+        {
+          "code": "inference.registry_corrupt",
+          "docs": "https://stratadb.org/e/inference.registry_corrupt"
+        },
+        {
+          "code": "inference.missing_api_key",
+          "docs": "https://stratadb.org/e/inference.missing_api_key"
+        },
+        {
+          "code": "inference.provider_auth_failed",
+          "docs": "https://stratadb.org/e/inference.provider_auth_failed"
+        },
+        {
+          "code": "inference.provider_unavailable",
+          "docs": "https://stratadb.org/e/inference.provider_unavailable"
+        },
+        {
+          "code": "inference.provider_timeout",
+          "docs": "https://stratadb.org/e/inference.provider_timeout"
+        },
+        {
+          "code": "inference.provider_rate_limited",
+          "docs": "https://stratadb.org/e/inference.provider_rate_limited"
+        },
+        {
+          "code": "inference.provider_quota_exhausted",
+          "docs": "https://stratadb.org/e/inference.provider_quota_exhausted"
+        },
+        {
+          "code": "inference.provider_model_not_found",
+          "docs": "https://stratadb.org/e/inference.provider_model_not_found"
+        },
+        {
+          "code": "inference.provider_malformed_response",
+          "docs": "https://stratadb.org/e/inference.provider_malformed_response"
+        },
+        {
+          "code": "inference.unsupported_provider",
+          "docs": "https://stratadb.org/e/inference.unsupported_provider"
+        },
+        {
+          "code": "inference.unsupported_parameter",
+          "docs": "https://stratadb.org/e/inference.unsupported_parameter"
         }
       ],
       "fixtures": {
@@ -9391,6 +9779,29 @@
           "requests/v1/vector/collection_create.json",
           "requests/v1/vector/upsert.json",
           "requests/v1/setup/vector_upsert_doc_b.json"
+        ],
+        "error_cases": [
+          {
+            "setup": [
+              "requests/v1/vector/collection_create.json"
+            ],
+            "request": "requests/v1/vector/query_text_without_model.json",
+            "expected_error": "responses/v1/errors/vector/embedding_model_missing.json"
+          },
+          {
+            "setup": [
+              "requests/v1/vector/collection_create.json"
+            ],
+            "request": "requests/v1/vector/query_vector_and_text.json",
+            "expected_error": "responses/v1/errors/vector/vector_input.json"
+          },
+          {
+            "setup": [
+              "requests/v1/vector/collection_create_unknown_model.json"
+            ],
+            "request": "requests/v1/vector/query_text_without_model.json",
+            "expected_error": "responses/v1/errors/inference/unknown_model.json"
+          }
         ]
       },
       "source": {
@@ -9500,7 +9911,7 @@
         "Output::VectorScanResult"
       ],
       "wire_status": "stable",
-      "response_model": "Page<VectorVersionedData, String>",
+      "response_model": "Page<VectorVersionedData>",
       "commit": "none",
       "pagination": "cursor",
       "batch": "none",
@@ -9551,7 +9962,7 @@
       "kind": "mutation.put",
       "title": "Upsert vector",
       "summary": "Insert or replace one vector.",
-      "description": "Upserts one vector key with a dense embedding and optional metadata. The vector dimension must match the collection configuration.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
+      "description": "Upserts one vector key with a dense embedding and optional metadata. The vector dimension must match the collection configuration. With `text` instead of a vector, the text is embedded through the collection's recorded model on the same inference path as `inference.embed`, so the `inference.*` failures listed below apply only to that form; a supplied vector never reaches the inference runtime.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/vector/upsert",
       "cli": {
         "path": [
@@ -9573,7 +9984,7 @@
         "Output::VectorWriteResult"
       ],
       "wire_status": "stable",
-      "response_model": "MutationAck<VectorWrite>",
+      "response_model": "MutationAck",
       "commit": "commits_on_success",
       "pagination": "none",
       "batch": "none",
@@ -9617,6 +10028,86 @@
         {
           "code": "invalid_argument.executor.vector_dimension",
           "docs": "https://stratadb.org/e/invalid_argument.executor.vector_dimension"
+        },
+        {
+          "code": "invalid_argument.executor.vector_input",
+          "docs": "https://stratadb.org/e/invalid_argument.executor.vector_input"
+        },
+        {
+          "code": "failed_precondition.engine.embedding_model_missing",
+          "docs": "https://stratadb.org/e/failed_precondition.engine.embedding_model_missing"
+        },
+        {
+          "code": "inference.invalid_request",
+          "docs": "https://stratadb.org/e/inference.invalid_request"
+        },
+        {
+          "code": "inference.unsupported_operation",
+          "docs": "https://stratadb.org/e/inference.unsupported_operation"
+        },
+        {
+          "code": "inference.missing_model",
+          "docs": "https://stratadb.org/e/inference.missing_model"
+        },
+        {
+          "code": "inference.unknown_model",
+          "docs": "https://stratadb.org/e/inference.unknown_model"
+        },
+        {
+          "code": "inference.io_failure",
+          "docs": "https://stratadb.org/e/inference.io_failure"
+        },
+        {
+          "code": "inference.model_load_failed",
+          "docs": "https://stratadb.org/e/inference.model_load_failed"
+        },
+        {
+          "code": "inference.local_runtime_failed",
+          "docs": "https://stratadb.org/e/inference.local_runtime_failed"
+        },
+        {
+          "code": "inference.registry_corrupt",
+          "docs": "https://stratadb.org/e/inference.registry_corrupt"
+        },
+        {
+          "code": "inference.missing_api_key",
+          "docs": "https://stratadb.org/e/inference.missing_api_key"
+        },
+        {
+          "code": "inference.provider_auth_failed",
+          "docs": "https://stratadb.org/e/inference.provider_auth_failed"
+        },
+        {
+          "code": "inference.provider_unavailable",
+          "docs": "https://stratadb.org/e/inference.provider_unavailable"
+        },
+        {
+          "code": "inference.provider_timeout",
+          "docs": "https://stratadb.org/e/inference.provider_timeout"
+        },
+        {
+          "code": "inference.provider_rate_limited",
+          "docs": "https://stratadb.org/e/inference.provider_rate_limited"
+        },
+        {
+          "code": "inference.provider_quota_exhausted",
+          "docs": "https://stratadb.org/e/inference.provider_quota_exhausted"
+        },
+        {
+          "code": "inference.provider_model_not_found",
+          "docs": "https://stratadb.org/e/inference.provider_model_not_found"
+        },
+        {
+          "code": "inference.provider_malformed_response",
+          "docs": "https://stratadb.org/e/inference.provider_malformed_response"
+        },
+        {
+          "code": "inference.unsupported_provider",
+          "docs": "https://stratadb.org/e/inference.unsupported_provider"
+        },
+        {
+          "code": "inference.unsupported_parameter",
+          "docs": "https://stratadb.org/e/inference.unsupported_parameter"
         }
       ],
       "fixtures": {
@@ -9624,6 +10115,36 @@
         "response": "responses/v1/vector/upsert_applied.json",
         "setup": [
           "requests/v1/vector/collection_create.json"
+        ],
+        "error_cases": [
+          {
+            "setup": [
+              "requests/v1/vector/collection_create.json"
+            ],
+            "request": "requests/v1/vector/upsert_text_without_model.json",
+            "expected_error": "responses/v1/errors/vector/embedding_model_missing.json"
+          },
+          {
+            "setup": [
+              "requests/v1/vector/collection_create.json"
+            ],
+            "request": "requests/v1/vector/upsert_vector_and_text.json",
+            "expected_error": "responses/v1/errors/vector/vector_input.json"
+          },
+          {
+            "setup": [
+              "requests/v1/vector/collection_create.json"
+            ],
+            "request": "requests/v1/vector/upsert_neither.json",
+            "expected_error": "responses/v1/errors/vector/vector_input.json"
+          },
+          {
+            "setup": [
+              "requests/v1/vector/collection_create_unknown_model.json"
+            ],
+            "request": "requests/v1/vector/upsert_text_without_model.json",
+            "expected_error": "responses/v1/errors/inference/unknown_model.json"
+          }
         ]
       },
       "source": {

@@ -10,11 +10,12 @@ description: >-
   graphs from Python without a server. Covers opening databases (durable,
   in-memory, durability and IPC modes, memory budget), every db.<namespace>,
   return shapes (None on miss, receipts, Page), branches via db.at() and
-  db.branches (fork, diff, preview, merge), as_of reads, typed errors
+  db.branches (fork, diff, preview, merge), time travel on both clocks
+  (as_of, as_of_time, committed_at), StrataHub browse and clone, typed errors
   matched on .code, db.ai inference, and the sharp edges that trip agents.
 license: MIT
 metadata:
-  strata-core-rev: "dc825d9ba98b1285563870b1b697b21667bd3fba"
+  strata-core-rev: "2a48581b091cfe232d469fd106de0d0fbd9d04f9"
   cli-version-range: "1.x"
   stratadb-version-range: "1.x"
 ---
@@ -69,12 +70,13 @@ One namespace per primitive, plus the control plane and the escape hatch:
 |---|---|---|
 | `db.kv` | opaque values by key (`str`/`bytes` in, `bytes` out) | `put`, `get`, `exists`, `delete`, `put_many`, `get_many`, `keys(prefix=)`, `history` |
 | `db.json` | structured documents, addressed by path | `set(key, "$", doc)`, `get(key, "$.field")`, `set_many`, `keys(prefix=)`, `scan`, `history` |
-| `db.vectors` | embeddings + metadata, similarity search | `create_collection(name, dimension=, metric=)`, `upsert`, `query(coll, vec, k=, filter=)`, `keys`, `history` |
+| `db.vectors` | embeddings + metadata, similarity search | `create_collection(name, dimension=, metric=, embedding_model=)`, `upsert(coll, key, vec \| text=)`, `query(coll, vec \| text=, k=, filter=)`, `set_embedding_model`, `keys`, `history` |
 | `db.events` | append-only, hash-chained log | `append(type, payload)`, `get(seq)`, `range(start=)`, `range_by_time`, `len()`, `verify_chain()` |
 | `db.graphs` | typed nodes and edges, traversal, analytics | `create`, `add_node`, `add_edge`, `neighbors`, `list_nodes`, graph analytics (PageRank, BFS, …) |
 | `db.branches`, `db.spaces`, `db.at(...)` | isolation and scoping | `fork`, `create`, `list`, `fork_at_version`, `fork_at_timestamp`; `db.at(branch=, space=)` |
 | `db.admin`, `db.arrow` | control plane; bulk Arrow/Parquet | `ping`, `info`, `health`, `ipc_status`; `export`, `import_` |
-| `db.ai` | inference, OpenAI-shaped | `chat`, `embed`, `rank`, `capability` |
+| `db.hub` | browse StrataHub (read-only; never touches your data) | `info`, `list_datasets(tasks=, tags=, sort=)`, `get_dataset`, `list_refs`, `list_yanked`; `stratadb.clone(name, dest)` downloads one |
+| `db.ai` | inference, OpenAI-shaped | `chat`, `embed`, `rank`, `capability`, `status` |
 | `db.execute({...})` | the raw wire — every cataloged command | `stratadb.command_index()` lists them |
 
 ```python
@@ -83,6 +85,9 @@ db.json.set("user:1", "$", {"name": "Ada"});  db.json.get("user:1", "$.name")  #
 db.vectors.create_collection("notes", dimension=3, metric="cosine")
 db.vectors.upsert("notes", "n1", [0.1, 0.2, 0.3], metadata={"kind": "note"})
 db.vectors.query("notes", [0.1, 0.2, 0.3], k=5)                               # list[VectorMatch]
+db.vectors.create_collection("docs", dimension=384, embedding_model="miniLM")  # stratadb >= 1.2.2
+db.vectors.upsert("docs", "d1", text="a small domestic cat")                  # engine embeds it
+db.vectors.query("docs", text="kitten", k=5)                                  # and on the way in
 db.events.append("deploy", {"ok": True});  db.events.len()                    # 1
 db.graphs.create("g"); db.graphs.add_node("g", "a"); db.graphs.add_node("g", "b")
 db.graphs.add_edge("g", "a", "link", "b")                                     # both endpoints must exist
@@ -100,8 +105,10 @@ checkpoints and flags.
   `db.json.get("absent")` too; `history()` of a never-written key is `None`.
 - **Every write returns a receipt** (`Record`): `r.commit.version` and
   `r.commit.timestamp` (the same logical commit counter — not wall-clock),
-  `r.commit.durability`, and `r.effect` (`.applied`, `.kind`). Keep
-  `r.commit.timestamp` whenever you may need to look back.
+  `r.commit.committed_at` (the real UTC instant, epoch µs, or `None` on a
+  commit written before engine 1.2.1), `r.commit.durability`, and `r.effect`
+  (`.applied`, `.kind`). Keep `r.commit.timestamp` whenever you may need to
+  look back; format `committed_at` with `stratadb.to_datetime(...)`.
 - **Listing methods return a `Page`** — `db.kv.keys()`, `db.json.keys()`,
   `db.events.range()`, `db.graphs.neighbors()`, `db.vectors.keys()`, … Iterating
   auto-paginates across every page; `.all()` collects; `page.has_more` /
@@ -129,8 +136,10 @@ out = db.branches.merge("experiment", "default")   # strict (default): ConflictE
 out = db.branches.merge("experiment", "default", strategy="source_wins")  # out.applied / .deleted / .target_version
 
 r = db.kv.put("k", "v1"); db.kv.put("k", "v2")
-db.kv.get("k", as_of=r.commit.timestamp)       # b'v1' — as_of takes a receipt's commit value
-db.branches.fork_at_timestamp("default", "as-it-was", r.commit.timestamp)
+db.kv.get("k", as_of=r.commit.timestamp)            # b'v1' — the logical commit timeline
+db.kv.get("k", as_of_time=r.commit.committed_at)    # b'v1' — real UTC time
+stratadb.to_datetime(r.commit.committed_at)         # -> aware UTC datetime; .astimezone() for local
+db.branches.fork_at_timestamp("default", "as-it-was", r.commit.timestamp)  # anchors take as_of only
 ```
 
 The default branch is `default` (not `main`). Promotion (`stratadb >= 1.1.0`)
@@ -138,20 +147,37 @@ merges key-value, JSON, and vector data; events and graphs are compared but
 never merged (they show up in `capabilities_unsupported`), and only branches
 with shared fork lineage can be merged (`invalid_argument.engine.branch_point`
 otherwise). `preview()` first when the outcome matters — `strict` refuses on
-any conflict and changes nothing. Timestamps are values you were given
-(receipts, history rows), never computed from the clock;
-`event.timestamp` and `db.events.range_by_time()` are the one wall-clock (µs)
-exception. Outside retained history you get `HistoryUnavailableError`
-(`history_unavailable.engine.persistence_history`) — choose a newer timestamp,
-don't retry in a loop. Patterns: the `strata-branching` and
-`strata-time-travel` skills.
+any conflict and changes nothing.
+
+**Two clocks, and they are not interchangeable** (`stratadb >= 1.2.1`).
+`timestamp` is a position on
+the logical commit timeline (a counter starting near 1, never a date) and its
+values are ones you were *given* — receipts, history rows — never computed.
+`committed_at` is the real UTC instant, in epoch µs, and it is the one you may
+compute: every read taking `as_of` also takes `as_of_time`, which accepts a
+`datetime`, a `date`, an ISO 8601 string, or raw µs (naive values are read as
+local time). Passing both raises `InvalidArgumentError`
+(`invalid_argument.executor.as_of_conflict`); passing a `datetime` to `as_of`
+raises `invalid_argument.sdk.as_of_kind`, which names the argument you wanted.
+History rows carry `committed_at` too, and `stratadb.to_micros` /
+`stratadb.to_datetime` convert in both directions (`None` passes through).
+
+`as_of_time` **does not clamp**: an instant outside the branch's dated history
+raises `HistoryUnavailableError`
+(`history_unavailable.engine.persistence_history`) at *both* ends — so
+`as_of_time=datetime.now()` is an error, not "latest". Read current state by
+passing no clock at all. The dated window is only as wide as the database's own
+history, and pre-1.2.1 commits report `committed_at is None`. Separately,
+`event.timestamp` is the event's own **occurrence** time (µs) and the axis
+`db.events.range_by_time()` walks — a third thing again, not a commit clock.
+Patterns: the `strata-branching` and `strata-time-travel` skills.
 
 ## Errors: match `.code`, never the message
 
 Every domain failure raises a `stratadb.errors.StrataError` subclass
 (`NotFoundError`, `AlreadyExistsError`, `InvalidArgumentError`,
 `FailedPreconditionError`, `ConflictError`, `UnavailableError`,
-`HistoryUnavailableError`, …)
+`HistoryUnavailableError`, `DataLossError`, …)
 carrying `.code` (`<class>.<area>.<detail>`), `.hint`, `.ref`
 (`https://stratadb.org/e/<code>`), `.retryable`, and `.retry_policy`. Invalid
 Python-side input raises the same hierarchy (`invalid_argument.sdk.*`), so one
@@ -180,7 +206,9 @@ Codes you will actually meet:
 | `failed_precondition.sdk.fork_not_supported` | the handle was used after `os.fork()` — open a fresh handle in the child |
 | `not_found.engine.branch` | `db.at(branch=...)` names a branch that does not exist — check `db.branches.list()` |
 | `already_exists.engine.branch` | the fork/create name is taken |
-| `history_unavailable.engine.persistence_history` | `as_of`, history, or a fork anchor outside retained history |
+| `history_unavailable.engine.persistence_history` | `as_of`, `as_of_time`, history, or a fork anchor outside the retained/dated window — including `as_of_time=now` |
+| `invalid_argument.executor.as_of_conflict` | both clocks in one call — pass `as_of` or `as_of_time`, not both |
+| `invalid_argument.sdk.as_of_kind` | a `datetime` passed to `as_of` — that is `as_of_time`'s argument |
 | `conflict.engine.promotion` | a `strict` `merge()` hit a conflict and changed nothing — `preview()`, resolve on the source, or `strategy="source_wins"` |
 | `invalid_argument.engine.branch_point` | `preview()`/`merge()` between branches with no shared fork lineage (e.g. a `create()`d root) |
 | `unavailable.engine.persistence` | `ipc="off"` open of a path another handle owns — close it or wait |
@@ -205,12 +233,27 @@ Codes you will actually meet:
   them. Use `durability="always"` when every acknowledgement must survive.
 - **Graph edges need both endpoints first.** `add_edge` to a missing node
   raises `invalid_argument.engine.graph_edge_endpoint`.
+- **`text=` needs a declared model.** `db.vectors.upsert(...,  text=)` and
+  `query(..., text=)` embed through the collection's `embedding_model`
+  (`create_collection(embedding_model=)` or `set_embedding_model()`); without
+  one it is `failed_precondition.engine.embedding_model_missing`, and a model
+  whose dimension disagrees with the collection is
+  `embedding_model_mismatch`. Pass a vector or `text=`, never both. The
+  embedding is a real inference call, so it carries the `inference.*` failures
+  — `db.ai.status()` tells you up front whether this build runs local models
+  and which provider keys are present.
 - **Cloud `db.ai` needs your key** (`OPENAI_API_KEY` / `ANTHROPIC_API_KEY` /
   `GOOGLE_API_KEY`, or `strata config set <provider>.api_key …`); Strata ships
   none, and there is no bundled offline embedder yet — for keyless vector
   search, upsert literal vectors.
 - **`commit.timestamp` is a logical counter**, not microseconds; never compare
-  it with wall-clock time.
+  it with wall-clock time. `commit.committed_at` is the microseconds — use that
+  (via `stratadb.to_datetime`) whenever a human will read the answer, and
+  remember it is `None` for commits written before engine 1.2.1.
+- **`db.events.range()` windows are half-open `[start, end)`**, in both
+  directions; `reverse=True` walks that same window newest-first, so
+  `db.events.range(0, reverse=True, limit=5)` is "the newest 5".
+  `range_by_time()` is half-open on the event's own occurrence time.
 
 ## Inference (`db.ai`)
 

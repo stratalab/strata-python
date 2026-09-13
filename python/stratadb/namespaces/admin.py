@@ -12,7 +12,7 @@ class AdminNamespace(Namespace):
 
     Examples:
         >>> db.admin.ping()  # doctest: +ELLIPSIS
-        Record(version=...)
+        AdminPing(version=...)
         >>> db.admin.info().durable
         False
     """

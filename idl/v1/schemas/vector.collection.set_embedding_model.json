@@ -56,12 +56,12 @@
       ]
     }
   },
-  "$id": "https://stratadb.org/idl/v1/schemas/vector.collection.create.json",
+  "$id": "https://stratadb.org/idl/v1/schemas/vector.collection.set_embedding_model.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "command": "vector.collection.create",
+  "command": "vector.collection.set_embedding_model",
   "request": {
     "additionalProperties": false,
-    "description": "Creates a vector collection.",
+    "description": "Declares which embedding model a collection's vectors come from (D9).\n\nFor collections created without `embedding_model` — every collection\nthat predates provenance. A declaration, not a verification: a stored\nvector carries no model, so this takes the caller's word for the\nvectors present, and from then on `text` is embedded with this model.\nA vector supplied directly is not checked against it — it cannot be —\nand remains the caller's word. One-time: re-declaring the recorded\nmodel is a no-op, and declaring a different one is refused with\n`failed_precondition.engine.embedding_model_mismatch`, because changing\nthe model under stored vectors is the mixing the record exists to\nprevent.",
     "properties": {
       "branch": {
         "description": "Target branch. Defaults to the executor handle branch.",
@@ -74,22 +74,9 @@
         "description": "Collection name.",
         "type": "string"
       },
-      "dimension": {
-        "description": "Embedding dimension.",
-        "format": "uint64",
-        "minimum": 0,
-        "type": "integer"
-      },
-      "embedding_model": {
-        "description": "The model that produces this collection's vectors (D9).\n\nWhat the record governs: `text` on `vector upsert` and\n`vector query` is embedded with this model and no other, so text\nwrites and searches cannot mix models — the failure dimension\ncannot catch, since two models at the same width return neighbours\nthat are ranked and meaningless. What it cannot govern: a `vector`\nsupplied directly carries no model, so Strata cannot check one\nagainst the record; supplying a vector is the caller's statement\nthat this model produced it.",
-        "type": [
-          "string",
-          "null"
-        ]
-      },
-      "metric": {
-        "$ref": "#/$defs/VectorDistanceMetric",
-        "description": "Distance metric."
+      "model": {
+        "description": "The model that produced, and will produce, this collection's\nvectors.",
+        "type": "string"
       },
       "space": {
         "description": "Target product space. Defaults to `\"default\"`.",
@@ -99,15 +86,14 @@
         ]
       },
       "type": {
-        "const": "vector_create_collection",
+        "const": "vector_set_embedding_model",
         "type": "string"
       }
     },
     "required": [
       "type",
       "collection",
-      "dimension",
-      "metric"
+      "model"
     ],
     "type": "object"
   },

@@ -1,5 +1,5 @@
 {
-  "count": 222,
+  "count": 229,
   "errors": [
     {
       "class": "invalid_argument",
@@ -579,6 +579,15 @@
     },
     {
       "class": "invalid_argument",
+      "code": "invalid_argument.engine.embedding_model",
+      "commit_outcome": "not_started",
+      "hint": "Use a non-empty model id such as `openai:text-embedding-3-small` or `miniLM`.",
+      "message": "The embedding model id is invalid.",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.embedding_model",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
       "code": "invalid_argument.engine.vector_dimension",
       "commit_outcome": "not_started",
       "hint": "Use the collection dimension, valid vector keys, and metadata/filter values supported by the collection.",
@@ -725,7 +734,7 @@
       "class": "already_exists",
       "code": "already_exists.engine.persistence",
       "commit_outcome": "not_started",
-      "hint": "Reload current state and retry against the latest version.",
+      "hint": "Use the existing branch or choose a different branch name.",
       "message": "The resource already exists.",
       "ref": "https://stratadb.org/e/already_exists.engine.persistence",
       "retry_policy": "never"
@@ -876,6 +885,24 @@
     },
     {
       "class": "failed_precondition",
+      "code": "failed_precondition.engine.embedding_model_mismatch",
+      "commit_outcome": "not_started",
+      "hint": "Embed with the model the collection records (see `vector collection stats`), or create a separate collection for the other model.",
+      "message": "The embedding model does not match the one this vector collection records.",
+      "ref": "https://stratadb.org/e/failed_precondition.engine.embedding_model_mismatch",
+      "retry_policy": "never"
+    },
+    {
+      "class": "failed_precondition",
+      "code": "failed_precondition.engine.embedding_model_missing",
+      "commit_outcome": "not_started",
+      "hint": "Declare the collection's model with `vector collection set-embedding-model <collection> <model>`, or pass a vector instead of text.",
+      "message": "This vector collection records no embedding model, so text cannot be embedded for it.",
+      "ref": "https://stratadb.org/e/failed_precondition.engine.embedding_model_missing",
+      "retry_policy": "never"
+    },
+    {
+      "class": "failed_precondition",
       "code": "failed_precondition.engine.space_not_empty",
       "commit_outcome": "not_started",
       "hint": "Use an existing non-reserved space, or delete/move contained data before deleting the space.",
@@ -887,7 +914,7 @@
       "class": "history_unavailable",
       "code": "history_unavailable.engine.persistence_history",
       "commit_outcome": "not_applicable",
-      "hint": "List the requested resource type, then retry with an existing resource id.",
+      "hint": "Request history inside the retained window.",
       "message": "The requested resource was not found.",
       "ref": "https://stratadb.org/e/history_unavailable.engine.persistence_history",
       "retry_policy": "after_state_change"
@@ -1364,7 +1391,7 @@
       "class": "failed_precondition",
       "code": "failed_precondition.engine.layout_version",
       "commit_outcome": "not_applicable",
-      "hint": "Open the database with a compatible Strata version or run the required migration.",
+      "hint": "Point Strata at an empty directory or an existing V1 database; pre-V1 databases are not migrated.",
       "message": "The database layout is incompatible with this runtime.",
       "ref": "https://stratadb.org/e/failed_precondition.engine.layout_version",
       "retry_policy": "never"
@@ -1785,6 +1812,15 @@
     },
     {
       "class": "invalid_argument",
+      "code": "invalid_argument.executor.vector_input",
+      "commit_outcome": "not_started",
+      "hint": "Pass exactly one: an explicit vector, or a text to embed with the collection's recorded model.",
+      "message": "A vector write or query supplied neither a vector nor a text, or both.",
+      "ref": "https://stratadb.org/e/invalid_argument.executor.vector_input",
+      "retry_policy": "never"
+    },
+    {
+      "class": "invalid_argument",
       "code": "invalid_argument.executor.vector_dimension",
       "commit_outcome": "not_started",
       "hint": "Use embeddings whose length matches the vector collection dimension.",
@@ -1904,8 +1940,8 @@
       "class": "failed_precondition",
       "code": "inference.missing_model",
       "commit_outcome": "not_applicable",
-      "hint": "Install, pull, or configure the requested model before retrying.",
-      "message": "The requested model is missing.",
+      "hint": "Run `strata inference models pull <model>`, then retry.",
+      "message": "The requested model is in the catalog but is not downloaded.",
       "ref": "https://stratadb.org/e/inference.missing_model",
       "retry_policy": "after_state_change"
     },
@@ -1935,6 +1971,24 @@
       "message": "The provider returned a malformed response.",
       "ref": "https://stratadb.org/e/inference.provider_malformed_response",
       "retry_policy": "unknown"
+    },
+    {
+      "class": "not_found",
+      "code": "inference.provider_model_not_found",
+      "commit_outcome": "not_applicable",
+      "hint": "Check the model name against the provider's current model list, then retry.",
+      "message": "The provider does not serve the requested model.",
+      "ref": "https://stratadb.org/e/inference.provider_model_not_found",
+      "retry_policy": "never"
+    },
+    {
+      "class": "failed_precondition",
+      "code": "inference.provider_quota_exhausted",
+      "commit_outcome": "not_applicable",
+      "hint": "Add credits or raise the quota on the provider account, then retry.",
+      "message": "The provider account has no credits or quota left.",
+      "ref": "https://stratadb.org/e/inference.provider_quota_exhausted",
+      "retry_policy": "after_state_change"
     },
     {
       "class": "unavailable",
@@ -1970,6 +2024,15 @@
       "hint": "Repair or recreate the local model registry before retrying.",
       "message": "The local inference registry is corrupt.",
       "ref": "https://stratadb.org/e/inference.registry_corrupt",
+      "retry_policy": "never"
+    },
+    {
+      "class": "not_found",
+      "code": "inference.unknown_model",
+      "commit_outcome": "not_applicable",
+      "hint": "Check the model name against `strata inference models list`, or pass the path of a GGUF file.",
+      "message": "The requested model is not in the catalog.",
+      "ref": "https://stratadb.org/e/inference.unknown_model",
       "retry_policy": "never"
     },
     {
