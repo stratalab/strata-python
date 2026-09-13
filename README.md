@@ -81,6 +81,11 @@ db.json.keys(prefix="user:").all()       # ["user:1"]
 from stratadb import filters
 db.vectors.create_collection("notes", dimension=3)
 db.vectors.upsert("notes", "n1", [0.1, 0.2, 0.3], metadata={"kind": "note"})
+
+# Or let the engine embed for you: declare the model, then pass text.
+db.vectors.create_collection("docs", dimension=384, embedding_model="miniLM")
+db.vectors.upsert("docs", "d1", text="a small domestic cat")
+db.vectors.query("docs", text="kitten", k=5)
 hits = db.vectors.query("notes", [0.1, 0.2, 0.3], k=5,
                         filter=filters.eq("kind", "note"))
 

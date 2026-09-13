@@ -79,6 +79,11 @@ def test_agent_guide_block_runs(index, tmp_path, monkeypatch, request):
     source = BLOCKS[index]
     if "db.ai.chat" in source or "db.ai.embed" in source:
         pytest.skip("inference examples need a provider API key")
+    if "text=" in source and "db.vectors" in source:
+        # Server-side embedding is an inference call like any other: it needs a
+        # ready model, which the cloud-only base wheel has none of. The
+        # declaration half runs in tests/test_text_embedding.py everywhere.
+        pytest.skip("text= embedding examples need a ready embedding model")
     if "db.hub" in source or "stratadb.clone(" in source:
         # Runs for real against the live hub (skips when none is reachable).
         monkeypatch.setenv("STRATA_HUB_URL", request.getfixturevalue("live_hub_url"))

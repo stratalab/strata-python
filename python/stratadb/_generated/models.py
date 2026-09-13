@@ -273,6 +273,18 @@ class AdminOpenTarget(str, Enum):
 
 
 @dataclass
+class AdminPing:
+    """Liveness probe output."""
+    version: str
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "AdminPing":
+        return cls(
+            version=d['version'],
+        )
+
+
+@dataclass
 class AdminPrimitives:
     """Primitive summaries in describe output."""
     event_count: int
@@ -1136,7 +1148,7 @@ class CommitReceipt:
 
 class ComparedCapability(str, Enum):
     """The data capability a branch comparison entry belongs to."""
-    KEY_VALUE = 'key_value'
+    KV = 'kv'
     JSON = 'json'
     VECTOR = 'vector'
     VECTOR_COLLECTION = 'vector_collection'
@@ -1946,6 +1958,28 @@ class HubCloneProgressStage(str, Enum):
 
 
 @dataclass
+class HubCloneResult:
+    """A completed hub clone."""
+    branch: str
+    dataset: str
+    dest: str
+    manifest_hash: str
+    object_count: int
+    total_bytes: int
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "HubCloneResult":
+        return cls(
+            branch=d['branch'],
+            dataset=d['dataset'],
+            dest=d['dest'],
+            manifest_hash=d['manifest_hash'],
+            object_count=d['object_count'],
+            total_bytes=d['total_bytes'],
+        )
+
+
+@dataclass
 class HubDatasetCard:
     """Full dataset card returned by `hub.get_dataset`."""
     capability_registry_version: int
@@ -2389,20 +2423,6 @@ class Maybe5:
 
 
 @dataclass
-class MaybeJsonValue:
-    """JSON point-read result that distinguishes absence from a stored JSON null."""
-    found: bool
-    value: Any
-
-    @classmethod
-    def from_wire(cls, d: dict) -> "MaybeJsonValue":
-        return cls(
-            found=d['found'],
-            value=d['value'],
-        )
-
-
-@dataclass
 class MaybeJsonVersionedValue:
     """JSON versioned point-read result that distinguishes absence from a stored JSON null."""
     found: bool
@@ -2669,6 +2689,7 @@ class VectorCollectionInfo:
     dimension: int
     metric: "VectorDistanceMetric"
     name: str
+    embedding_model: Optional[str] = None
 
     @classmethod
     def from_wire(cls, d: dict) -> "VectorCollectionInfo":
@@ -2677,6 +2698,7 @@ class VectorCollectionInfo:
             dimension=d['dimension'],
             metric=VectorDistanceMetric(d['metric']),
             name=d['name'],
+            embedding_model=(None if d.get('embedding_model') is None else d['embedding_model']),
         )
 
 

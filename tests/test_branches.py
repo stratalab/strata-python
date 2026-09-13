@@ -51,7 +51,7 @@ def test_diff_reports_added_removed_modified_per_capability(db):
     forward = db.branches.diff("default", "experiment")
     assert forward.branch_a == "default" and forward.branch_b == "experiment"
     caps = by_capability(forward)
-    kv = caps["key_value"]
+    kv = caps["kv"]
     assert identities(kv.added) == [b"new"]
     assert identities(kv.removed) == [b"gone"]
     assert identities(kv.modified) == [b"keep"]
@@ -63,9 +63,9 @@ def test_diff_reports_added_removed_modified_per_capability(db):
 
     # Directional: A -> B flips added and removed.
     backward = by_capability(db.branches.diff("experiment", "default"))
-    assert identities(backward["key_value"].added) == [b"gone"]
-    assert identities(backward["key_value"].removed) == [b"new"]
-    assert identities(backward["key_value"].modified) == [b"keep"]
+    assert identities(backward["kv"].added) == [b"gone"]
+    assert identities(backward["kv"].removed) == [b"new"]
+    assert identities(backward["kv"].modified) == [b"keep"]
 
     # Diff is read-only.
     assert db.kv.get("keep") == b"base"
@@ -86,12 +86,12 @@ def test_diff_as_of_compares_both_branches_at_a_commit(db):
     db.kv.put("k", "changed")
 
     now = by_capability(db.branches.diff("default", "feature"))
-    assert identities(now["key_value"].modified) == [b"k"]
-    assert now["key_value"].added == []
+    assert identities(now["kv"].modified) == [b"k"]
+    assert now["kv"].added == []
     # As of the feature write, default had no `k` yet -> added, not modified.
     then = by_capability(db.branches.diff("default", "feature", as_of=first.commit.timestamp))
-    assert identities(then["key_value"].added) == [b"k"]
-    assert then["key_value"].modified == []
+    assert identities(then["kv"].added) == [b"k"]
+    assert then["kv"].modified == []
 
 
 def test_diff_as_of_must_lie_within_both_branches_history(db):
@@ -111,7 +111,7 @@ def test_diff_spans_spaces(db):
     db.at(branch="experiment", space="tenant-a").kv.put("k", "v")
     comparison = db.branches.diff("default", "experiment")
     assert [(s.space, s.capability.value) for s in comparison.spaces] == [
-        ("tenant-a", "key_value")
+        ("tenant-a", "kv")
     ]
 
 
@@ -136,7 +136,7 @@ def test_preview_is_clean_when_only_the_source_changed(db):
     assert preview.branch_point > 0
     covered = {c.value for c in preview.capabilities_covered}
     unsupported = {c.value for c in preview.capabilities_unsupported}
-    assert {"key_value", "json", "vector"} <= covered
+    assert {"kv", "json", "vector"} <= covered
     assert {"event", "graph_metadata", "graph_node", "graph_edge", "graph_ontology"} <= unsupported
     assert covered.isdisjoint(unsupported)
 
@@ -149,7 +149,7 @@ def test_preview_reports_conflicts_without_mutating(db):
 
     strict = db.branches.preview("experiment", "default")
     (conflict,) = strict.conflicts
-    assert conflict.capability == "key_value" and conflict.space == "default"
+    assert conflict.capability == "kv" and conflict.space == "default"
     assert conflict.identity == b"k"
     assert conflict.kind == "value_divergence"
     assert conflict.source_value == b"fork-side"
@@ -196,7 +196,7 @@ def test_merge_applies_the_fork_atomically(db):
     assert outcome.source == "experiment" and outcome.target == "default"
     assert outcome.strategy == "strict" and outcome.conflicts == []
     applied = {(e.capability.value, e.identity) for e in outcome.applied}
-    assert ("key_value", b"k") in applied
+    assert ("kv", b"k") in applied
     assert ("json", b"doc") in applied
     assert any(cap == "vector" for cap, _ in applied)
     assert identities(outcome.deleted) == [b"stale"]
@@ -287,7 +287,7 @@ def test_events_and_graphs_are_compared_but_never_promoted(db):
     outcome = db.branches.merge("experiment", "default")
     unsupported = {c.value for c in outcome.capabilities_unsupported}
     assert {"event", "graph_node"} <= unsupported
-    assert {e.capability.value for e in outcome.applied} == {"key_value"}
+    assert {e.capability.value for e in outcome.applied} == {"kv"}
     assert db.kv.get("k") == b"carried"
     assert db.events.len() == 0  # compare-only: not carried over
     assert db.graphs.get_node("g", "node-1") is None

@@ -85,6 +85,9 @@ BINDINGS = {
     "vector.collection.delete": Binding("vectors", "delete_collection", arg_map={"collection": "name"}),
     "vector.collection.list": Binding("vectors", "list_collections", "[c.name for c in {}]", "json"),
     "vector.collection.stats": Binding("vectors", "stats", "{}.dimension", "int", {"collection": "name"}),
+    "vector.collection.set_embedding_model": Binding(
+        "vectors", "set_embedding_model", '{}.items[0].embedding_model', "json"
+    ),
     "vector.count": Binding("vectors", "count", "{}", "int", {"collection": "name"}),
     "vector.upsert": Binding("vectors", "upsert"),
     "vector.get": Binding("vectors", "get", "{}.key", "json"),
@@ -193,10 +196,15 @@ BINDINGS = {
     # network/machine-state ones (models.pull/local) stay allowlisted.
     # Note: exprs go through str.format, so use set(...) not a `{...}` literal.
     "inference.capability": Binding("ai", "capability", '{}["provider"]', "json"),
+    # inference.status reports machine state (models on disk, which keys are
+    # set), so it has no stable assertion — hand-written, like models.local.
     "inference.cache_status": Binding("ai", "cache_status", '{}["generation_models"]', "json"),
-    "inference.models.list": Binding(
-        "ai", "models.list", 'sorted(set(m["task"] for m in {}["items"]))', "json"
-    ),
+    # inference.models.list is deliberately unbound: its upstream spec at core
+    # v1.2.2 still returns ["embed", "generate", "rank"], but the same release
+    # dropped the two reranker catalog entries (core #3045 — the repos they
+    # named were never published), so the rendered example cannot run. The
+    # docstring in ai.py is hand-written and executed by tests/test_doctests.py
+    # until the spec catches up (stratalab/strata-core#3380).
     "inference.unload": Binding("ai", "unload", '{}["unloaded"]', "json"),
     # arrow — file round-trip; the `{tmpdir}/<file>` path renders as a tmp_dir
     # expression (see render_arg). Wire `file_path` maps to the method's `path`.

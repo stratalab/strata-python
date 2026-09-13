@@ -163,7 +163,8 @@ class BranchesNamespace(Namespace):
         Directional ``branch_a`` → ``branch_b``. The result's ``.spaces`` holds
         one ``SpaceComparisonItem`` per (space, capability) that differs, each
         with ``.added`` (only on B), ``.removed`` (only on A), and ``.modified``
-        (on both, with different values). Capabilities are ``key_value``,
+        (on both, with different values). Capabilities are ``kv`` (named
+        ``key_value`` before engine 1.2.2),
         ``json``, ``vector``, ``vector_collection``, ``event``,
         ``graph_metadata``, ``graph_node``, ``graph_edge``, and
         ``graph_ontology``; an entity's ``.identity`` is its space-relative key

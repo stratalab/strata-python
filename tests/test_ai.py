@@ -150,12 +150,20 @@ def test_capability_no_network(db):
     assert cap["requires_api_key"] is True
 
 
-def test_missing_key_raises_typed_error(db, monkeypatch, tmp_path):
+def test_missing_key_raises_typed_error(monkeypatch, tmp_path):
+    # The handle must be opened *after* the config is isolated: engine 1.2.2
+    # assembles provider settings when the database opens, so a key in
+    # ~/.config/strata/config.toml is already captured by a handle opened
+    # before XDG_CONFIG_HOME moved — the call then goes out with it and comes
+    # back inference.provider_auth_failed instead. (Env vars are still read per
+    # call.) Opening here keeps the test honest on a developer machine that has
+    # run `strata config set openai.api_key`.
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))  # empty config
     ai_mod._keys_loaded = False
-    with pytest.raises(errors.StrataError) as excinfo:
-        db.ai.chat("hi", model="openai:gpt-4o-mini", max_tokens=5)
+    with stratadb.open(cache=True) as keyless:
+        with pytest.raises(errors.StrataError) as excinfo:
+            keyless.ai.chat("hi", model="openai:gpt-4o-mini", max_tokens=5)
     assert excinfo.value.code == "inference.missing_api_key"
     assert isinstance(excinfo.value, errors.FailedPreconditionError)
 

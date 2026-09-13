@@ -101,8 +101,9 @@ class JSONNamespace(Namespace):
     def get_entry(self, key: str, path: str = "$", *, as_of: Optional[int] = None, as_of_time: Optional[TimeLike] = None) -> Any:
         """Returns the value with its commit metadata, or ``None`` if absent.
 
-        Time-travel (``as_of``) reads carry no version metadata (the engine's
-        raw-value envelope), so this returns the bare value in that case.
+        Historical reads carry the metadata too, since engine 1.2.2: the
+        as-of read used to answer a bare-value envelope and drop the version,
+        timestamp and ``document_version`` it exists to report.
         """
         found, value, versioned = self._read(key, path, as_of, as_of_time)
         if not found:
@@ -112,12 +113,14 @@ class JSONNamespace(Namespace):
     def _read(
         self, key: str, path: str, as_of: Optional[int], as_of_time: Optional[TimeLike] = None
     ) -> tuple:
-        """Runs json_get, tolerating its two output shapes.
+        """Runs json_get and decodes its answer to ``(found, value, versioned)``.
 
-        json_get is the documented JSON exception: the latest read returns a
-        versioned envelope (``json_versioned_value``), while an ``as_of`` read
-        returns the raw document (``json_value`` / MaybeJsonValue). Returns
-        ``(found, value, versioned_or_None)``.
+        Engine 1.2.2 made every json_get answer ``json_versioned_value``; the
+        bare ``json_value`` shape survives here only for an older IPC host,
+        which a newer client can still be brokered into because the protocol
+        revision did not change (strata-core #3369). Against such a host an
+        as-of read has no version metadata to give, so ``versioned`` is
+        ``None`` and :meth:`get_entry` returns the bare value.
         """
         cmd = {"type": "json_get", "key": key, "path": path}
         for field, value in self._temporal(as_of, as_of_time).items():

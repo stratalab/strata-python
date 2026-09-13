@@ -97,8 +97,22 @@ for h in hits:
     h.key, h.score, h.metadata         # VectorMatch(.key: str, .score: float, .metadata)
 ```
 
-Pair with `db.ai.embed(...)` to build a semantic index: embed text, upsert the
-vector, then query with an embedded query.
+**Semantic search without embedding it yourself** (engine 1.2.2+): declare the
+collection's model once and hand `text=` to `upsert`/`query` — the engine embeds
+it. `db.ai.embed(...)` remains the explicit path when you want the vector.
+
+```python
+db.vectors.create_collection("docs", dimension=384, embedding_model="miniLM")
+db.vectors.upsert("docs", "d1", text="a small domestic cat")   # embedded for you
+db.vectors.query("docs", text="kitten", k=5)                   # and on the way in
+db.vectors.set_embedding_model("docs", "miniLM")               # declare it after the fact
+```
+
+Pass a `vector` or `text=`, never both. `text=` on a collection with no declared
+model raises `FailedPreconditionError`
+(`failed_precondition.engine.embedding_model_missing`), and the embedding call
+itself can raise any `inference.*` code — `db.ai.status()` reports up front
+whether this build can run local models and which provider keys are present.
 
 ## Event log — `db.events` (append-only, hash-chained)
 
@@ -318,6 +332,12 @@ Exact failure modes worth recognizing up front (match on the `.code`, not the me
   `cache=True` raises `InvalidArgumentError` (`invalid_argument.cli.no_database`) —
   Strata never opens the current directory implicitly. Pass a path, set `STRATA_DB`
   (`stratadb.from_env()`), or use `cache=True`.
+- **A provider key from the config file is read at open.** Engine 1.2.2
+  assembles provider settings when the database opens, so
+  `strata config set openai.api_key ...` after `stratadb.open(...)` does not
+  reach that handle — reopen. The `OPENAI_API_KEY`-style env vars are still
+  read per call. `db.ai.status()` reports which providers this handle sees as
+  `ready`, and where each key came from.
 - **Cloud `db.ai.*` needs a provider key.** A keyless cloud call raises
   `FailedPreconditionError` (`inference.missing_api_key`), and the message names the
   env var — it's a setup issue, not a bug. Set `OPENAI_API_KEY` (or the provider's).

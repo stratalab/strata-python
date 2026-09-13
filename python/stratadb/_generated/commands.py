@@ -74,7 +74,7 @@ class Commands:
         if branch is not None:
             cmd['branch'] = branch
         data = self._core.data(cmd)
-        return _wire.Record({'branch': data['branch'], 'dataset': data['dataset'], 'dest': data['dest'], 'manifest_hash': data['manifest_hash'], 'object_count': data['object_count'], 'total_bytes': data['total_bytes']})
+        return models.HubCloneResult.from_wire(data)
 
     def admin_info(self, *, branch=None):
         """Read database identity and a catalog summary.
@@ -123,7 +123,7 @@ class Commands:
         """
         cmd = {'type': 'ping'}
         data = self._core.data(cmd)
-        return _wire.Record({'version': data['version']})
+        return models.AdminPing.from_wire(data)
 
     def admin_remote(self):
         """Read where this database was cloned from.
@@ -1721,15 +1721,17 @@ class Commands:
         data = self._core.data(cmd)
         return models.BatchResult7.from_wire(data)
 
-    def vector_collection_create(self, collection, dimension, metric, *, branch=None, space=None):
-        """Create a vector collection with a dimension and metric.
+    def vector_collection_create(self, collection, dimension, metric, *, embedding_model=None, branch=None, space=None):
+        """Create a vector collection with a dimension, metric, and optionally the model that produces its vectors.
 
-        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.vector_collection, invalid_argument.engine.vector_key, not_found.engine.vector_collection, invalid_argument.engine.vector_dimension, invalid_argument.executor.vector_dimension
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.vector_collection, invalid_argument.engine.vector_key, not_found.engine.vector_collection, invalid_argument.engine.vector_dimension, invalid_argument.engine.embedding_model, invalid_argument.executor.vector_dimension
         """
         cmd = {'type': 'vector_create_collection'}
         cmd['collection'] = collection
         cmd['dimension'] = dimension
         cmd['metric'] = metric
+        if embedding_model is not None:
+            cmd['embedding_model'] = embedding_model
         if branch is not None:
             cmd['branch'] = branch
         if space is not None:
@@ -1757,6 +1759,21 @@ class Commands:
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.vector_collection, invalid_argument.engine.vector_key, not_found.engine.vector_collection
         """
         cmd = {'type': 'vector_list_collections'}
+        if branch is not None:
+            cmd['branch'] = branch
+        if space is not None:
+            cmd['space'] = space
+        data = self._core.data(cmd)
+        return _wire.Record({'cursor': (None if data.get('cursor') is None else data['cursor']), 'has_more': data['has_more'], 'items': [models.VectorCollectionInfo.from_wire(_x) for _x in (data['items'] or [])]})
+
+    def vector_collection_set_embedding_model(self, collection, model, *, branch=None, space=None):
+        """Declare the embedding model a vector collection's vectors come from.
+
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.vector_collection, invalid_argument.engine.vector_key, not_found.engine.vector_collection, invalid_argument.engine.embedding_model, failed_precondition.engine.embedding_model_mismatch
+        """
+        cmd = {'type': 'vector_set_embedding_model'}
+        cmd['collection'] = collection
+        cmd['model'] = model
         if branch is not None:
             cmd['branch'] = branch
         if space is not None:
@@ -1951,14 +1968,13 @@ class Commands:
         data = self._core.data(cmd)
         return _wire.Record({'collection': data['collection'], 'commit': (None if data.get('commit') is None else models.CommitReceipt.from_wire(data['commit'])), 'effect': models.MutationEffect.from_wire(data['effect']), 'key': data['key'], 'vector_revision': (None if data.get('vector_revision') is None else data['vector_revision'])})
 
-    def vector_query(self, collection, query, k, *, as_of=None, as_of_time=None, filter=None, branch=None, space=None):
+    def vector_query(self, collection, k, *, as_of=None, as_of_time=None, filter=None, query=None, text=None, branch=None, space=None):
         """Search a vector collection.
 
-        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.vector_collection, invalid_argument.engine.vector_key, not_found.engine.vector_collection, invalid_argument.engine.vector_filter, invalid_argument.executor.vector_limit
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.vector_collection, invalid_argument.engine.vector_key, not_found.engine.vector_collection, invalid_argument.engine.vector_filter, invalid_argument.executor.vector_limit, invalid_argument.executor.vector_input, failed_precondition.engine.embedding_model_missing, inference.invalid_request, inference.unsupported_operation, inference.missing_model, inference.unknown_model, inference.io_failure, inference.model_load_failed, inference.local_runtime_failed, inference.registry_corrupt, inference.missing_api_key, inference.provider_auth_failed, inference.provider_unavailable, inference.provider_timeout, inference.provider_rate_limited, inference.provider_quota_exhausted, inference.provider_model_not_found, inference.provider_malformed_response, inference.unsupported_provider, inference.unsupported_parameter
         """
         cmd = {'type': 'vector_query'}
         cmd['collection'] = collection
-        cmd['query'] = [_x for _x in (query or [])]
         cmd['k'] = k
         if as_of is not None:
             cmd['as_of'] = as_of
@@ -1966,6 +1982,10 @@ class Commands:
             cmd['as_of_time'] = as_of_time
         if filter is not None:
             cmd['filter'] = {'conditions': [{'field': _x['field'], 'op': _x['op'], 'value': _x['value']} for _x in (filter['conditions'] or [])]}
+        if query is not None:
+            cmd['query'] = [_x for _x in (query or [])]
+        if text is not None:
+            cmd['text'] = text
         if branch is not None:
             cmd['branch'] = branch
         if space is not None:
@@ -2007,17 +2027,20 @@ class Commands:
         data = self._core.data(cmd)
         return _wire.Record({'cursor': (None if data.get('cursor') is None else data['cursor']), 'has_more': data['has_more'], 'items': [models.VectorVersionedData.from_wire(_x) for _x in (data['items'] or [])]})
 
-    def vector_upsert(self, collection, key, vector, *, metadata=None, branch=None, space=None):
+    def vector_upsert(self, collection, key, *, metadata=None, text=None, vector=None, branch=None, space=None):
         """Insert or replace one vector.
 
-        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.vector_collection, invalid_argument.engine.vector_key, not_found.engine.vector_collection, invalid_argument.engine.vector_dimension, invalid_argument.engine.vector_embedding, invalid_argument.engine.vector_metadata, invalid_argument.executor.vector_dimension
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.vector_collection, invalid_argument.engine.vector_key, not_found.engine.vector_collection, invalid_argument.engine.vector_dimension, invalid_argument.engine.vector_embedding, invalid_argument.engine.vector_metadata, invalid_argument.executor.vector_dimension, invalid_argument.executor.vector_input, failed_precondition.engine.embedding_model_missing, inference.invalid_request, inference.unsupported_operation, inference.missing_model, inference.unknown_model, inference.io_failure, inference.model_load_failed, inference.local_runtime_failed, inference.registry_corrupt, inference.missing_api_key, inference.provider_auth_failed, inference.provider_unavailable, inference.provider_timeout, inference.provider_rate_limited, inference.provider_quota_exhausted, inference.provider_model_not_found, inference.provider_malformed_response, inference.unsupported_provider, inference.unsupported_parameter
         """
         cmd = {'type': 'vector_upsert'}
         cmd['collection'] = collection
         cmd['key'] = key
-        cmd['vector'] = [_x for _x in (vector or [])]
         if metadata is not None:
             cmd['metadata'] = metadata
+        if text is not None:
+            cmd['text'] = text
+        if vector is not None:
+            cmd['vector'] = [_x for _x in (vector or [])]
         if branch is not None:
             cmd['branch'] = branch
         if space is not None:

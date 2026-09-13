@@ -117,6 +117,7 @@ GENERATED_COMMANDS = [
     'vector.collection.create',
     'vector.collection.delete',
     'vector.collection.list',
+    'vector.collection.set_embedding_model',
     'vector.collection.stats',
     'vector.count',
     'vector.delete',
@@ -146,6 +147,7 @@ UNCOVERED_COMMANDS = [
     'inference.models.local',
     'inference.models.pull',
     'inference.rank',
+    'inference.status',
     'inference.tokenize',
     'inference.unload',
 ]

@@ -126,8 +126,8 @@ def test_json_and_events_and_graph(commands):
 
 def test_vector_query_typed(commands):
     commands.vector_collection_create("v", 3, "cosine")
-    commands.vector_upsert("v", "k1", [1.0, 0.0, 0.0], metadata={"kind": "note"})
-    matches = commands.vector_query("v", [1.0, 0.0, 0.0], 5)
+    commands.vector_upsert("v", "k1", vector=[1.0, 0.0, 0.0], metadata={"kind": "note"})
+    matches = commands.vector_query("v", 5, query=[1.0, 0.0, 0.0])
     assert len(matches) == 1
     assert isinstance(matches[0], models.VectorMatch)
     assert matches[0].key == "k1"

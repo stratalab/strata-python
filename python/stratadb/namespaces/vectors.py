@@ -65,6 +65,30 @@ def _vector_arg(vector: Any) -> list:
         ) from None
 
 
+def _embedding_input(
+    vector: Any, text: Any, *, vector_field: str = "vector"
+) -> dict[str, Any]:
+    """The embedding argument for one call: a literal vector, or text to embed.
+
+    Engine 1.2.2 lets a collection declare an ``embedding_model`` and take
+    ``text`` where a vector would go. The two are alternatives, and the engine
+    rejects the confused cases (``invalid_argument.executor.vector_input``);
+    catching them here names the argument the caller meant instead of spending
+    a round trip to be told.
+    """
+    if (vector is None) == (text is None):
+        raise client_error(
+            InvalidArgumentError,
+            "invalid_argument.sdk.command",
+            "pass a vector or text=, not both" if vector is not None else "pass a vector or text=",
+            "give a literal embedding, or text= for the engine to embed with the "
+            "collection's declared embedding_model",
+        )
+    if text is not None:
+        return {"text": text}
+    return {vector_field: _vector_arg(vector)}
+
+
 def _vector_entries(entries: Any) -> list[dict]:
     out = []
     for entry in entries:
@@ -99,8 +123,21 @@ class VectorsNamespace(Namespace):
 
     # --- collections ---
 
-    def create_collection(self, name: str, dimension: int, *, metric: str = "cosine") -> Any:
+    def create_collection(
+        self,
+        name: str,
+        dimension: int,
+        *,
+        metric: str = "cosine",
+        embedding_model: Optional[str] = None,
+    ) -> Any:
         """Creates a collection of ``dimension``-d vectors under ``metric``.
+
+        ``embedding_model`` declares the model whose output this collection
+        holds (``"openai:text-embedding-3-small"``, or a bare name for a local
+        model). Declaring it is what lets :meth:`upsert` and :meth:`query` take
+        ``text=`` and embed it for you; :meth:`set_embedding_model` declares it
+        on a collection that already exists.
 
         Examples:
             >>> _ = db.vectors.create_collection("docs", 3, metric="cosine")
@@ -108,8 +145,26 @@ class VectorsNamespace(Namespace):
             3
         """
         return self._c.vector_collection_create(
-            name, dimension, _normalize_metric(metric), **self._scope
+            name, dimension, _normalize_metric(metric),
+            embedding_model=embedding_model, **self._scope
         )
+
+    def set_embedding_model(self, collection: str, model: str) -> Any:
+        """Declares the embedding model a collection's vectors come from.
+
+        Use it on a collection created before the model was known. A
+        collection holds one model's output: re-declaring a *different* model
+        raises :class:`~stratadb.errors.FailedPreconditionError`
+        (``failed_precondition.engine.embedding_model_mismatch``), since
+        distances between two models' vectors are not comparable. Declaring a
+        model where there was none always succeeds.
+
+        Examples:
+            >>> _ = db.vectors.create_collection("docs", 3, metric="cosine")
+            >>> db.vectors.set_embedding_model("docs", "openai:text-embedding-3-small").items[0].embedding_model
+            'openai:text-embedding-3-small'
+        """
+        return self._c.vector_collection_set_embedding_model(collection, model, **self._scope)
 
     def delete_collection(self, name: str) -> Any:
         """Deletes a collection and all its vectors.
@@ -164,11 +219,21 @@ class VectorsNamespace(Namespace):
         self,
         collection: str,
         key: str,
-        vector: Sequence[float],
+        vector: Optional[Sequence[float]] = None,
         *,
+        text: Optional[str] = None,
         metadata: Optional[dict] = None,
     ) -> Any:
         """Inserts or replaces a vector (with optional metadata).
+
+        Pass ``vector`` to store an embedding you computed, or ``text=`` to
+        have the engine embed it with the collection's declared
+        ``embedding_model`` (engine 1.2.2+) — exactly one of the two. A
+        ``text=`` upsert on a collection with no declared model raises
+        :class:`~stratadb.errors.FailedPreconditionError`
+        (``failed_precondition.engine.embedding_model_missing``), and the
+        embedding call itself can raise the ``inference.*`` codes, including
+        ``inference.missing_api_key`` for a cloud model with no key.
 
         Examples:
             >>> _ = db.vectors.create_collection("docs", 3, metric="cosine")
@@ -177,7 +242,13 @@ class VectorsNamespace(Namespace):
             True
         """
         _check_metadata(metadata)
-        return self._c.vector_upsert(collection, key, _vector_arg(vector), metadata=metadata, **self._scope)
+        return self._c.vector_upsert(
+            collection,
+            key,
+            **_embedding_input(vector, text),
+            metadata=metadata,
+            **self._scope,
+        )
 
     def get(self, collection: str, key: str, *, as_of: Optional[int] = None, as_of_time: Optional[TimeLike] = None) -> Any:
         """Returns the stored vector + metadata, or ``None`` if absent.
@@ -316,8 +387,9 @@ class VectorsNamespace(Namespace):
     def query(
         self,
         collection: str,
-        vector: Sequence[float],
+        vector: Optional[Sequence[float]] = None,
         *,
+        text: Optional[str] = None,
         k: int = 10,
         filter: Any = None,
         as_of: Optional[int] = None,
@@ -325,7 +397,11 @@ class VectorsNamespace(Namespace):
     ) -> list:
         """Returns the ``k`` nearest matches, optionally metadata-filtered.
 
-        Each match exposes ``.key``, ``.score``, and ``.metadata``.
+        Each match exposes ``.key``, ``.score``, and ``.metadata``. Search by a
+        ``vector`` you computed, or by ``text=``, which the engine embeds with
+        the collection's declared ``embedding_model`` (engine 1.2.2+) — exactly
+        one of the two, and ``text=`` carries the same embedding-model and
+        ``inference.*`` failure modes as :meth:`upsert`.
 
         Examples:
             >>> _ = db.vectors.create_collection("docs", 3, metric="cosine")
@@ -335,7 +411,12 @@ class VectorsNamespace(Namespace):
             ['a', 'b']
         """
         return self._c.vector_query(
-            collection, _vector_arg(vector), k, filter=_filter_wire(filter), **self._temporal(as_of, as_of_time), **self._scope
+            collection,
+            k,
+            filter=_filter_wire(filter),
+            **_embedding_input(vector, text, vector_field="query"),
+            **self._temporal(as_of, as_of_time),
+            **self._scope,
         )
 
     def index_query(

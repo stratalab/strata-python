@@ -6,7 +6,7 @@
       "type": "string"
     },
     "Maybe": {
-      "description": "Point-read envelope shared by every capability's single-record `get`.\n\n`found` is the authoritative presence flag; `value` carries the record only\nwhen it exists. A missing record serializes as `{found: false, value: null}`\nand a present one as `{found: true, value: <record>}`, so absence never\naliases a bare `null` payload and every primitive answers a point read the\nsame shape.\n\nThe payload is `Option<T>` because these primitives never store a JSON\n`null` as a record — struct payloads round-trip cleanly through\n`Option<T>`. JSON is the one exception: a stored JSON `null` is a real value\nthat `Option<serde_json::Value>` would collapse to absence on deserialize,\nso JSON reads use the dedicated [`MaybeJsonValue`](super::MaybeJsonValue)\nenvelope, which carries a non-optional `value` to keep found-null distinct\nfrom absent. Both envelopes serialize the same `{found, value}` wire shape.",
+      "description": "Point-read envelope shared by every capability's single-record `get`.\n\n`found` is the authoritative presence flag; `value` carries the record only\nwhen it exists. A missing record serializes as `{found: false, value: null}`\nand a present one as `{found: true, value: <record>}`, so absence never\naliases a bare `null` payload and every primitive answers a point read the\nsame shape.\n\nThe payload is `Option<T>` because these primitives never store a JSON\n`null` as a record — struct payloads round-trip cleanly through\n`Option<T>`. JSON is the one exception: a stored JSON `null` is a real value\nthat `Option<serde_json::Value>` would collapse to absence on deserialize,\nso a JSON read answers with\n[`MaybeJsonVersionedValue`](super::MaybeJsonVersionedValue), whose payload\ncarries a non-optional `value` to keep found-null distinct from absent.\nBoth envelopes serialize the same `{found, value}` wire shape.",
       "properties": {
         "found": {
           "type": "boolean"
@@ -58,7 +58,7 @@
   "command": "kv.get",
   "request": {
     "additionalProperties": false,
-    "description": "Reads one KV entry.",
+    "description": "Reads one KV entry.\n\n# Guaranteed semantics\n\n- **Absent and empty are different.** A missing key returns no entry; a\n  key holding zero bytes returns an entry whose value is empty.\n- **Reads never block writers.** A read observes a consistent version of\n  the key and takes no lock a concurrent writer waits on.",
     "properties": {
       "as_of": {
         "description": "Read as of a position on the logical commit timeline — the\n`timestamp` from `history` output, not the `version`, and never a\ncalendar date. To read as of a real time, use `as_of_time` instead.",

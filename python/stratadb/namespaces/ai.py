@@ -405,6 +405,32 @@ class AiNamespace(Namespace):
         """
         return self._core.data({"type": "inference_unload", "model": model})
 
+    def status(self) -> Any:
+        """What this build can do before anything is attempted (engine 1.2.2+).
+
+        Note that a key from ``strata config set <provider>.api_key`` is read
+        when the **database is opened** (engine 1.2.2 assembles provider
+        settings there), while the environment variable is read per call — so
+        a config key written after ``stratadb.open(...)`` needs a reopen, and
+        ``key_source`` here reports what this handle actually holds.
+
+        Reports whether the wheel can execute local models
+        (``local_execution``) and download them (``model_download``), the
+        shared ``models_dir`` and how many catalogued models are present, and
+        one row per cloud provider: whether its key is present, which env var
+        it reads, the base URL in effect, and whether it is ``ready``. Answer
+        "why did my ``db.ai`` call fail?" here rather than by running it —
+        a keyless provider shows ``key_present: False`` before it can raise
+        ``inference.missing_api_key``.
+
+        Examples:
+            >>> {p["provider"] for p in db.ai.status()["providers"]} >= {"openai", "anthropic"}
+            True
+            >>> isinstance(db.ai.status()["local_execution"], bool)
+            True
+        """
+        return self._core.data({"type": "inference_status"})
+
     def cache_status(self) -> Any:
         """Which models are currently loaded in the runtime cache.
 
@@ -445,7 +471,7 @@ class _Models:
 
         Examples:
             >>> sorted(set(m["task"] for m in db.ai.models.list()["items"]))
-            ['embed', 'generate', 'rank']
+            ['embed', 'generate']
         """
         return self._core.data({"type": "inference_models_list"})
 

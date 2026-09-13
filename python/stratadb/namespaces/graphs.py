@@ -493,7 +493,7 @@ class GraphAnalytics(Namespace):
             >>> _ = db.graphs.add_node("g", "c")
             >>> _ = db.graphs.add_edge("g", "a", "knows", "b")
             >>> _ = db.graphs.add_edge("g", "b", "knows", "c")
-            >>> db.graphs.analytics.bfs("g", "a").visited
+            >>> db.graphs.analytics.bfs("g", "a", direction="outgoing").visited
             ['a', 'b', 'c']
         """
         return self._c.graph_analytics_bfs(
@@ -527,7 +527,7 @@ class GraphAnalytics(Namespace):
             >>> _ = db.graphs.add_node("g", "c")
             >>> _ = db.graphs.add_edge("g", "a", "knows", "b")
             >>> _ = db.graphs.add_edge("g", "b", "knows", "c")
-            >>> sorted(db.graphs.analytics.sssp("g", "a").distances)
+            >>> sorted(db.graphs.analytics.sssp("g", "a", direction="outgoing").distances)
             ['a', 'b', 'c']
         """
         return self._c.graph_analytics_sssp(
@@ -568,7 +568,7 @@ class GraphAnalytics(Namespace):
             >>> _ = db.graphs.add_node("g", "c")
             >>> _ = db.graphs.add_edge("g", "a", "knows", "b")
             >>> _ = db.graphs.add_edge("g", "b", "knows", "c")
-            >>> sorted(db.graphs.analytics.cdlp("g").labels)
+            >>> sorted(db.graphs.analytics.cdlp("g", direction="both").labels)
             ['a', 'b', 'c']
         """
         return self._c.graph_analytics_cdlp(
