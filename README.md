@@ -229,6 +229,11 @@ except errors.NotFoundError as e:
 
 Misses are not errors — reads return `None`.
 
+Codes come from two registries: the engine's (`strata agents errors`) and the
+SDK's own client-side ones — a closed handle, a bad `limit`, a `datetime` handed
+to `as_of`. `stratadb.errors.catalog()` lists the SDK's thirteen with the same
+fields the engine publishes, and the wheel ships them as `sdk-errors.json`.
+
 ## For AI agents
 
 - `stratadb.agents_guide()` — the complete offline **Python** usage guide bundled

@@ -18,6 +18,12 @@ def test_namespace_doctests(name):
     _run_doctests(importlib.import_module(f"stratadb.namespaces.{name}"), name)
 
 
+def test_errors_doctests():
+    # stratadb.errors.catalog() is public surface (stratadb.org renders /e/
+    # pages from it), so its examples are executed like every other.
+    _run_doctests(importlib.import_module("stratadb.errors"), "errors")
+
+
 def test_clock_doctests():
     # stratadb.clock is public surface (as_of_time coercion, committed_at
     # formatting), so its examples are held to the same standard.

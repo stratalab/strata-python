@@ -8,6 +8,11 @@ typed exception whose class is the code's first segment.
 **Match on** :attr:`StrataError.code` **or** :attr:`StrataError.error_class` —
 never on the human ``message`` text, which is not part of the contract.
 
+Codes come from two registries: the engine's, published by
+``strata agents errors``, and the SDK's own client-side ones — a closed
+handle, a bad ``limit``, a ``datetime`` handed to ``as_of`` — which
+:func:`catalog` publishes and the wheel ships as ``sdk-errors.json``.
+
 Misses (a key that is absent) are **not** errors: reads return ``None``.
 Out-of-range time travel raises :class:`HistoryUnavailableError`, distinct from
 :class:`NotFoundError`.
@@ -17,6 +22,9 @@ from __future__ import annotations
 
 import json
 from typing import Any
+
+from ._catalog import catalog as _catalog
+from ._catalog import entry as _entry
 
 
 class StrataError(Exception):
@@ -205,21 +213,44 @@ def client_error(
 ) -> StrataError:
     """Builds a client-side (SDK-raised, non-engine) error with a full status.
 
-    Used for guards the engine never sees — e.g. opening with no target.
+    Used for guards the engine never sees — e.g. opening with no target. The
+    retry policy and commit outcome come from :data:`~stratadb._catalog.SDK_ERRORS`
+    so they are stated once and published; ``message`` and ``hint`` stay the
+    call site's own, which can name the offending argument and its value.
     """
+    row = _entry(code)
+    retry_policy = row["retry_policy"]
     return error_cls(
         {
-            "class": code.split(".", 1)[0],
+            "class": row["class"],
             "code": code,
-            "message": message,
-            "suggested_fix": hint,
-            "docs_url": f"https://stratadb.org/e/{code}",
+            "message": message or row["message"],
+            "suggested_fix": hint or row["hint"],
+            "docs_url": row["ref"],
             "reference_id": "",
-            "retry_policy": "never",
-            "retryable": False,
-            "commit_outcome": "not_applicable",
+            "retry_policy": retry_policy,
+            "retryable": retry_policy not in ("never", "unknown"),
+            "commit_outcome": row["commit_outcome"],
         }
     )
+
+
+def catalog() -> list:
+    """Every error code the SDK raises itself, in the engine registry's shape.
+
+    The engine publishes its codes through ``strata agents errors``; these are
+    the client-side ones it never sees, which is why they are catalogued here
+    (stratalab/strata-python#87). The wheel also ships them as
+    ``sdk-errors.json`` beside the command index.
+
+    Examples:
+        >>> rows = stratadb.errors.catalog()
+        >>> len(rows)
+        13
+        >>> {row["area"] for row in rows} == {"sdk", "cli"}
+        True
+    """
+    return _catalog()
 
 
 __all__ = [
@@ -243,5 +274,6 @@ __all__ = [
     "error_from_status",
     "error_from_payload",
     "client_error",
+    "catalog",
     "require_field",
 ]
