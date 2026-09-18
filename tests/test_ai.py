@@ -168,6 +168,28 @@ def test_missing_key_raises_typed_error(monkeypatch, tmp_path):
     assert isinstance(excinfo.value, errors.FailedPreconditionError)
 
 
+def test_status_reports_the_config_file_state(db, monkeypatch, tmp_path):
+    # strata-core #3423: a provider whose key sits in a broken config used to
+    # be indistinguishable from one never configured — both key_present=False,
+    # key_source=None — so a caller offered the wrong remedy. The file's state
+    # is reported (never its contents).
+    status = db.ai.status()
+    assert set(status["config_file"]) == {"path", "state"}
+    assert status["config_file"]["state"] in ("absent", "readable", "unreadable", "malformed")
+
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))  # nothing written there
+    with stratadb.open(cache=True) as fresh:
+        absent = fresh.ai.status()["config_file"]
+    assert absent["state"] == "absent"
+    assert absent["path"].startswith(str(tmp_path))
+
+    broken = tmp_path / "strata" / "config.toml"
+    broken.parent.mkdir(parents=True, exist_ok=True)
+    broken.write_text('[providers.openai\napi_key = "unterminated')
+    with stratadb.open(cache=True) as fresh:
+        assert fresh.ai.status()["config_file"]["state"] == "malformed"
+
+
 def test_model_handle_injects_config():
     class FakeAi:
         def chat(self, messages, *, model, **kwargs):

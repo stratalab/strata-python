@@ -405,8 +405,12 @@ def open(  # noqa: A001 — deliberate builtin shadow at module scope (gzip.open
     socket other processes can broker to — and transparently brokers to the
     existing owner otherwise, so several processes (or handles) share one
     durable database; ``"client"`` brokers on contention but never hosts;
-    ``"off"`` is a raw exclusive open with no brokering (a second open then
-    raises). ``db.admin.ipc_status()`` reports the live topology.
+    ``"off"`` is a raw exclusive open with no brokering — a second open raises
+    :class:`~stratadb.errors.FailedPreconditionError`
+    (``failed_precondition.engine.writer_lock``; before engine 1.2.3 this was
+    an ``UnavailableError``, which read as an outage rather than another
+    opener holding the database). ``db.admin.ipc_status()`` reports the live
+    topology.
 
     ``memory_budget`` sizes the storage memory budget of a durable database, in
     bytes (at least 1 MiB; the engine rejects smaller with

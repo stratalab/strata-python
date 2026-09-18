@@ -43,12 +43,15 @@ def test_open_regular_file_raises_typed_error(tmp_path):
 def test_double_open_off_mode_raises_typed_error(tmp_path):
     # With ipc="off" a durable open is exclusive: a second off-mode open of the
     # same path raises typed (no brokering). (The default ipc="host" instead
-    # brokers in — see tests/test_ipc.py.)
+    # brokers in — see tests/test_ipc.py.) Engine 1.2.3 names the condition:
+    # another opener holds the writer lock, which is a precondition to fix and
+    # not the transient `unavailable` outage it used to report.
     path = str(tmp_path / "db")
     first = stratadb.open(path, ipc="off")  # holds the exclusive process lock
     try:
-        with pytest.raises(errors.StrataError):
+        with pytest.raises(errors.FailedPreconditionError) as excinfo:
             stratadb.open(path, ipc="off")
+        assert excinfo.value.code == "failed_precondition.engine.writer_lock"
     finally:
         first.close()
 

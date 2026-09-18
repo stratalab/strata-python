@@ -149,6 +149,13 @@ class BranchesNamespace(Namespace):
     def delete(self, name: str) -> Any:
         """Deletes a branch.
 
+        A branch that is the source of a live fork cannot be deleted while the
+        fork depends on it: :class:`~stratadb.errors.FailedPreconditionError`
+        (``failed_precondition.engine.branch_has_children``, engine 1.2.3 —
+        it used to read as a retry-later failure). Delete the children first.
+        The ``default`` branch can never be deleted
+        (``invalid_argument.engine.branch_delete``).
+
         Examples:
             >>> _ = db.branches.create("temp")
             >>> _ = db.branches.delete("temp")

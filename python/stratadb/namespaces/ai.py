@@ -414,6 +414,14 @@ class AiNamespace(Namespace):
         a config key written after ``stratadb.open(...)`` needs a reopen, and
         ``key_source`` here reports what this handle actually holds.
 
+        ``config_file`` (engine 1.2.3) says where that file is and whether it
+        could be used — ``state`` is ``absent``, ``readable``, ``unreadable``
+        or ``malformed``, and the whole object is ``None`` when the runtime
+        reads no file. Never its contents. It is the difference between "no
+        key was ever set" and "a key is set in a file I cannot parse", which
+        both used to look like ``key_present: False`` and earned the caller
+        the wrong remedy.
+
         Reports whether the wheel can execute local models
         (``local_execution``) and download them (``model_download``), the
         shared ``models_dir`` and how many catalogued models are present, and
@@ -427,6 +435,9 @@ class AiNamespace(Namespace):
             >>> {p["provider"] for p in db.ai.status()["providers"]} >= {"openai", "anthropic"}
             True
             >>> isinstance(db.ai.status()["local_execution"], bool)
+            True
+            >>> (db.ai.status()["config_file"] or {"state": "absent"})["state"] in (
+            ...     "absent", "readable", "unreadable", "malformed")
             True
         """
         return self._core.data({"type": "inference_status"})
