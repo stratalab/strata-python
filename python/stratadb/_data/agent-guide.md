@@ -78,7 +78,8 @@ for key in db.kv.iter_keys(prefix="user:"):   # plain iterator over keys
 ## JSON documents — `db.json`
 
 ```python
-db.json.set("user:1", "$", {"name": "Ada", "roles": ["admin"]})  # -> Record(.commit, .effect, .key)
+db.json.set("user:1", {"name": "Ada", "roles": ["admin"]})  # -> Record(.commit, .effect, .key)
+db.json.set("user:1", "$.name", "Grace")          # a path writes one field; omit it for the document
 db.json.get("user:1", "$.name")        # 'Ada'
 db.json.get("user:1")                  # {'name': 'Ada', 'roles': ['admin']}  (bare value; None on miss)
 db.json.exists("user:1")               # True
@@ -349,7 +350,9 @@ Exact failure modes worth recognizing up front (match on the `.code`, not the me
   a second `stratadb.open(path)` — another handle or another process — brokers to
   the first as the owner rather than raising; `db.admin.ipc_status()` shows who
   owns it. Opt out with `ipc="off"` for an exclusive open, where a second open
-  raises `UnavailableError` (`unavailable.engine.persistence`) until the owner
+  raises `FailedPreconditionError` (`failed_precondition.engine.writer_lock`,
+  engine 1.2.3 — it was `UnavailableError`/`unavailable.engine.persistence`
+  before, which read as an outage rather than contention) until the owner
   closes. On non-unix platforms IPC is unavailable and durable opens are always
   exclusive (`ipc="host"/"client"` raise `InvalidArgumentError`).
 - **Default durability is `"standard"`, not fsync-per-commit.** A commit
@@ -371,7 +374,8 @@ Exact failure modes worth recognizing up front (match on the `.code`, not the me
   Budgets below 1 MiB raise `InvalidArgumentError`
   (`invalid_argument.engine.persistence`); `cache=True` takes no budget.
 - **A strict merge that conflicts changes nothing.** `db.branches.merge()`
-  raises `ConflictError` (`conflict.engine.promotion`, not retryable) if any
+  raises `ConflictError` (`conflict.engine.promotion`, `after_state_change` —
+  worth retrying once the source is resolved, never as a blind loop) if any
   entity diverged on both branches since the fork point, and applies *none* of
   the changes — not even the clean ones. Resolve on the source and retry, or
   pass `strategy="source_wins"` deliberately. Events and graphs never merge

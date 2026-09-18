@@ -15,7 +15,7 @@ description: >-
   matched on .code, db.ai inference, and the sharp edges that trip agents.
 license: MIT
 metadata:
-  strata-core-rev: "2a48581b091cfe232d469fd106de0d0fbd9d04f9"
+  strata-core-rev: "6fc481c33473efd7d1724284107b67be08625dcd"
   cli-version-range: "1.x"
   stratadb-version-range: "1.x"
 ---
@@ -69,7 +69,7 @@ One namespace per primitive, plus the control plane and the escape hatch:
 | Namespace | For | Key calls |
 |---|---|---|
 | `db.kv` | opaque values by key (`str`/`bytes` in, `bytes` out) | `put`, `get`, `exists`, `delete`, `put_many`, `get_many`, `keys(prefix=)`, `history` |
-| `db.json` | structured documents, addressed by path | `set(key, "$", doc)`, `get(key, "$.field")`, `set_many`, `keys(prefix=)`, `scan`, `history` |
+| `db.json` | structured documents, addressed by path | `set(key, doc)` or `set(key, "$.field", v)`, `get(key, "$.field")`, `set_many`, `keys(prefix=)`, `scan`, `history` |
 | `db.vectors` | embeddings + metadata, similarity search | `create_collection(name, dimension=, metric=, embedding_model=)`, `upsert(coll, key, vec \| text=)`, `query(coll, vec \| text=, k=, filter=)`, `set_embedding_model`, `keys`, `history` |
 | `db.events` | append-only, hash-chained log | `append(type, payload)`, `get(seq)`, `range(start=)`, `range_by_time`, `len()`, `verify_chain()` |
 | `db.graphs` | typed nodes and edges, traversal, analytics | `create`, `add_node`, `add_edge`, `neighbors`, `list_nodes`, graph analytics (PageRank, BFS, …) |
@@ -81,7 +81,8 @@ One namespace per primitive, plus the control plane and the escape hatch:
 
 ```python
 db.kv.put("greeting", "hello");  db.kv.get("greeting")                        # b'hello'
-db.json.set("user:1", "$", {"name": "Ada"});  db.json.get("user:1", "$.name")  # 'Ada'
+db.json.set("user:1", {"name": "Ada"});  db.json.get("user:1", "$.name")        # 'Ada'
+db.json.set("user:1", "$.name", "Grace")   # a path writes one field; omit it for the document
 db.vectors.create_collection("notes", dimension=3, metric="cosine")
 db.vectors.upsert("notes", "n1", [0.1, 0.2, 0.3], metadata={"kind": "note"})
 db.vectors.query("notes", [0.1, 0.2, 0.3], k=5)                               # list[VectorMatch]
@@ -209,9 +210,10 @@ Codes you will actually meet:
 | `history_unavailable.engine.persistence_history` | `as_of`, `as_of_time`, history, or a fork anchor outside the retained/dated window — including `as_of_time=now` |
 | `invalid_argument.executor.as_of_conflict` | both clocks in one call — pass `as_of` or `as_of_time`, not both |
 | `invalid_argument.sdk.as_of_kind` | a `datetime` passed to `as_of` — that is `as_of_time`'s argument |
-| `conflict.engine.promotion` | a `strict` `merge()` hit a conflict and changed nothing — `preview()`, resolve on the source, or `strategy="source_wins"` |
+| `conflict.engine.promotion` | a `strict` `merge()` hit a conflict and changed nothing — `preview()`, resolve on the source, or `strategy="source_wins"`. `retry_policy` is `after_state_change`: retry only after resolving, never as a loop |
 | `invalid_argument.engine.branch_point` | `preview()`/`merge()` between branches with no shared fork lineage (e.g. a `create()`d root) |
-| `unavailable.engine.persistence` | `ipc="off"` open of a path another handle owns — close it or wait |
+| `failed_precondition.engine.writer_lock` | `ipc="off"` open of a path another handle owns — close it, or open with the default `ipc="host"` and broker in (engine 1.2.3; it was `unavailable.engine.persistence`) |
+| `failed_precondition.engine.branch_has_children` | `db.branches.delete()` on a branch another branch was forked from — delete the fork first (durable databases) |
 | `unavailable.executor.ipc_transport` | the owner this handle brokered to has closed — reopen the database (see below) |
 | `inference.missing_api_key` | a cloud `db.ai` call with no provider key (`FailedPreconditionError`) |
 | `unsupported.sdk.state_removed` | `db.state` was removed in V1 — use `db.kv` or `db.json` |
@@ -240,8 +242,11 @@ Codes you will actually meet:
   whose dimension disagrees with the collection is
   `embedding_model_mismatch`. Pass a vector or `text=`, never both. The
   embedding is a real inference call, so it carries the `inference.*` failures
-  — `db.ai.status()` tells you up front whether this build runs local models
-  and which provider keys are present.
+  — `db.ai.status()` tells you up front whether this build runs local models,
+  which provider keys are present, and (engine 1.2.3) whether the config file
+  those keys live in is `absent`, `readable`, `unreadable` or `malformed` —
+  the difference between "no key was set" and "one was set in a file I cannot
+  read", which used to look identical.
 - **Cloud `db.ai` needs your key** (`OPENAI_API_KEY` / `ANTHROPIC_API_KEY` /
   `GOOGLE_API_KEY`, or `strata config set <provider>.api_key …`); Strata ships
   none, and there is no bundled offline embedder yet — for keyless vector

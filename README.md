@@ -71,7 +71,7 @@ db.kv.put("greeting", "hello")
 db.kv.get("greeting")                    # b"hello"
 
 # Structured data belongs in the JSON primitive (or json.dumps it into kv)
-db.json.set("user:1", "$", {"name": "Ada", "roles": ["admin"]})
+db.json.set("user:1", {"name": "Ada", "roles": ["admin"]})   # path defaults to "$"
 db.json.get("user:1", "$.name")          # "Ada"
 
 # Listing methods return a Page: iterate (auto-paginates) or collect with .all()

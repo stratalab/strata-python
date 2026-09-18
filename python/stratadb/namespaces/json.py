@@ -10,8 +10,12 @@ from typing import Any, Iterator, Optional, Sequence
 
 from .._results import BatchResult, Page, Sample
 from ..clock import TimeLike
-from ..errors import require_field
+from ..errors import InvalidArgumentError, client_error, require_field
 from .base import PAGE_SIZE, Namespace
+
+# "Not given", so an omitted argument is distinguishable from a stored None
+# (a JSON null is a legitimate value to write).
+_UNSET: Any = object()
 
 
 def _set_entries(entries: Any) -> list[dict]:
@@ -63,14 +67,37 @@ class JSONNamespace(Namespace):
 
     # --- single-record ---
 
-    def set(self, key: str, path: str, value: Any) -> Any:
+    def set(self, key: str, path: Any = _UNSET, value: Any = _UNSET) -> Any:
         """Sets ``value`` at ``path`` in document ``key``. Returns a write result.
+
+        ``path`` is optional and defaults to ``"$"``, the whole document, so
+        the natural first write mirrors :meth:`~stratadb.namespaces.kv.KVNamespace.put`::
+
+            db.json.set("user:1", {"name": "Ada"})           # the whole document
+            db.json.set("user:1", "$.name", "Grace")         # one field
+
+        Both forms are positional-compatible: two arguments are ``(key,
+        value)``, three are ``(key, path, value)``, and the keyword spellings
+        (``path=``, ``value=``) work as before.
 
         Examples:
             >>> _ = db.json.set("user", "$", {"name": "alice", "age": 30})
             >>> db.json.get("user", "$")
             {'age': 30, 'name': 'alice'}
         """
+        if value is _UNSET:
+            # Two arguments: the second one is the value, at the whole document.
+            if path is _UNSET:
+                raise client_error(
+                    InvalidArgumentError,
+                    "invalid_argument.sdk.command",
+                    "json.set needs a value",
+                    "call set(key, value) for the whole document, or "
+                    "set(key, path, value) for one field",
+                )
+            path, value = "$", path
+        elif path is _UNSET:
+            path = "$"  # set(key, value=...)
         return self._c.json_set(key, path, value, **self._scope)
 
     def get(self, key: str, path: str = "$", *, as_of: Optional[int] = None, as_of_time: Optional[TimeLike] = None) -> Any:

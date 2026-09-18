@@ -33,6 +33,30 @@ def identities(entities):
 # --- diff ---------------------------------------------------------------------
 
 
+def test_a_fork_source_cannot_be_deleted_while_its_fork_lives(tmp_path):
+    # strata-core #3196: deleting a branch another branch was forked from used
+    # to read as a retry-later failure; it is a permanent precondition, and the
+    # remedy is to delete the child first. (Durable only — a cache database
+    # holds no persistence claims to depend on.)
+    db = stratadb.open(str(tmp_path / "db"))
+    try:
+        db.kv.put("k", "v")
+        db.branches.fork("default", "parent")
+        db.at(branch="parent").kv.put("p", "v")
+        db.branches.fork("parent", "child")
+
+        with pytest.raises(errors.FailedPreconditionError) as excinfo:
+            db.branches.delete("parent")
+        assert excinfo.value.code == "failed_precondition.engine.branch_has_children"
+        assert "parent" in {b.name for b in db.branches.list()}  # nothing happened
+
+        db.branches.delete("child")
+        db.branches.delete("parent")  # the child gone, the source goes
+        assert {b.name for b in db.branches.list()} == {"default"}
+    finally:
+        db.close()
+
+
 def test_diff_reports_added_removed_modified_per_capability(db):
     db.kv.put("keep", "base")
     db.kv.put("gone", "base")
@@ -229,7 +253,11 @@ def test_merge_strict_refuses_and_mutates_nothing(db):
     with pytest.raises(errors.ConflictError) as excinfo:
         db.branches.merge("experiment", "default")
     assert excinfo.value.code == "conflict.engine.promotion"
-    assert excinfo.value.retryable is False
+    # Engine 1.2.3 moved this from never to after_state_change: retrying is
+    # worth it, but only once the conflict is resolved on the source — never
+    # as a blind loop on the same request.
+    assert excinfo.value.retry_policy == "after_state_change"
+    assert excinfo.value.retryable is True
 
     # Zero target mutation: not even the non-conflicting entry moved.
     assert db.kv.get("k") == b"main-side"
