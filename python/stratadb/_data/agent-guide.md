@@ -78,7 +78,8 @@ for key in db.kv.iter_keys(prefix="user:"):   # plain iterator over keys
 ## JSON documents — `db.json`
 
 ```python
-db.json.set("user:1", "$", {"name": "Ada", "roles": ["admin"]})  # -> Record(.commit, .effect, .key)
+db.json.set("user:1", {"name": "Ada", "roles": ["admin"]})  # -> Record(.commit, .effect, .key)
+db.json.set("user:1", "$.name", "Grace")          # a path writes one field; omit it for the document
 db.json.get("user:1", "$.name")        # 'Ada'
 db.json.get("user:1")                  # {'name': 'Ada', 'roles': ['admin']}  (bare value; None on miss)
 db.json.exists("user:1")               # True

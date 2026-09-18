@@ -107,6 +107,39 @@ def test_json_set_get_and_path(db):
     assert db.json.get("doc", "$.name") == "note"
 
 
+def test_json_set_takes_a_path_or_defaults_it(db):
+    # #86: json.get defaulted the path and json.set did not, so the write that
+    # mirrors kv.put(key, value) — the natural first one — was a TypeError that
+    # named the wrong argument. Both forms work, and both spellings of each.
+    db.json.set("whole", {"name": "Ada"})                 # (key, value)
+    assert db.json.get("whole") == {"name": "Ada"}
+
+    db.json.set("whole", "$.name", "Grace")               # (key, path, value)
+    assert db.json.get("whole", "$.name") == "Grace"
+
+    db.json.set("kw", value={"k": 1})                     # value=
+    db.json.set("kw", path="$.k", value=2)                # path= + value=
+    assert db.json.get("kw") == {"k": 2}
+
+    # A stored JSON null is a value, not an omitted argument.
+    db.json.set("null-doc", None)
+    entry = db.json.get_entry("null-doc")
+    assert entry is not None and entry.value is None
+
+    # A string is a document, not a path.
+    db.json.set("str-doc", "$.not-a-path")
+    assert db.json.get("str-doc") == "$.not-a-path"
+
+
+def test_json_set_without_a_value_is_typed(db):
+    # Previously `TypeError: missing 1 required positional argument: 'value'`,
+    # which named the argument the caller did supply.
+    with pytest.raises(errors.InvalidArgumentError) as excinfo:
+        db.json.set("lonely")
+    assert excinfo.value.code == "invalid_argument.sdk.command"
+    assert "set(key, value)" in excinfo.value.hint
+
+
 def test_json_miss_is_none(db):
     assert db.json.get("absent") is None
     assert db.json.get_entry("absent") is None

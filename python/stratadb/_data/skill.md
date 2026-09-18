@@ -69,7 +69,7 @@ One namespace per primitive, plus the control plane and the escape hatch:
 | Namespace | For | Key calls |
 |---|---|---|
 | `db.kv` | opaque values by key (`str`/`bytes` in, `bytes` out) | `put`, `get`, `exists`, `delete`, `put_many`, `get_many`, `keys(prefix=)`, `history` |
-| `db.json` | structured documents, addressed by path | `set(key, "$", doc)`, `get(key, "$.field")`, `set_many`, `keys(prefix=)`, `scan`, `history` |
+| `db.json` | structured documents, addressed by path | `set(key, doc)` or `set(key, "$.field", v)`, `get(key, "$.field")`, `set_many`, `keys(prefix=)`, `scan`, `history` |
 | `db.vectors` | embeddings + metadata, similarity search | `create_collection(name, dimension=, metric=, embedding_model=)`, `upsert(coll, key, vec \| text=)`, `query(coll, vec \| text=, k=, filter=)`, `set_embedding_model`, `keys`, `history` |
 | `db.events` | append-only, hash-chained log | `append(type, payload)`, `get(seq)`, `range(start=)`, `range_by_time`, `len()`, `verify_chain()` |
 | `db.graphs` | typed nodes and edges, traversal, analytics | `create`, `add_node`, `add_edge`, `neighbors`, `list_nodes`, graph analytics (PageRank, BFS, …) |
@@ -81,7 +81,8 @@ One namespace per primitive, plus the control plane and the escape hatch:
 
 ```python
 db.kv.put("greeting", "hello");  db.kv.get("greeting")                        # b'hello'
-db.json.set("user:1", "$", {"name": "Ada"});  db.json.get("user:1", "$.name")  # 'Ada'
+db.json.set("user:1", {"name": "Ada"});  db.json.get("user:1", "$.name")        # 'Ada'
+db.json.set("user:1", "$.name", "Grace")   # a path writes one field; omit it for the document
 db.vectors.create_collection("notes", dimension=3, metric="cosine")
 db.vectors.upsert("notes", "n1", [0.1, 0.2, 0.3], metadata={"kind": "note"})
 db.vectors.query("notes", [0.1, 0.2, 0.3], k=5)                               # list[VectorMatch]
