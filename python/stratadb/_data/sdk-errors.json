@@ -1,0 +1,135 @@
+{
+  "count": 13,
+  "errors": [
+    {
+      "area": "sdk",
+      "class": "failed_precondition",
+      "code": "failed_precondition.sdk.fork_not_supported",
+      "commit_outcome": "not_started",
+      "hint": "Open a fresh handle in the child process; a handle cannot cross os.fork().",
+      "message": "The handle was inherited across a fork and cannot be used.",
+      "ref": "https://stratadb.org/e/failed_precondition.sdk.fork_not_supported",
+      "retry_policy": "never"
+    },
+    {
+      "area": "sdk",
+      "class": "failed_precondition",
+      "code": "failed_precondition.sdk.handle_closed",
+      "commit_outcome": "not_started",
+      "hint": "Open a new handle; close() is final for the one you have (and idempotent).",
+      "message": "The database handle is closed.",
+      "ref": "https://stratadb.org/e/failed_precondition.sdk.handle_closed",
+      "retry_policy": "never"
+    },
+    {
+      "area": "cli",
+      "class": "invalid_argument",
+      "code": "invalid_argument.cli.no_database",
+      "commit_outcome": "not_started",
+      "hint": "Pass a path to stratadb.open(), set STRATA_DB for stratadb.from_env(), or use cache=True for an in-memory database.",
+      "message": "No database was specified.",
+      "ref": "https://stratadb.org/e/invalid_argument.cli.no_database",
+      "retry_policy": "never"
+    },
+    {
+      "area": "sdk",
+      "class": "invalid_argument",
+      "code": "invalid_argument.sdk.as_of_kind",
+      "commit_outcome": "not_started",
+      "hint": "as_of takes a position on the commit timeline (an int); pass as_of_time for a wall-clock instant.",
+      "message": "The as_of argument is not a commit timestamp.",
+      "ref": "https://stratadb.org/e/invalid_argument.sdk.as_of_kind",
+      "retry_policy": "never"
+    },
+    {
+      "area": "sdk",
+      "class": "invalid_argument",
+      "code": "invalid_argument.sdk.as_of_time",
+      "commit_outcome": "not_started",
+      "hint": "Pass epoch microseconds, a datetime, a date, or an ISO 8601 string (e.g. \"2026-09-05T15:00:00Z\").",
+      "message": "The as_of_time argument is not a wall-clock instant.",
+      "ref": "https://stratadb.org/e/invalid_argument.sdk.as_of_time",
+      "retry_policy": "never"
+    },
+    {
+      "area": "sdk",
+      "class": "invalid_argument",
+      "code": "invalid_argument.sdk.command",
+      "commit_outcome": "not_started",
+      "hint": "Correct the argument the message names and retry.",
+      "message": "The request contains invalid input.",
+      "ref": "https://stratadb.org/e/invalid_argument.sdk.command",
+      "retry_policy": "never"
+    },
+    {
+      "area": "sdk",
+      "class": "invalid_argument",
+      "code": "invalid_argument.sdk.committed_at",
+      "commit_outcome": "not_applicable",
+      "hint": "Pass a committed_at value (epoch microseconds), or None.",
+      "message": "The value is not a commit instant.",
+      "ref": "https://stratadb.org/e/invalid_argument.sdk.committed_at",
+      "retry_policy": "never"
+    },
+    {
+      "area": "sdk",
+      "class": "invalid_argument",
+      "code": "invalid_argument.sdk.entry",
+      "commit_outcome": "not_started",
+      "hint": "Pass each entry as a dict (or tuple) carrying the required fields.",
+      "message": "A batch entry is missing a required field.",
+      "ref": "https://stratadb.org/e/invalid_argument.sdk.entry",
+      "retry_policy": "never"
+    },
+    {
+      "area": "sdk",
+      "class": "invalid_argument",
+      "code": "invalid_argument.sdk.fork_ambiguous",
+      "commit_outcome": "not_started",
+      "hint": "Fork at a version or at a timestamp, not both.",
+      "message": "A fork anchor was given twice.",
+      "ref": "https://stratadb.org/e/invalid_argument.sdk.fork_ambiguous",
+      "retry_policy": "never"
+    },
+    {
+      "area": "sdk",
+      "class": "invalid_argument",
+      "code": "invalid_argument.sdk.limit",
+      "commit_outcome": "not_started",
+      "hint": "Omit limit to page through everything, or pass a value >= 1.",
+      "message": "The limit is not a positive integer.",
+      "ref": "https://stratadb.org/e/invalid_argument.sdk.limit",
+      "retry_policy": "never"
+    },
+    {
+      "area": "sdk",
+      "class": "invalid_argument",
+      "code": "invalid_argument.sdk.vector_metadata",
+      "commit_outcome": "not_started",
+      "hint": "Pass metadata as a dict of scalar values, or omit it.",
+      "message": "The vector metadata is not a mapping.",
+      "ref": "https://stratadb.org/e/invalid_argument.sdk.vector_metadata",
+      "retry_policy": "never"
+    },
+    {
+      "area": "sdk",
+      "class": "invalid_argument",
+      "code": "invalid_argument.sdk.vector_metric",
+      "commit_outcome": "not_started",
+      "hint": "Use \"cosine\", \"euclidean\", or \"dot\".",
+      "message": "The distance metric is not one this collection supports.",
+      "ref": "https://stratadb.org/e/invalid_argument.sdk.vector_metric",
+      "retry_policy": "never"
+    },
+    {
+      "area": "sdk",
+      "class": "unsupported",
+      "code": "unsupported.sdk.state_removed",
+      "commit_outcome": "not_applicable",
+      "hint": "Use db.kv for keyed values, or db.json for structured documents.",
+      "message": "The state-cell primitive was removed in V1.",
+      "ref": "https://stratadb.org/e/unsupported.sdk.state_removed",
+      "retry_policy": "never"
+    }
+  ]
+}

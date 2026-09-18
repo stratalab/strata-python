@@ -317,7 +317,15 @@ try:
 except errors.NotFoundError as e:
     e.code           # "not_found.engine.branch"
     e.hint, e.ref    # actionable hint + a docs URL
+
+errors.catalog()                          # the codes the SDK itself raises (13)
 ```
+
+Two registries produce those codes: the engine's, which `strata agents errors`
+publishes, and the SDK's own — the guards the engine never sees
+(`invalid_argument.sdk.*`, `failed_precondition.sdk.*`, and
+`invalid_argument.cli.no_database`). `errors.catalog()` is the second one, in
+the same shape, and the wheel ships it as `sdk-errors.json`.
 
 ## Gotchas / known sharp edges
 
