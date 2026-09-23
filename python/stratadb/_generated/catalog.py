@@ -123,6 +123,7 @@ GENERATED_COMMANDS = [
     'vector.delete',
     'vector.delete_all',
     'vector.delete_by_filter',
+    'vector.embedding.update',
     'vector.exists',
     'vector.get',
     'vector.history',

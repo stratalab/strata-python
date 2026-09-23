@@ -107,6 +107,7 @@ db.vectors.create_collection("docs", dimension=384, embedding_model="miniLM")
 db.vectors.upsert("docs", "d1", text="a small domestic cat")   # embedded for you
 db.vectors.query("docs", text="kitten", k=5)                   # and on the way in
 db.vectors.set_embedding_model("docs", "miniLM")               # declare it after the fact
+db.vectors.update_embedding("docs", "d1", text="a large domestic cat")  # re-embed, keep metadata
 ```
 
 Pass a `vector` or `text=`, never both. `text=` on a collection with no declared

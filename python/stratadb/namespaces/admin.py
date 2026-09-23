@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Optional
 
 from .base import Namespace
 
@@ -62,14 +62,17 @@ class AdminNamespace(Namespace):
         """
         return self._c.admin_metrics()
 
-    def describe(self) -> Any:
+    def describe(self, *, space: Optional[str] = None) -> Any:
         """A structured description of the database's capabilities and layout.
+
+        ``space`` describes that space rather than the default one; engine
+        1.2.4 made it honored, where it previously always reported ``default``.
 
         Examples:
             >>> db.admin.describe().default_branch
             'default'
         """
-        return self._c.admin_describe()
+        return self._c.admin_describe(space=space)
 
     def config(self) -> Any:
         """The effective open configuration.

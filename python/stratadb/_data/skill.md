@@ -15,7 +15,7 @@ description: >-
   matched on .code, db.ai inference, and the sharp edges that trip agents.
 license: MIT
 metadata:
-  strata-core-rev: "6fc481c33473efd7d1724284107b67be08625dcd"
+  strata-core-rev: "5893cbaf5882cb0b0559de25b6c0e7e372cba132"
   cli-version-range: "1.x"
   stratadb-version-range: "1.x"
 ---
@@ -70,7 +70,7 @@ One namespace per primitive, plus the control plane and the escape hatch:
 |---|---|---|
 | `db.kv` | opaque values by key (`str`/`bytes` in, `bytes` out) | `put`, `get`, `exists`, `delete`, `put_many`, `get_many`, `keys(prefix=)`, `history` |
 | `db.json` | structured documents, addressed by path | `set(key, doc)` or `set(key, "$.field", v)`, `get(key, "$.field")`, `set_many`, `keys(prefix=)`, `scan`, `history` |
-| `db.vectors` | embeddings + metadata, similarity search | `create_collection(name, dimension=, metric=, embedding_model=)`, `upsert(coll, key, vec \| text=)`, `query(coll, vec \| text=, k=, filter=)`, `set_embedding_model`, `keys`, `history` |
+| `db.vectors` | embeddings + metadata, similarity search | `create_collection(name, dimension=, metric=, embedding_model=)`, `upsert(coll, key, vec \| text=)`, `query(coll, vec \| text=, k=, filter=)`, `set_embedding_model`, `update_embedding`, `keys`, `history` |
 | `db.events` | append-only, hash-chained log | `append(type, payload)`, `get(seq)`, `range(start=)`, `range_by_time`, `len()`, `verify_chain()` |
 | `db.graphs` | typed nodes and edges, traversal, analytics | `create`, `add_node`, `add_edge`, `neighbors`, `list_nodes`, graph analytics (PageRank, BFS, …) |
 | `db.branches`, `db.spaces`, `db.at(...)` | isolation and scoping | `fork`, `create`, `list`, `fork_at_version`, `fork_at_timestamp`; `db.at(branch=, space=)` |
@@ -227,6 +227,12 @@ Codes you will actually meet:
   retryable). A fresh `stratadb.open(path)` recovers as the new owner. Within
   one process, share one handle across threads (it is concurrency-safe) rather
   than reopening, and never rebind the only reference to the owner.
+- **`durability=` belongs to the owner too, and asking anyway is refused.** A
+  handle that brokers into a running owner cannot change the WAL sync policy,
+  so `stratadb.open(path, durability="always")` against a hosted database
+  raises `failed_precondition.sdk.durability_brokered` (stratadb >= 1.2.4)
+  rather than quietly writing at the owner's mode. Open without it to join, or
+  start the owner with the mode you want.
 - **`memory_budget=` belongs to the owner.** A handle that brokers in inherits
   the owner's budget and its own value is ignored;
   `db.admin.info().memory_budget.source` says which rule applied.

@@ -345,6 +345,32 @@ class VectorsNamespace(Namespace):
         _check_metadata(metadata)
         return self._c.vector_metadata_update(collection, key, metadata, **self._scope)
 
+    def update_embedding(
+        self,
+        collection: str,
+        key: str,
+        vector: Optional[Sequence[float]] = None,
+        *,
+        text: Optional[str] = None,
+    ) -> Any:
+        """Replaces the embedding of an existing vector, keeping its metadata.
+
+        The mirror of :meth:`update_metadata` (engine 1.2.4): re-embed a record
+        whose text changed without rewriting what you stored beside it. Takes a
+        ``vector`` or ``text=`` on the same terms as :meth:`upsert` — exactly
+        one, and ``text=`` needs the collection's declared ``embedding_model``.
+
+        Examples:
+            >>> _ = db.vectors.create_collection("docs", 3, metric="cosine")
+            >>> _ = db.vectors.upsert("docs", "a", [1.0, 0.0, 0.0], metadata={"tag": "x"})
+            >>> _ = db.vectors.update_embedding("docs", "a", [0.0, 1.0, 0.0])
+            >>> db.vectors.get("docs", "a").data.metadata
+            {'tag': 'x'}
+        """
+        return self._c.vector_embedding_update(
+            collection, key, **_embedding_input(vector, text), **self._scope
+        )
+
     def delete(self, collection: str, key: str) -> Any:
         """Deletes one vector.
 

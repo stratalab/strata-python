@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 import stratadb
-from stratadb import filters
+from stratadb import errors, filters
 
 
 @pytest.fixture()
@@ -131,6 +131,47 @@ def test_hash_chain(db):
     chain = db.events.verify_chain()
     assert chain.valid is True
     assert chain.length == 2
+
+
+def test_update_embedding_replaces_the_vector_and_keeps_metadata(db):
+    # strata-core #3120: the mirror of update_metadata, so a record whose text
+    # changed can be re-embedded without rewriting what was stored beside it.
+    db.vectors.create_collection("docs", 3, metric="cosine")
+    db.vectors.upsert("docs", "a", [1.0, 0.0, 0.0], metadata={"tag": "x", "n": 1})
+
+    db.vectors.update_embedding("docs", "a", [0.0, 1.0, 0.0])
+
+    stored = db.vectors.get("docs", "a").data
+    assert stored.embedding == [0.0, 1.0, 0.0]
+    assert stored.metadata == {"tag": "x", "n": 1}
+    # It takes the same vector-or-text alternative as upsert, and the same guard.
+    with pytest.raises(errors.InvalidArgumentError) as excinfo:
+        db.vectors.update_embedding("docs", "a", [0.0, 0.0, 1.0], text="both")
+    assert excinfo.value.code == "invalid_argument.sdk.command"
+
+
+def test_update_embedding_on_an_absent_key_is_a_reported_no_op(db):
+    # A miss is not an error here either: the effect says nothing applied, and
+    # no commit was made, rather than raising.
+    db.vectors.create_collection("docs", 3, metric="cosine")
+    result = db.vectors.update_embedding("docs", "absent", [1.0, 0.0, 0.0])
+    assert result.effect.applied is False
+    assert result.effect.kind.value == "not_found"
+    assert result.commit is None
+    assert db.vectors.exists("docs", "absent") is False
+
+
+def test_a_collection_is_resolved_at_the_read_snapshot(db):
+    # strata-core #3229: collection existence used to resolve at head, so a
+    # time-travel read reported on a collection that did not exist yet.
+    anchor = db.kv.put("anchor", "0")
+    db.vectors.create_collection("later", 2)
+    db.vectors.upsert("later", "k", [1.0, 0.0])
+
+    assert db.vectors.count("later") == 1
+    with pytest.raises(errors.NotFoundError) as excinfo:
+        db.vectors.count("later", as_of=anchor.commit.timestamp)
+    assert excinfo.value.code == "not_found.engine.vector_collection"
 
 
 def test_range_and_list_and_types(db):
