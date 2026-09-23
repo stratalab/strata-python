@@ -37,6 +37,15 @@ SDK_ERRORS: Dict[str, Dict[str, Any]] = {
         "retry_policy": "never",
         "commit_outcome": "not_started",
     },
+    "failed_precondition.sdk.durability_brokered": {
+        "message": "The durability mode cannot be set on a brokered connection.",
+        "hint": (
+            "Open without durability= to join the running owner, or start the owner "
+            "with the mode you want."
+        ),
+        "retry_policy": "never",
+        "commit_outcome": "not_started",
+    },
     "failed_precondition.sdk.handle_closed": {
         "message": "The database handle is closed.",
         "hint": "Open a new handle; close() is final for the one you have (and idempotent).",
@@ -152,7 +161,7 @@ def catalog() -> list:
     Examples:
         >>> rows = stratadb.errors.catalog()
         >>> len(rows)
-        13
+        14
         >>> rows[0]["code"]
         'failed_precondition.sdk.fork_not_supported'
         >>> {row["area"] for row in rows} == {"sdk", "cli"}

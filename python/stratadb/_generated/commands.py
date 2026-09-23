@@ -39,7 +39,7 @@ class Commands:
         data = self._core.data(cmd)
         return (None if data is None else data)
 
-    def admin_describe(self, *, branch=None):
+    def admin_describe(self, *, branch=None, space=None):
         """Read a compact description of the database.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.branch_name
@@ -47,6 +47,8 @@ class Commands:
         cmd = {'type': 'describe'}
         if branch is not None:
             cmd['branch'] = branch
+        if space is not None:
+            cmd['space'] = space
         data = self._core.data(cmd)
         return models.AdminDescribe.from_wire(data)
 
@@ -1856,6 +1858,25 @@ class Commands:
             cmd['space'] = space
         data = self._core.data(cmd)
         return _wire.Record({'collection': data['collection'], 'commit': (None if data.get('commit') is None else models.CommitReceipt.from_wire(data['commit'])), 'effect': models.MutationEffect.from_wire(data['effect'])})
+
+    def vector_embedding_update(self, collection, key, *, text=None, vector=None, branch=None, space=None):
+        """Replace the embedding for one vector, keeping its metadata.
+
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.vector_collection, invalid_argument.engine.vector_key, not_found.engine.vector_collection, invalid_argument.engine.vector_dimension, invalid_argument.engine.vector_embedding, invalid_argument.executor.vector_dimension, invalid_argument.executor.vector_input, failed_precondition.engine.embedding_model_missing, inference.invalid_request, inference.unsupported_operation, inference.missing_model, inference.unknown_model, inference.io_failure, inference.model_load_failed, inference.local_runtime_failed, inference.registry_corrupt, inference.missing_api_key, inference.provider_auth_failed, inference.provider_unavailable, inference.provider_timeout, inference.provider_rate_limited, inference.provider_quota_exhausted, inference.provider_model_not_found, inference.provider_malformed_response, inference.unsupported_provider, inference.unsupported_parameter
+        """
+        cmd = {'type': 'vector_update_embedding'}
+        cmd['collection'] = collection
+        cmd['key'] = key
+        if text is not None:
+            cmd['text'] = text
+        if vector is not None:
+            cmd['vector'] = [_x for _x in (vector or [])]
+        if branch is not None:
+            cmd['branch'] = branch
+        if space is not None:
+            cmd['space'] = space
+        data = self._core.data(cmd)
+        return _wire.Record({'collection': data['collection'], 'commit': (None if data.get('commit') is None else models.CommitReceipt.from_wire(data['commit'])), 'effect': models.MutationEffect.from_wire(data['effect']), 'key': data['key'], 'vector_revision': (None if data.get('vector_revision') is None else data['vector_revision'])})
 
     def vector_exists(self, collection, key, *, branch=None, space=None):
         """Check whether one vector key exists.

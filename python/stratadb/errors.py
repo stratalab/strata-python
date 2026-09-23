@@ -246,7 +246,7 @@ def catalog() -> list:
     Examples:
         >>> rows = stratadb.errors.catalog()
         >>> len(rows)
-        13
+        14
         >>> {row["area"] for row in rows} == {"sdk", "cli"}
         True
     """

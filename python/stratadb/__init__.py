@@ -34,7 +34,13 @@ from ._core import Core
 from .clock import TimeLike, to_datetime, to_micros
 from ._generated import Commands
 from ._generated.models import HubCloneProgress, HubDatasetSort, PromotionStrategy
-from .errors import InvalidArgumentError, UnsupportedError, client_error, error_from_payload
+from .errors import (
+    FailedPreconditionError,
+    InvalidArgumentError,
+    UnsupportedError,
+    client_error,
+    error_from_payload,
+)
 from .namespaces.kv import KVNamespace
 from .namespaces.json import JSONNamespace
 from .namespaces.vectors import VectorsNamespace
@@ -171,6 +177,8 @@ class Strata:
             self._core = Core.open_cache()
         elif path is not None:
             self._core = Core.open_durable(str(path), durability, ipc, memory_budget)
+            if durability is not None:
+                self._refuse_brokered_durability(durability)
         else:
             raise client_error(
                 InvalidArgumentError, _NO_DB_CODE, "no database specified", _NO_DB_HINT
@@ -182,6 +190,33 @@ class Strata:
         # Scope override for db.at(...) views; None means "use the session default".
         self._branch: str | None = None
         self._space: str | None = None
+
+    def _refuse_brokered_durability(self, durability: str) -> None:
+        """Rejects ``durability=`` on a handle that brokered to a running owner.
+
+        Durability is fixed by whoever opens the store — it sets the WAL sync
+        policy — so a handle that brokered in cannot change it, and quietly
+        applying the owner's mode tells a caller who asked for a synced commit
+        that it happened when it did not. The CLI refuses this (strata-core
+        #3395) in its own open path, which the SDK does not share; this is the
+        same refusal for callers who arrive through Python.
+        """
+        try:
+            status = Commands(self._core).admin_ipc_status()
+        except Exception:  # pragma: no cover - status is advisory, never fatal
+            return
+        if getattr(status, "is_owner", True):
+            return
+        self._core.close()
+        self._closed = True
+        raise client_error(
+            FailedPreconditionError,
+            "failed_precondition.sdk.durability_brokered",
+            f"durability={durability!r} cannot be set on a handle that brokered "
+            "to a running owner; the owner's mode governs this database",
+            "open without durability= to join the owner, or start the owner "
+            'with the mode you want (ipc="off" opens exclusively)',
+        )
 
     def execute(self, command: dict[str, Any]) -> dict[str, Any]:
         """Runs one raw command on the wire, returning its output envelope.

@@ -115,8 +115,20 @@ def test_space_isolation(db):
 # --- admin ----------------------------------------------------------------
 
 
+def test_describe_reports_the_space_it_is_asked_about(db):
+    # strata-core #3385: describe always reported the default space, whatever
+    # --space said, so a multi-tenant caller could not see their own layout.
+    db.spaces.create("tenant-a")
+    db.at(space="tenant-a").kv.put("only-here", "v")
+
+    default = db.admin.describe()
+    tenant = db.admin.describe(space="tenant-a")
+    assert default != tenant
+    assert db.at(space="tenant-a").kv.count() == 1 and db.kv.count() == 0
+
+
 def test_admin_surface(db):
-    assert db.admin.ping().version == "1.2.3"
+    assert db.admin.ping().version == "1.2.4"
     assert db.admin.info().default_branch == "default"
     assert db.admin.health().status == "healthy"
     assert db.admin.config().target == "cache"

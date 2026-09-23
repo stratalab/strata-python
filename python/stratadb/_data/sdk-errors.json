@@ -1,6 +1,16 @@
 {
-  "count": 13,
+  "count": 14,
   "errors": [
+    {
+      "area": "sdk",
+      "class": "failed_precondition",
+      "code": "failed_precondition.sdk.durability_brokered",
+      "commit_outcome": "not_started",
+      "hint": "Open without durability= to join the running owner, or start the owner with the mode you want.",
+      "message": "The durability mode cannot be set on a brokered connection.",
+      "ref": "https://stratadb.org/e/failed_precondition.sdk.durability_brokered",
+      "retry_policy": "never"
+    },
     {
       "area": "sdk",
       "class": "failed_precondition",

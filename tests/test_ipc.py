@@ -177,3 +177,38 @@ def test_client_brokers_to_a_separate_host_process(durable_path):
     finally:
         host.terminate()
         host.wait()
+
+
+def test_durability_is_refused_on_a_brokered_handle(tmp_path):
+    """A brokered handle cannot change the durability the owner set.
+
+    Durability fixes the WAL sync policy at open, so a handle that brokered in
+    cannot change it — and quietly applying the owner's mode would tell a
+    caller who asked for a synced commit that it happened. The CLI refuses this
+    in its own open path (strata-core #3395), which the SDK does not share, so
+    the SDK refuses it too rather than leaving Python callers with the silent
+    version.
+    """
+    path = str(tmp_path / "shared")
+    owner = stratadb.open(path)  # standard durability, hosts the socket
+    try:
+        with pytest.raises(errors.FailedPreconditionError) as excinfo:
+            stratadb.open(path, durability="always")
+        assert excinfo.value.code == "failed_precondition.sdk.durability_brokered"
+        assert "owner" in excinfo.value.hint
+
+        # Joining the owner without asking for a mode is the supported path.
+        joined = stratadb.open(path)
+        try:
+            assert joined.admin.ipc_status().is_owner is False
+        finally:
+            joined.close()
+    finally:
+        owner.close()
+
+    # The owner itself may of course set it.
+    solo = stratadb.open(str(tmp_path / "solo"), durability="always")
+    try:
+        assert solo.kv.put("k", "v").commit.durability.value == "always"
+    finally:
+        solo.close()
