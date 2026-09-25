@@ -139,7 +139,7 @@ class Commands:
     def arrow_export(self, primitive, format, path, *, collection=None, event_type=None, graph=None, limit=None, prefix=None, branch=None, space=None):
         """Export a product primitive to an Arrow-compatible file.
 
-        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, unsupported.executor.arrow_feature_disabled, invalid_argument.executor.arrow_format, invalid_argument.executor.arrow_empty_export, invalid_argument.executor.arrow_vector_dimension, invalid_argument.executor.arrow_graph, invalid_argument.executor.arrow_collection, unavailable.executor.arrow_io, internal.executor.arrow
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, unsupported.executor.arrow_feature_disabled, invalid_argument.executor.arrow_format, invalid_argument.executor.arrow_collection, invalid_argument.executor.arrow_graph, unavailable.executor.arrow_io, internal.executor.arrow, invalid_argument.executor.arrow_empty_export, invalid_argument.executor.arrow_vector_dimension
         """
         cmd = {'type': 'arrow_export'}
         cmd['primitive'] = primitive
@@ -165,7 +165,7 @@ class Commands:
     def arrow_import(self, file_path, target, *, collection=None, format=None, graph=None, key_column=None, value_column=None, branch=None, space=None):
         """Import an Arrow-compatible file into a product primitive.
 
-        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, unsupported.executor.arrow_feature_disabled, invalid_argument.executor.arrow_format, invalid_argument.executor.arrow_input_missing, invalid_argument.executor.arrow_key_column, invalid_argument.executor.arrow_value_column, invalid_argument.executor.arrow_collection, invalid_argument.executor.arrow_embedding_type, invalid_argument.executor.arrow_encoding, invalid_argument.executor.arrow_json_key, invalid_argument.executor.arrow_non_finite_float, invalid_argument.executor.arrow_base64, invalid_argument.executor.arrow_vector_key, invalid_argument.executor.arrow_event, invalid_argument.executor.arrow_graph, not_found.engine.vector_collection, unavailable.executor.arrow_io, internal.executor.arrow
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, unsupported.executor.arrow_feature_disabled, invalid_argument.executor.arrow_format, invalid_argument.executor.arrow_collection, invalid_argument.executor.arrow_graph, unavailable.executor.arrow_io, internal.executor.arrow, invalid_argument.executor.arrow_input_missing, invalid_argument.executor.arrow_key_column, invalid_argument.executor.arrow_value_column, invalid_argument.executor.arrow_embedding_type, invalid_argument.executor.arrow_encoding, invalid_argument.executor.arrow_json_key, invalid_argument.executor.arrow_non_finite_float, invalid_argument.executor.arrow_base64, invalid_argument.executor.arrow_vector_key, invalid_argument.executor.arrow_event, not_found.engine.vector_collection
         """
         cmd = {'type': 'arrow_import'}
         cmd['file_path'] = file_path
@@ -574,10 +574,10 @@ class Commands:
         data = self._core.data(cmd)
         return models.GraphPagerankData.from_wire(data)
 
-    def graph_analytics_sssp(self, graph, source, *, as_of=None, as_of_time=None, budget=None, direction=None, branch=None, space=None):
+    def graph_analytics_sssp(self, graph, source, *, as_of=None, as_of_time=None, budget=None, direction=None, edge_types=None, branch=None, space=None):
         """Compute shortest-path distances from a source.
 
-        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.graph_name, not_found.engine.graph, invalid_argument.engine.graph_node_id, not_found.engine.graph_node, resource_exhausted.engine.graph_analytics_budget, invalid_argument.executor.graph_analytics_budget
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.graph_name, not_found.engine.graph, invalid_argument.engine.graph_node_id, invalid_argument.engine.graph_edge_type, not_found.engine.graph_node, failed_precondition.engine.graph_negative_weight, resource_exhausted.engine.graph_analytics_budget, invalid_argument.executor.graph_analytics_budget
         """
         cmd = {'type': 'graph_sssp'}
         cmd['graph'] = graph
@@ -590,6 +590,8 @@ class Commands:
             cmd['budget'] = {'max_edges': (None if budget.get('max_edges') is None else budget['max_edges']), 'max_nodes': (None if budget.get('max_nodes') is None else budget['max_nodes'])}
         if direction is not None:
             cmd['direction'] = direction
+        if edge_types is not None:
+            cmd['edge_types'] = [_x for _x in (edge_types or [])]
         if branch is not None:
             cmd['branch'] = branch
         if space is not None:
@@ -635,7 +637,7 @@ class Commands:
     def graph_batch_write(self, graph, operations, *, branch=None, space=None):
         """Apply graph mutations atomically.
 
-        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.graph_name, not_found.engine.graph, invalid_argument.engine.graph_batch, invalid_argument.engine.graph_node_id, invalid_argument.engine.graph_edge_type, invalid_argument.engine.graph_edge_endpoint, failed_precondition.engine.graph_ontology_node_type, failed_precondition.engine.graph_ontology_edge_type
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.graph_name, not_found.engine.graph, invalid_argument.engine.graph_node_id, invalid_argument.engine.graph_edge_type, invalid_argument.engine.graph_edge_endpoint, failed_precondition.engine.graph_ontology_node_type, failed_precondition.engine.graph_ontology_edge_type
         """
         cmd = {'type': 'graph_batch_write'}
         cmd['graph'] = graph
@@ -672,7 +674,7 @@ class Commands:
     def graph_bulk_insert(self, graph, *, chunk_size=None, edges=None, nodes=None, branch=None, space=None):
         """Bulk-load nodes and edges in chunks.
 
-        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.graph_name, not_found.engine.graph, invalid_argument.engine.graph_node_id, invalid_argument.engine.graph_edge_type, invalid_argument.engine.graph_edge_weight, invalid_argument.engine.graph_edge_endpoint, invalid_argument.engine.graph_properties, invalid_argument.engine.graph_properties_too_large, failed_precondition.engine.graph_negative_weight, failed_precondition.engine.graph_ontology_node_type, failed_precondition.engine.graph_ontology_edge_type
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.graph_name, not_found.engine.graph, invalid_argument.engine.graph_node_id, invalid_argument.engine.graph_edge_type, invalid_argument.engine.graph_edge_weight, invalid_argument.engine.graph_edge_endpoint, invalid_argument.engine.graph_properties, invalid_argument.engine.graph_properties_too_large, failed_precondition.engine.graph_negative_weight, failed_precondition.engine.graph_ontology_edge_type, failed_precondition.engine.graph_ontology_node_type
         """
         cmd = {'type': 'graph_bulk_insert'}
         cmd['graph'] = graph
@@ -703,13 +705,15 @@ class Commands:
         data = self._core.data(cmd)
         return _wire.Record({'commit': models.CommitReceipt.from_wire(data['commit']), 'effect': models.MutationEffect.from_wire(data['effect']), 'info': models.GraphInfoData.from_wire(data['info'])})
 
-    def graph_delete(self, graph, *, branch=None, space=None):
+    def graph_delete(self, graph, *, force=None, branch=None, space=None):
         """Delete a graph and its visible data.
 
-        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.graph_name, not_found.engine.graph
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.graph_name, not_found.engine.graph, failed_precondition.engine.graph_not_empty
         """
         cmd = {'type': 'graph_delete'}
         cmd['graph'] = graph
+        if force is not None:
+            cmd['force'] = force
         if branch is not None:
             cmd['branch'] = branch
         if space is not None:
@@ -720,7 +724,7 @@ class Commands:
     def graph_edge_add(self, graph, src, edge_type, dst, *, properties=None, weight=None, branch=None, space=None):
         """Add or replace a graph edge.
 
-        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.graph_name, not_found.engine.graph, invalid_argument.engine.graph_node_id, invalid_argument.engine.graph_edge_type, invalid_argument.engine.graph_edge_type_reserved, invalid_argument.engine.graph_edge_weight, invalid_argument.engine.graph_edge_endpoint, invalid_argument.engine.graph_properties, invalid_argument.engine.graph_properties_too_large, failed_precondition.engine.graph_negative_weight, failed_precondition.engine.graph_ontology_edge_type, failed_precondition.engine.graph_ontology_endpoint_type
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.graph_name, not_found.engine.graph, invalid_argument.engine.graph_node_id, invalid_argument.engine.graph_edge_type, invalid_argument.engine.graph_edge_weight, invalid_argument.engine.graph_edge_endpoint, invalid_argument.engine.graph_properties, invalid_argument.engine.graph_properties_too_large, failed_precondition.engine.graph_negative_weight, failed_precondition.engine.graph_ontology_edge_type, invalid_argument.engine.graph_edge_type_reserved, failed_precondition.engine.graph_ontology_endpoint_type
         """
         cmd = {'type': 'graph_add_edge'}
         cmd['graph'] = graph
@@ -818,7 +822,7 @@ class Commands:
     def graph_neighbors(self, graph, node_id, direction, *, as_of=None, as_of_time=None, cursor=None, edge_type=None, limit=None, branch=None, space=None):
         """List a node's neighbors.
 
-        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.graph_name, not_found.engine.graph, invalid_argument.engine.graph_node_id, invalid_argument.engine.graph_edge_type
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.graph_name, not_found.engine.graph, invalid_argument.engine.graph_node_id, invalid_argument.engine.graph_edge_type, invalid_argument.engine.graph_cursor
         """
         cmd = {'type': 'graph_neighbors'}
         cmd['graph'] = graph
@@ -1182,13 +1186,17 @@ class Commands:
         data = self._core.data(cmd)
         return models.BatchResult6.from_wire(data)
 
-    def json_batch_get(self, entries, *, branch=None, space=None):
+    def json_batch_get(self, entries, *, as_of=None, as_of_time=None, branch=None, space=None):
         """Read multiple JSON values by document and path.
 
         Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.json_document_id, invalid_argument.engine.json_path, invalid_argument.engine.json_path_too_long
         """
         cmd = {'type': 'json_batch_get'}
         cmd['entries'] = [{'key': _x['key'], 'path': _x['path']} for _x in (entries or [])]
+        if as_of is not None:
+            cmd['as_of'] = as_of
+        if as_of_time is not None:
+            cmd['as_of_time'] = as_of_time
         if branch is not None:
             cmd['branch'] = branch
         if space is not None:
@@ -1741,13 +1749,15 @@ class Commands:
         data = self._core.data(cmd)
         return _wire.Record({'cursor': (None if data.get('cursor') is None else data['cursor']), 'has_more': data['has_more'], 'items': [models.VectorCollectionInfo.from_wire(_x) for _x in (data['items'] or [])]})
 
-    def vector_collection_delete(self, collection, *, branch=None, space=None):
+    def vector_collection_delete(self, collection, *, force=None, branch=None, space=None):
         """Delete a vector collection.
 
-        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.vector_collection, invalid_argument.engine.vector_key, not_found.engine.vector_collection
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.vector_collection, invalid_argument.engine.vector_key, not_found.engine.vector_collection, failed_precondition.engine.vector_collection_not_empty
         """
         cmd = {'type': 'vector_delete_collection'}
         cmd['collection'] = collection
+        if force is not None:
+            cmd['force'] = force
         if branch is not None:
             cmd['branch'] = branch
         if space is not None:

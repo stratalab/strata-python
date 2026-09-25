@@ -140,7 +140,17 @@ db.graphs.add_edge("social", "ada", "follows", "grace")
 db.graphs.list()                       # -> ['social']  (list[str] of graph names)
 for n in db.graphs.neighbors("social", "ada"):   # each -> GraphNeighborHit
     n.node_id                          # 'grace' — the neighbor, in any direction
+routes = db.graphs.analytics.sssp("social", "ada")   # engine 1.2.5+
+routes.distances                       # cost per reachable node
+routes.path_to("grace")                # ['ada', 'grace'] — the walk, or None
+db.graphs.analytics.sssp("social", "ada", edge_types=["follows"])  # restrict the traversal
+db.graphs.delete("social", force=True) # a graph holding data refuses without force
 ```
+
+`db.vectors.delete_collection(name, force=True)` is the same gate for vectors
+(`failed_precondition.engine.{graph,vector_collection}_not_empty` without it).
+`db.graphs.meta(name).import_pending` says whether a multi-commit
+`bulk_insert` started and never finished.
 
 Use `n.node_id` for the neighbor: it is the other endpoint for both `direction="outgoing"`
 and `direction="incoming"`. `n.dst` is the edge's dst, which for `direction="incoming"` is the

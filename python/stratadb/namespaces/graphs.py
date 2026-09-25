@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Optional, Sequence
 
-from .._results import Page, Sample
+from .._results import Page, Sample, ShortestPaths
 from ..clock import TimeLike
 from ..errors import require_field
 from .base import Namespace
@@ -53,8 +53,13 @@ class GraphsNamespace(Namespace):
         """
         return self._c.graph_create(name, **self._scope)
 
-    def delete(self, name: str) -> Any:
+    def delete(self, name: str, *, force: bool = False) -> Any:
         """Deletes a graph and all its nodes and edges.
+
+        A graph holding visible data refuses to go without ``force=True``
+        (engine 1.2.5): :class:`~stratadb.errors.FailedPreconditionError`,
+        ``failed_precondition.engine.graph_not_empty``. Deleting an empty
+        graph needs nothing.
 
         Examples:
             >>> _ = db.graphs.create("temp")
@@ -62,7 +67,7 @@ class GraphsNamespace(Namespace):
             >>> db.graphs.list()
             []
         """
-        return self._c.graph_delete(name, **self._scope)
+        return self._c.graph_delete(name, force=force, **self._scope)
 
     def list(
         self, *, as_of: Optional[int] = None, as_of_time: Optional[TimeLike] = None
@@ -516,9 +521,15 @@ class GraphAnalytics(Namespace):
         direction: Optional[str] = None,
         budget: Optional[dict] = None,
         as_of: Optional[int] = None,
+        edge_types: Optional[Sequence[str]] = None,
         as_of_time: Optional[TimeLike] = None,
-    ) -> Any:
-        """Single-source shortest paths from ``source`` (``.distances``).
+    ) -> ShortestPaths:
+        """Single-source shortest paths from ``source``.
+
+        Returns ``.distances`` (cost per reachable node) and ``.predecessors``
+        (where each one's cheapest walk arrived from); ``.path_to(target)``
+        unpacks the route. ``edge_types`` restricts which edges may be
+        traversed, applied at every relaxation — both new in engine 1.2.5.
 
         Examples:
             >>> _ = db.graphs.create("g")
@@ -530,8 +541,16 @@ class GraphAnalytics(Namespace):
             >>> sorted(db.graphs.analytics.sssp("g", "a", direction="outgoing").distances)
             ['a', 'b', 'c']
         """
-        return self._c.graph_analytics_sssp(
-            graph, source, direction=direction, budget=budget, **self._temporal(as_of, as_of_time), **self._scope
+        return ShortestPaths.from_wire(
+            self._c.graph_analytics_sssp(
+                graph,
+                source,
+                direction=direction,
+                budget=budget,
+                edge_types=list(edge_types) if edge_types is not None else None,
+                **self._temporal(as_of, as_of_time),
+                **self._scope,
+            )
         )
 
     def wcc(self, graph: str, *, budget: Optional[dict] = None, as_of: Optional[int] = None, as_of_time: Optional[TimeLike] = None) -> Any:

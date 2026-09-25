@@ -100,6 +100,57 @@ class Sample:
 
 
 @dataclass
+class ShortestPaths:
+    """Single-source shortest paths, with the route to each node recoverable.
+
+    ``distances`` is the cost to each reachable node and ``predecessors`` the
+    node each one's cheapest walk arrived from (engine 1.2.5) — the source has
+    no entry. :meth:`path_to` follows that map back, which is the thing a
+    caller actually wants and would otherwise write by hand every time.
+    """
+
+    graph: str
+    source: str
+    direction: Any
+    distances: dict
+    predecessors: dict
+
+    def path_to(self, target: str) -> Optional[List[str]]:
+        """The cheapest walk from ``source`` to ``target``, or ``None``.
+
+        ``None`` means unreachable; the source itself is ``[source]``. The
+        walk is returned source-first.
+        """
+        if target == self.source:
+            return [self.source]
+        if target not in self.distances:
+            return None
+        route = [target]
+        seen = {target}
+        node = target
+        while node != self.source:
+            node = self.predecessors.get(node)
+            if node is None or node in seen:
+                # A predecessor map that does not reach the source is the
+                # engine's to explain; report unreachable rather than loop.
+                return None
+            seen.add(node)
+            route.append(node)
+        route.reverse()
+        return route
+
+    @classmethod
+    def from_wire(cls, record: Any) -> "ShortestPaths":
+        return cls(
+            graph=record.graph,
+            source=record.source,
+            direction=record.direction,
+            distances=dict(record.distances),
+            predecessors=dict(record.predecessors),
+        )
+
+
+@dataclass
 class BatchItem:
     """One positional result within a batch."""
 
@@ -158,4 +209,4 @@ class BatchResult:
         )
 
 
-__all__ = ["Page", "Sample", "BatchItem", "BatchResult"]
+__all__ = ["Page", "Sample", "ShortestPaths", "BatchItem", "BatchResult"]

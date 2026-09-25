@@ -166,8 +166,13 @@ class VectorsNamespace(Namespace):
         """
         return self._c.vector_collection_set_embedding_model(collection, model, **self._scope)
 
-    def delete_collection(self, name: str) -> Any:
+    def delete_collection(self, name: str, *, force: bool = False) -> Any:
         """Deletes a collection and all its vectors.
+
+        A collection holding visible data refuses to go without ``force=True``
+        (engine 1.2.5): :class:`~stratadb.errors.FailedPreconditionError`,
+        ``failed_precondition.engine.vector_collection_not_empty``. Deleting an
+        empty collection needs nothing.
 
         Examples:
             >>> _ = db.vectors.create_collection("temp", 3, metric="cosine")
@@ -175,7 +180,7 @@ class VectorsNamespace(Namespace):
             >>> [c.name for c in db.vectors.list_collections()]
             []
         """
-        return self._c.vector_collection_delete(name, **self._scope)
+        return self._c.vector_collection_delete(name, force=force, **self._scope)
 
     def list_collections(self) -> Page:
         """Lists the collections.

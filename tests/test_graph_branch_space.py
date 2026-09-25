@@ -128,7 +128,7 @@ def test_describe_reports_the_space_it_is_asked_about(db):
 
 
 def test_admin_surface(db):
-    assert db.admin.ping().version == "1.2.4"
+    assert db.admin.ping().version == "1.2.5"
     assert db.admin.info().default_branch == "default"
     assert db.admin.health().status == "healthy"
     assert db.admin.config().target == "cache"

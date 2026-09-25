@@ -1,5 +1,5 @@
 {
-  "count": 231,
+  "count": 227,
   "errors": [
     {
       "class": "invalid_argument",
@@ -111,15 +111,6 @@
     },
     {
       "class": "invalid_argument",
-      "code": "invalid_argument.engine.graph_batch",
-      "commit_outcome": "not_started",
-      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
-      "message": "The graph request is invalid.",
-      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_batch",
-      "retry_policy": "never"
-    },
-    {
-      "class": "invalid_argument",
       "code": "invalid_argument.engine.graph_binding",
       "commit_outcome": "not_started",
       "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
@@ -129,11 +120,11 @@
     },
     {
       "class": "invalid_argument",
-      "code": "invalid_argument.engine.graph_binding_record",
+      "code": "invalid_argument.engine.graph_cursor",
       "commit_outcome": "not_started",
       "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
       "message": "The graph request is invalid.",
-      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_binding_record",
+      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_cursor",
       "retry_policy": "never"
     },
     {
@@ -143,15 +134,6 @@
       "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
       "message": "The graph request is invalid.",
       "ref": "https://stratadb.org/e/invalid_argument.engine.graph_edge_endpoint",
-      "retry_policy": "never"
-    },
-    {
-      "class": "invalid_argument",
-      "code": "invalid_argument.engine.graph_edge_record",
-      "commit_outcome": "not_started",
-      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
-      "message": "The graph request is invalid.",
-      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_edge_record",
       "retry_policy": "never"
     },
     {
@@ -183,15 +165,6 @@
     },
     {
       "class": "invalid_argument",
-      "code": "invalid_argument.engine.graph_metadata",
-      "commit_outcome": "not_started",
-      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
-      "message": "The graph request is invalid.",
-      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_metadata",
-      "retry_policy": "never"
-    },
-    {
-      "class": "invalid_argument",
       "code": "invalid_argument.engine.graph_name",
       "commit_outcome": "not_started",
       "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
@@ -215,24 +188,6 @@
       "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
       "message": "The graph request is invalid.",
       "ref": "https://stratadb.org/e/invalid_argument.engine.graph_node_id",
-      "retry_policy": "never"
-    },
-    {
-      "class": "invalid_argument",
-      "code": "invalid_argument.engine.graph_node_record",
-      "commit_outcome": "not_started",
-      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
-      "message": "The graph request is invalid.",
-      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_node_record",
-      "retry_policy": "never"
-    },
-    {
-      "class": "invalid_argument",
-      "code": "invalid_argument.engine.graph_ontology_record",
-      "commit_outcome": "not_started",
-      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
-      "message": "The graph request is invalid.",
-      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_ontology_record",
       "retry_policy": "never"
     },
     {
@@ -287,15 +242,6 @@
       "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
       "message": "The graph request is invalid.",
       "ref": "https://stratadb.org/e/invalid_argument.engine.graph_type_hint",
-      "retry_policy": "never"
-    },
-    {
-      "class": "invalid_argument",
-      "code": "invalid_argument.engine.graph_type_index_record",
-      "commit_outcome": "not_started",
-      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
-      "message": "The graph request is invalid.",
-      "ref": "https://stratadb.org/e/invalid_argument.engine.graph_type_index_record",
       "retry_policy": "never"
     },
     {
@@ -917,6 +863,24 @@
       "hint": "Use an existing non-reserved space, or delete/move contained data before deleting the space.",
       "message": "The requested space operation cannot be completed.",
       "ref": "https://stratadb.org/e/failed_precondition.engine.space_not_empty",
+      "retry_policy": "never"
+    },
+    {
+      "class": "failed_precondition",
+      "code": "failed_precondition.engine.vector_collection_not_empty",
+      "commit_outcome": "not_started",
+      "hint": "Use the collection dimension, valid vector keys, and metadata/filter values supported by the collection.",
+      "message": "The vector request is invalid.",
+      "ref": "https://stratadb.org/e/failed_precondition.engine.vector_collection_not_empty",
+      "retry_policy": "never"
+    },
+    {
+      "class": "failed_precondition",
+      "code": "failed_precondition.engine.graph_not_empty",
+      "commit_outcome": "not_started",
+      "hint": "Use valid graph, node, edge, and binding identifiers and keep graph properties within limits.",
+      "message": "The graph request is invalid.",
+      "ref": "https://stratadb.org/e/failed_precondition.engine.graph_not_empty",
       "retry_policy": "never"
     },
     {

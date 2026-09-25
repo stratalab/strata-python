@@ -15,7 +15,7 @@ description: >-
   matched on .code, db.ai inference, and the sharp edges that trip agents.
 license: MIT
 metadata:
-  strata-core-rev: "5893cbaf5882cb0b0559de25b6c0e7e372cba132"
+  strata-core-rev: "7bf09c2e3e4fe327aa79c5f12a48add9e2993cf0"
   cli-version-range: "1.x"
   stratadb-version-range: "1.x"
 ---
@@ -72,7 +72,7 @@ One namespace per primitive, plus the control plane and the escape hatch:
 | `db.json` | structured documents, addressed by path | `set(key, doc)` or `set(key, "$.field", v)`, `get(key, "$.field")`, `set_many`, `keys(prefix=)`, `scan`, `history` |
 | `db.vectors` | embeddings + metadata, similarity search | `create_collection(name, dimension=, metric=, embedding_model=)`, `upsert(coll, key, vec \| text=)`, `query(coll, vec \| text=, k=, filter=)`, `set_embedding_model`, `update_embedding`, `keys`, `history` |
 | `db.events` | append-only, hash-chained log | `append(type, payload)`, `get(seq)`, `range(start=)`, `range_by_time`, `len()`, `verify_chain()` |
-| `db.graphs` | typed nodes and edges, traversal, analytics | `create`, `add_node`, `add_edge`, `neighbors`, `list_nodes`, graph analytics (PageRank, BFS, …) |
+| `db.graphs` | typed nodes and edges, traversal, analytics | `create`, `add_node`, `add_edge`, `neighbors`, `list_nodes`, `delete(name, force=)`, analytics (PageRank, BFS, `sssp(...).path_to(target)`, …) |
 | `db.branches`, `db.spaces`, `db.at(...)` | isolation and scoping | `fork`, `create`, `list`, `fork_at_version`, `fork_at_timestamp`; `db.at(branch=, space=)` |
 | `db.admin`, `db.arrow` | control plane; bulk Arrow/Parquet | `ping`, `info`, `health`, `ipc_status`; `export`, `import_` |
 | `db.hub` | browse StrataHub (read-only; never touches your data) | `info`, `list_datasets(tasks=, tags=, sort=)`, `get_dataset`, `list_refs`, `list_yanked`; `stratadb.clone(name, dest)` downloads one |
@@ -239,6 +239,15 @@ Codes you will actually meet:
 - **Default durability is `"standard"`, not fsync-per-commit.** Acknowledged
   commits become durable at the next sync point; a SIGKILL before then loses
   them. Use `durability="always"` when every acknowledgement must survive.
+- **Dropping a graph or collection with data in it needs `force=True`.**
+  `db.graphs.delete(name)` and `db.vectors.delete_collection(name)` refuse
+  while visible data remains (`failed_precondition.engine.graph_not_empty` /
+  `…vector_collection_not_empty`, stratadb >= 1.2.5). That refusal is a
+  question — confirm the intent before retrying with `force=True`.
+- **`sssp` gives you the route.** `db.graphs.analytics.sssp(g, src)` returns
+  `.distances` and `.predecessors`, and `.path_to(target)` unpacks the walk
+  (`None` when unreachable, `[src]` for the source). `edge_types=[...]`
+  restricts which edges may be traversed.
 - **Graph edges need both endpoints first.** `add_edge` to a missing node
   raises `invalid_argument.engine.graph_edge_endpoint`.
 - **`text=` needs a declared model.** `db.vectors.upsert(...,  text=)` and

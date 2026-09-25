@@ -1594,6 +1594,7 @@ class GraphInfoData:
     created_version: int
     edge_count: int
     graph: str
+    import_pending: bool
     node_count: int
     updated_timestamp: int
     updated_version: int
@@ -1605,6 +1606,7 @@ class GraphInfoData:
             created_version=d['created_version'],
             edge_count=d['edge_count'],
             graph=d['graph'],
+            import_pending=d['import_pending'],
             node_count=d['node_count'],
             updated_timestamp=d['updated_timestamp'],
             updated_version=d['updated_version'],
@@ -1847,6 +1849,7 @@ class GraphSsspData:
     direction: "GraphDirection"
     distances: _wire.Record
     graph: str
+    predecessors: _wire.Record
     source: str
 
     @classmethod
@@ -1855,6 +1858,7 @@ class GraphSsspData:
             direction=GraphDirection(d['direction']),
             distances=d['distances'],
             graph=d['graph'],
+            predecessors=d['predecessors'],
             source=d['source'],
         )
 
