@@ -321,17 +321,29 @@ class JSONNamespace(Namespace):
         """
         return BatchResult.from_wire(self._c.json_batch_set(_set_entries(entries), **self._scope))
 
-    def get_many(self, entries: Any) -> list[Any]:
+    def get_many(
+        self,
+        entries: Any,
+        *,
+        as_of: Optional[int] = None,
+        as_of_time: Optional[TimeLike] = None,
+    ) -> list[Any]:
         """Reads many documents; returns the JSON value or ``None`` per entry, in order.
 
         Each entry is a document id, a ``(key, path)`` pair, or ``{"key", "path"}``.
+
+        Takes either clock (engine 1.2.5), on the same terms as :meth:`get`, so
+        a batch read can be pinned to one version instead of racing writes
+        across its entries.
 
         Examples:
             >>> _ = db.json.set_many([{"key": "a", "path": "$", "value": {"v": 1}}, {"key": "b", "path": "$", "value": {"v": 2}}])
             >>> db.json.get_many([{"key": "a", "path": "$"}, {"key": "b", "path": "$"}])
             [{'v': 1}, {'v': 2}]
         """
-        result = self._c.json_batch_get(_kp_entries(entries), **self._scope)
+        result = self._c.json_batch_get(
+            _kp_entries(entries), **self._temporal(as_of, as_of_time), **self._scope
+        )
         out: list[Any] = [None] * len(result.items)
         for item in result.items:
             payload = item.result

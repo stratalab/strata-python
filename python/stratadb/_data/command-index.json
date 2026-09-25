@@ -644,20 +644,12 @@
           "docs": "https://stratadb.org/e/invalid_argument.executor.arrow_format"
         },
         {
-          "code": "invalid_argument.executor.arrow_empty_export",
-          "docs": "https://stratadb.org/e/invalid_argument.executor.arrow_empty_export"
-        },
-        {
-          "code": "invalid_argument.executor.arrow_vector_dimension",
-          "docs": "https://stratadb.org/e/invalid_argument.executor.arrow_vector_dimension"
+          "code": "invalid_argument.executor.arrow_collection",
+          "docs": "https://stratadb.org/e/invalid_argument.executor.arrow_collection"
         },
         {
           "code": "invalid_argument.executor.arrow_graph",
           "docs": "https://stratadb.org/e/invalid_argument.executor.arrow_graph"
-        },
-        {
-          "code": "invalid_argument.executor.arrow_collection",
-          "docs": "https://stratadb.org/e/invalid_argument.executor.arrow_collection"
         },
         {
           "code": "unavailable.executor.arrow_io",
@@ -666,6 +658,14 @@
         {
           "code": "internal.executor.arrow",
           "docs": "https://stratadb.org/e/internal.executor.arrow"
+        },
+        {
+          "code": "invalid_argument.executor.arrow_empty_export",
+          "docs": "https://stratadb.org/e/invalid_argument.executor.arrow_empty_export"
+        },
+        {
+          "code": "invalid_argument.executor.arrow_vector_dimension",
+          "docs": "https://stratadb.org/e/invalid_argument.executor.arrow_vector_dimension"
         }
       ],
       "fixtures": {
@@ -733,6 +733,22 @@
           "docs": "https://stratadb.org/e/invalid_argument.executor.arrow_format"
         },
         {
+          "code": "invalid_argument.executor.arrow_collection",
+          "docs": "https://stratadb.org/e/invalid_argument.executor.arrow_collection"
+        },
+        {
+          "code": "invalid_argument.executor.arrow_graph",
+          "docs": "https://stratadb.org/e/invalid_argument.executor.arrow_graph"
+        },
+        {
+          "code": "unavailable.executor.arrow_io",
+          "docs": "https://stratadb.org/e/unavailable.executor.arrow_io"
+        },
+        {
+          "code": "internal.executor.arrow",
+          "docs": "https://stratadb.org/e/internal.executor.arrow"
+        },
+        {
           "code": "invalid_argument.executor.arrow_input_missing",
           "docs": "https://stratadb.org/e/invalid_argument.executor.arrow_input_missing"
         },
@@ -743,10 +759,6 @@
         {
           "code": "invalid_argument.executor.arrow_value_column",
           "docs": "https://stratadb.org/e/invalid_argument.executor.arrow_value_column"
-        },
-        {
-          "code": "invalid_argument.executor.arrow_collection",
-          "docs": "https://stratadb.org/e/invalid_argument.executor.arrow_collection"
         },
         {
           "code": "invalid_argument.executor.arrow_embedding_type",
@@ -777,20 +789,8 @@
           "docs": "https://stratadb.org/e/invalid_argument.executor.arrow_event"
         },
         {
-          "code": "invalid_argument.executor.arrow_graph",
-          "docs": "https://stratadb.org/e/invalid_argument.executor.arrow_graph"
-        },
-        {
           "code": "not_found.engine.vector_collection",
           "docs": "https://stratadb.org/e/not_found.engine.vector_collection"
-        },
-        {
-          "code": "unavailable.executor.arrow_io",
-          "docs": "https://stratadb.org/e/unavailable.executor.arrow_io"
-        },
-        {
-          "code": "internal.executor.arrow",
-          "docs": "https://stratadb.org/e/internal.executor.arrow"
         }
       ],
       "fixtures": {
@@ -2489,7 +2489,7 @@
       "kind": "read.analytics",
       "title": "Compute graph shortest paths",
       "summary": "Compute shortest-path distances from a source.",
-      "description": "Computes weighted shortest-path distances from a source node over a consistent snapshot. Edge weights (default 1.0) accumulate along paths; unreachable nodes are omitted from the result. Direction defaults to `outgoing`. The source node must exist (`not_found.engine.graph_node`). Accepts an optional snapshot budget and `as_of` for time travel.\n\nAnalytics commands compute over a consistent snapshot of the visible graph and return a complete result payload in one response. They accept optional snapshot budgets and an `as_of` timestamp for time travel; results are deterministic for a fixed graph state.",
+      "description": "Computes weighted shortest-path distances from a source node over a consistent snapshot, and for every reachable node the predecessor its cheapest walk arrived from — follow `predecessors` back to the source to unpack a path. Edge weights (default 1.0) accumulate along paths; unreachable nodes are omitted from the result. Direction defaults to `outgoing`. `edge_types` restricts the walk to the listed types (a type the graph does not contain restricts to nothing, as for `bfs`); a negative-weight edge among the selected types refuses with `failed_precondition.engine.graph_negative_weight`. The source node must exist (`not_found.engine.graph_node`). Accepts an optional snapshot budget and `as_of` for time travel.\n\nAnalytics commands compute over a consistent snapshot of the visible graph and return a complete result payload in one response. They accept optional snapshot budgets and an `as_of` timestamp for time travel; results are deterministic for a fixed graph state.",
       "docs": "/docs/graph/analytics/sssp",
       "cli": {
         "path": [
@@ -2541,8 +2541,16 @@
           "docs": "https://stratadb.org/e/invalid_argument.engine.graph_node_id"
         },
         {
+          "code": "invalid_argument.engine.graph_edge_type",
+          "docs": "https://stratadb.org/e/invalid_argument.engine.graph_edge_type"
+        },
+        {
           "code": "not_found.engine.graph_node",
           "docs": "https://stratadb.org/e/not_found.engine.graph_node"
+        },
+        {
+          "code": "failed_precondition.engine.graph_negative_weight",
+          "docs": "https://stratadb.org/e/failed_precondition.engine.graph_negative_weight"
         },
         {
           "code": "resource_exhausted.engine.graph_analytics_budget",
@@ -2563,6 +2571,26 @@
           "requests/v1/setup/graph_add_carol.json",
           "requests/v1/graph/edge_add.json",
           "requests/v1/setup/graph_edge_bob_carol.json"
+        ],
+        "error_cases": [
+          {
+            "setup": [
+              "requests/v1/graph/create.json",
+              "requests/v1/graph/node_add.json"
+            ],
+            "request": "requests/v1/graph/sssp_bad_edge_type.json",
+            "expected_error": "responses/v1/errors/graph/sssp_edge_type.json"
+          },
+          {
+            "setup": [
+              "requests/v1/graph/create.json",
+              "requests/v1/graph/node_add.json",
+              "requests/v1/setup/graph_add_bob.json",
+              "requests/v1/setup/graph_edge_negative_weight.json"
+            ],
+            "request": "requests/v1/graph/sssp.json",
+            "expected_error": "responses/v1/errors/graph/sssp_negative_weight.json"
+          }
         ]
       },
       "source": {
@@ -2763,10 +2791,6 @@
           "docs": "https://stratadb.org/e/not_found.engine.graph"
         },
         {
-          "code": "invalid_argument.engine.graph_batch",
-          "docs": "https://stratadb.org/e/invalid_argument.engine.graph_batch"
-        },
-        {
           "code": "invalid_argument.engine.graph_node_id",
           "docs": "https://stratadb.org/e/invalid_argument.engine.graph_node_id"
         },
@@ -2866,7 +2890,7 @@
       "kind": "mutation.put",
       "title": "Bulk insert graph data",
       "summary": "Bulk-load nodes and edges in chunks.",
-      "description": "Ingests a payload of nodes and edges in chunked commits: nodes first, then edges, so edges may reference nodes from the same payload. Node objects use the key `node_id`; edges use `src`, `edge_type`, `dst`, and optional `weight` (default 1.0) and `properties`. `chunk_size` bounds items per commit (default 512, clamped at 800). The acknowledgement reports inserted counts, the number of chunk commits, and the final chunk's commit receipt.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
+      "description": "Ingests a payload of nodes and edges in chunked commits: nodes first, then edges, so edges may reference nodes from the same payload. Node objects use the key `node_id`; edges use `src`, `edge_type`, `dst`, and optional `weight` (default 1.0) and `properties`. `chunk_size` bounds items per commit (default 512, clamped at 800). The acknowledgement reports inserted counts, the number of chunk commits, and the final chunk's commit receipt.\n\nEach chunk is its own commit, so an interruption leaves the chunks that landed. An import that spans more than one commit sets a durable watermark on the graph with its first commit and clears it with its last: `graph meta` reports `import_pending: true` in between, and afterwards if the import was cut short. The watermark says a multi-commit import is in progress, not which payload: it is cleared by whichever `graph bulk_insert`'s last chunk lands next, whatever its chunk size, and ordinary writes leave it as it is. Every row is an upsert, so finishing an interrupted import is re-running its own payload; the graph stays readable and writable throughout.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/graph/bulk_insert",
       "cli": {
         "path": [
@@ -2877,7 +2901,7 @@
       },
       "mcp": {
         "name": "strata_graph_bulk_insert",
-        "description": "Use this when the user wants to load many nodes and edges into a graph at once. Nodes commit before edges in chunked commits; edge endpoints must exist or arrive in the same payload."
+        "description": "Use this when the user wants to load many nodes and edges into a graph at once. Nodes commit before edges in chunked commits; edge endpoints must exist or arrive in the same payload. Safe to re-run after an interruption."
       },
       "feature": "core",
       "access": "write",
@@ -2942,12 +2966,12 @@
           "docs": "https://stratadb.org/e/failed_precondition.engine.graph_negative_weight"
         },
         {
-          "code": "failed_precondition.engine.graph_ontology_node_type",
-          "docs": "https://stratadb.org/e/failed_precondition.engine.graph_ontology_node_type"
-        },
-        {
           "code": "failed_precondition.engine.graph_ontology_edge_type",
           "docs": "https://stratadb.org/e/failed_precondition.engine.graph_ontology_edge_type"
+        },
+        {
+          "code": "failed_precondition.engine.graph_ontology_node_type",
+          "docs": "https://stratadb.org/e/failed_precondition.engine.graph_ontology_node_type"
         }
       ],
       "fixtures": {
@@ -3050,7 +3074,7 @@
       "kind": "mutation.delete",
       "title": "Delete graph",
       "summary": "Delete a graph and its visible data.",
-      "description": "Deletes a named graph and every visible node, edge, binding, and ontology row it owns. Deleting a graph that does not exist is not an error: the acknowledgement reports `deleted: false` with a `not_found` effect. Earlier states remain readable through time travel on other commands.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
+      "description": "Deletes a named graph and every visible node, edge, binding, and ontology row it owns. Deleting a graph that does not exist is not an error: the acknowledgement reports `deleted: false` with a `not_found` effect. Earlier states remain readable through time travel on other commands.\n\nA graph too large for one commit is deleted in several: it disappears at the first — every read and write of it refuses `not_found.engine.graph` from then on — its rows are swept in later commits, and the acknowledged commit is the last, with row counts that cover the whole deletion. If the sweep is interrupted, the next `graph delete` (or `graph create` of the same name) finishes it before doing anything else, so no row of the old graph ever surfaces under the new one.\n\nSuccessful mutations return an acknowledgement of the outcome: for a state-changing write, the affected target with the mutation effect and commit facts; for mutations that produce a domain result (such as a branch or a promotion outcome), that result object.",
       "docs": "/docs/graph/delete",
       "cli": {
         "path": [
@@ -3061,7 +3085,7 @@
       },
       "mcp": {
         "name": "strata_graph_delete",
-        "description": "Use this when the user wants to delete an entire named graph, including all of its nodes and edges. Returns deleted=false if the graph does not exist."
+        "description": "Use this when the user wants to delete an entire named graph, including all of its nodes and edges. Returns deleted=false if the graph does not exist. Works for a graph of any size."
       },
       "feature": "core",
       "access": "write",
@@ -3096,6 +3120,10 @@
         {
           "code": "not_found.engine.graph",
           "docs": "https://stratadb.org/e/not_found.engine.graph"
+        },
+        {
+          "code": "failed_precondition.engine.graph_not_empty",
+          "docs": "https://stratadb.org/e/failed_precondition.engine.graph_not_empty"
         }
       ],
       "fixtures": {
@@ -3103,6 +3131,16 @@
         "response": "responses/v1/graph/delete_applied.json",
         "setup": [
           "requests/v1/graph/create.json"
+        ],
+        "error_cases": [
+          {
+            "setup": [
+              "requests/v1/graph/create.json",
+              "requests/v1/graph/node_add.json"
+            ],
+            "request": "requests/v1/graph/delete.json",
+            "expected_error": "responses/v1/errors/graph/delete_not_empty.json"
+          }
         ]
       },
       "source": {
@@ -3173,10 +3211,6 @@
           "docs": "https://stratadb.org/e/invalid_argument.engine.graph_edge_type"
         },
         {
-          "code": "invalid_argument.engine.graph_edge_type_reserved",
-          "docs": "https://stratadb.org/e/invalid_argument.engine.graph_edge_type_reserved"
-        },
-        {
           "code": "invalid_argument.engine.graph_edge_weight",
           "docs": "https://stratadb.org/e/invalid_argument.engine.graph_edge_weight"
         },
@@ -3199,6 +3233,10 @@
         {
           "code": "failed_precondition.engine.graph_ontology_edge_type",
           "docs": "https://stratadb.org/e/failed_precondition.engine.graph_ontology_edge_type"
+        },
+        {
+          "code": "invalid_argument.engine.graph_edge_type_reserved",
+          "docs": "https://stratadb.org/e/invalid_argument.engine.graph_edge_type_reserved"
         },
         {
           "code": "failed_precondition.engine.graph_ontology_endpoint_type",
@@ -3445,7 +3483,7 @@
       "kind": "read.get",
       "title": "Read graph metadata",
       "summary": "Read graph metadata and counts.",
-      "description": "Reads a graph's metadata: live node and edge counts plus the create and last-update commit versions and timestamps. Reading a graph that does not exist returns no data rather than an error. Accepts `as_of` for time travel.\n\nOptional reads distinguish present data from missing data. When version or timestamp facts exist on the executor output, SDK mappings should preserve them.",
+      "description": "Reads a graph's metadata: live node and edge counts, the create and last-update commit versions and timestamps, and `import_pending` — whether a `bulk_insert` spanning more than one commit began and has not finished (its first commit sets the flag, its last clears it, so an interrupted import leaves it set; re-running the import clears it). This is one row read, not a scan: the graph's metadata row carries its counts and is rewritten by every commit that changes a node or edge, so `updated_version` is a per-graph revision token — unchanged means no node or edge has changed since, whatever else moved on the branch. Ontology changes do not move it. Reading a graph that does not exist returns no data rather than an error. Accepts `as_of` for time travel. A graph whose rows were last written by a release before its metadata row carried counts is counted by scan until its next write.\n\nOptional reads distinguish present data from missing data. When version or timestamp facts exist on the executor output, SDK mappings should preserve them.",
       "docs": "/docs/graph/meta",
       "cli": {
         "path": [
@@ -3456,7 +3494,7 @@
       },
       "mcp": {
         "name": "strata_graph_meta",
-        "description": "Use this when the user wants a graph's node count, edge count, or creation and update commit coordinates. Returns null if the graph does not exist."
+        "description": "Use this when the user wants a graph's node count, edge count, creation and update commit coordinates, or whether a bulk import was cut short — one row read, cheap enough to poll. Returns null if the graph does not exist."
       },
       "feature": "core",
       "access": "read",
@@ -3569,6 +3607,10 @@
         {
           "code": "invalid_argument.engine.graph_edge_type",
           "docs": "https://stratadb.org/e/invalid_argument.engine.graph_edge_type"
+        },
+        {
+          "code": "invalid_argument.engine.graph_cursor",
+          "docs": "https://stratadb.org/e/invalid_argument.engine.graph_cursor"
         }
       ],
       "fixtures": {
@@ -3581,6 +3623,16 @@
           "requests/v1/setup/graph_add_carol.json",
           "requests/v1/graph/edge_add.json",
           "requests/v1/setup/graph_edge_alice_carol.json"
+        ],
+        "error_cases": [
+          {
+            "setup": [
+              "requests/v1/graph/create.json",
+              "requests/v1/graph/node_add.json"
+            ],
+            "request": "requests/v1/graph/neighbors_bad_cursor.json",
+            "expected_error": "responses/v1/errors/graph/neighbors_bad_cursor.json"
+          }
         ]
       },
       "source": {
@@ -6067,7 +6119,7 @@
       "kind": "batch.itemwise_read",
       "title": "Batch get JSON values",
       "summary": "Read multiple JSON values by document and path.",
-      "description": "Reads several document/path entries and returns positional item results. Each item records whether the value was found and includes version metadata when present.\n\nItemwise batches return one positional item result per input item. The outer batch status summarizes whether all, some, or none of the items succeeded.",
+      "description": "Reads several document/path entries and returns positional item results. Each item records whether the value was found and includes version metadata when present.\n\nWith `as_of` (a position on the logical commit timeline) or `as_of_time` (a wall-clock instant), every entry is read as of that one position, so a batch can hydrate the documents a version-pinned read named — a graph query at a version, say — without mixing in later state. Entries keep their order, a repeated entry is answered again, and a document absent at that position is a miss. An instant outside the branch's recorded history fails the whole batch with `history_unavailable.engine.persistence_history` rather than answering from the latest state; setting both clocks at once is refused.\n\nItemwise batches return one positional item result per input item. The outer batch status summarizes whether all, some, or none of the items succeeded.",
       "docs": "/docs/json/batch_get",
       "cli": {
         "surface": "wire"
@@ -6120,6 +6172,16 @@
         "response": "responses/v1/json/batch_get_ok.json",
         "setup": [
           "requests/v1/json/set.json"
+        ],
+        "cases": [
+          {
+            "setup": [
+              "requests/v1/json/set.json",
+              "requests/v1/json/set_rename.json"
+            ],
+            "request": "requests/v1/json/batch_get_as_of.json",
+            "response": "responses/v1/json/batch_get_ok.json"
+          }
         ]
       },
       "source": {
@@ -8621,6 +8683,10 @@
         {
           "code": "not_found.engine.vector_collection",
           "docs": "https://stratadb.org/e/not_found.engine.vector_collection"
+        },
+        {
+          "code": "failed_precondition.engine.vector_collection_not_empty",
+          "docs": "https://stratadb.org/e/failed_precondition.engine.vector_collection_not_empty"
         }
       ],
       "fixtures": {
@@ -8628,6 +8694,16 @@
         "response": "responses/v1/vector/collection_delete_true.json",
         "setup": [
           "requests/v1/vector/collection_create.json"
+        ],
+        "error_cases": [
+          {
+            "setup": [
+              "requests/v1/vector/collection_create.json",
+              "requests/v1/vector/upsert.json"
+            ],
+            "request": "requests/v1/vector/collection_delete.json",
+            "expected_error": "responses/v1/errors/vector/collection_delete_not_empty.json"
+          }
         ]
       },
       "source": {

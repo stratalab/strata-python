@@ -153,6 +153,23 @@ def test_json_exists_count_keys(db):
     assert sorted(db.json.keys()) == ["a", "b"]
 
 
+def test_json_batch_reads_can_be_pinned_to_a_version(db):
+    # strata-core #3485: a batch read used to resolve each entry at head, so a
+    # write landing mid-batch could be seen by some entries and not others.
+    first = db.json.set_many({"a": {"v": 1}, "b": {"v": 1}})
+    db.json.set("a", {"v": 2})
+
+    assert db.json.get_many(["a", "b"]) == [{"v": 2}, {"v": 1}]
+    pinned = db.json.get_many(["a", "b"], as_of=first.commit.timestamp)
+    assert pinned == [{"v": 1}, {"v": 1}]
+
+    at_time = db.json.get_many(["a", "b"], as_of_time=first.commit.committed_at)
+    assert at_time == [{"v": 1}, {"v": 1}]
+    with pytest.raises(errors.InvalidArgumentError) as excinfo:
+        db.json.get_many(["a"], as_of=first.commit.timestamp, as_of_time=first.commit.committed_at)
+    assert excinfo.value.code == "invalid_argument.executor.as_of_conflict"
+
+
 def test_json_batch_ops(db):
     db.json.set_many({"m1": {"a": 1}, "m2": {"b": 2}})
     assert db.json.get_many(["m1", "absent", "m2"]) == [{"a": 1}, None, {"b": 2}]
