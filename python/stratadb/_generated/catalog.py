@@ -19,6 +19,7 @@ GENERATED_COMMANDS = [
     'admin.metrics',
     'admin.ping',
     'admin.remote',
+    'admin.storage',
     'arrow.export',
     'arrow.import',
     'branch.create',

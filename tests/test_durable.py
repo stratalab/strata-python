@@ -171,3 +171,38 @@ def test_always_mode_acks_survive_sigkill(tmp_path):
         assert reopened.kv.get(f"k:{writes - 1}") == f"v:{writes - 1}".encode()
     finally:
         reopened.close()
+
+
+def test_storage_reports_the_footprint_and_the_reclaim_ledger(tmp_path):
+    """db.admin.storage() — engine 1.2.6's on-disk accounting.
+
+    Two tiers: the default is cheap (live tables, WAL, the reclaim ledger),
+    and audit=True pays for a listing to add the rest — including
+    total_bytes, which is None without it.
+    """
+    db = stratadb.open(str(tmp_path / "db"))
+    try:
+        for i in range(100):
+            db.kv.put(f"k{i}", b"v" * 200)
+
+        plain = db.admin.storage()
+        assert plain.audit is False
+        assert plain.total_bytes is None  # needs the listing to be knowable
+        assert plain.wal_retained_bytes > 0
+        assert plain.reclaim.total_passes >= 0
+
+        audited = db.admin.storage(audit=True)
+        assert audited.audit is True
+        assert audited.total_bytes > 0
+        assert audited.unreferenced_objects is not None
+        assert audited.wal_reclaimable_bytes is not None
+    finally:
+        db.close()
+
+
+def test_storage_needs_a_durable_database():
+    # A cache database holds no durable objects, so there is nothing to report.
+    with stratadb.open(cache=True) as db:
+        with pytest.raises(errors.UnsupportedError) as excinfo:
+            db.admin.storage()
+    assert excinfo.value.code == "unsupported.engine.persistence_capability"

@@ -15,7 +15,7 @@ description: >-
   matched on .code, db.ai inference, and the sharp edges that trip agents.
 license: MIT
 metadata:
-  strata-core-rev: "7bf09c2e3e4fe327aa79c5f12a48add9e2993cf0"
+  strata-core-rev: "81a9efbe60e25b84ba9355d3eb1d68001b834f3c"
   cli-version-range: "1.x"
   stratadb-version-range: "1.x"
 ---
@@ -74,7 +74,7 @@ One namespace per primitive, plus the control plane and the escape hatch:
 | `db.events` | append-only, hash-chained log | `append(type, payload)`, `get(seq)`, `range(start=)`, `range_by_time`, `len()`, `verify_chain()` |
 | `db.graphs` | typed nodes and edges, traversal, analytics | `create`, `add_node`, `add_edge`, `neighbors`, `list_nodes`, `delete(name, force=)`, analytics (PageRank, BFS, `sssp(...).path_to(target)`, …) |
 | `db.branches`, `db.spaces`, `db.at(...)` | isolation and scoping | `fork`, `create`, `list`, `fork_at_version`, `fork_at_timestamp`; `db.at(branch=, space=)` |
-| `db.admin`, `db.arrow` | control plane; bulk Arrow/Parquet | `ping`, `info`, `health`, `ipc_status`; `export`, `import_` |
+| `db.admin`, `db.arrow` | control plane; bulk Arrow/Parquet | `ping`, `info`, `health`, `ipc_status`, `storage(audit=)`; `export`, `import_` |
 | `db.hub` | browse StrataHub (read-only; never touches your data) | `info`, `list_datasets(tasks=, tags=, sort=)`, `get_dataset`, `list_refs`, `list_yanked`; `stratadb.clone(name, dest)` downloads one |
 | `db.ai` | inference, OpenAI-shaped | `chat`, `embed`, `rank`, `capability`, `status` |
 | `db.execute({...})` | the raw wire — every cataloged command | `stratadb.command_index()` lists them |
@@ -220,6 +220,12 @@ Codes you will actually meet:
 
 ## Sharp edges
 
+- **Opening a durable database with `stratadb >= 1.2.6` upgrades its format.**
+  There is no read-only open, so `stratadb.open(path)` alone does it — reading
+  is enough — and it is one-way: an older stratadb or `strata` CLI afterwards
+  refuses the directory with `unavailable.engine.persistence`, which looks
+  retryable and is not. Upgrade every reader of shared files together, and copy
+  the directory first if a way back matters.
 - **Keep the owner alive.** With the `ipc="host"` default, the first open of a
   path owns the store and later opens broker to it. When the owner closes —
   `close()`, its last reference dropped, process exit — every brokered handle
