@@ -146,6 +146,23 @@ def test_every_registry_class_has_a_typed_subclass():
     assert classes - set(errors._ERROR_CLASSES) == set()
 
 
+def test_format_version_is_a_permanent_precondition():
+    # strata-core 1.2.6 added this for the downgrade direction: a database
+    # written by a newer Strata than the runtime opening it. Non-retryable —
+    # no amount of waiting makes an older binary understand a newer layout.
+    exc = errors.error_from_status(
+        {
+            "class": "failed_precondition",
+            "code": "failed_precondition.engine.format_version",
+            "message": "The stored layout is incompatible with this runtime.",
+            "retry_policy": "never",
+            "retryable": False,
+        }
+    )
+    assert isinstance(exc, errors.FailedPreconditionError)
+    assert exc.retryable is False and exc.retry_policy == "never"
+
+
 def test_data_loss_is_its_own_class():
     # strata-core #2749: data_loss.* used to report class "corruption".
     exc = errors.error_from_status(

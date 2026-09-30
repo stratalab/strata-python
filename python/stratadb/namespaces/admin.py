@@ -62,6 +62,36 @@ class AdminNamespace(Namespace):
         """
         return self._c.admin_metrics()
 
+    def storage(self, *, audit: bool = False) -> Any:
+        """What the database occupies on disk, and what the last reclaim did.
+
+        Two tiers (engine 1.2.6). The default is the cheap one: live table
+        objects and their bytes, the WAL's retained/active bytes and retention
+        watermark, and ``.reclaim`` — the ledger of reclaim passes, including
+        the last snapshot prune's outcome.
+
+        ``audit=True`` adds the listing-backed facts, which cost a scan:
+        unreferenced and quarantined objects, snapshots and the segments a
+        prune would drop, the WAL's reclaimable-versus-tail split — and
+        ``total_bytes``, the sum across every family. **``total_bytes`` is
+        ``None`` without ``audit=True``**, since it cannot be known without
+        that listing.
+
+        Durable databases only: a ``cache=True`` database holds no durable
+        objects and raises :class:`~stratadb.errors.UnsupportedError`
+        (``unsupported.engine.persistence_capability``).
+
+        Examples:
+            >>> with stratadb.open(tmp_dir + "/store") as durable:
+            ...     _ = durable.kv.put("k", "v")
+            ...     durable.admin.storage().reclaim.total_passes >= 0
+            True
+            >>> with stratadb.open(tmp_dir + "/store") as durable:
+            ...     durable.admin.storage(audit=True).total_bytes > 0
+            True
+        """
+        return self._c.admin_storage(audit=audit)
+
     def describe(self, *, space: Optional[str] = None) -> Any:
         """A structured description of the database's capabilities and layout.
 

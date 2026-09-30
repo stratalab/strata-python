@@ -212,6 +212,13 @@ handle (even `stratadb.open(cache=True)`) can browse. Pass `hub_url=` or set
 `STRATA_HUB_URL` to target another hub; `db.hub.info()` reports its limits, and
 `db.hub.list_yanked()` its takedown list.
 
+> **Upgrading to 1.2.6 changes the on-disk format.** Opening a durable database
+> with this version upgrades it — reading is enough, since the SDK has no
+> read-only open — and an older stratadb or `strata` CLI then refuses that
+> directory (reporting `unavailable.engine.persistence`, which looks retryable
+> but is not). Upgrade every reader together, and copy the directory first if
+> you need a way back.
+
 ## Errors
 
 Every failure raises a typed `stratadb.errors.StrataError` subclass carrying a

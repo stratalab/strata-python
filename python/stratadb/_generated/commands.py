@@ -136,6 +136,19 @@ class Commands:
         data = self._core.data(cmd)
         return _wire.Record({'origin': (None if data.get('origin') is None else models.RemoteOriginInfo.from_wire(data['origin']))})
 
+    def admin_storage(self, *, audit=None, branch=None):
+        """Read the database's on-disk footprint.
+
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.branch_name, unsupported.engine.persistence_capability
+        """
+        cmd = {'type': 'storage'}
+        if audit is not None:
+            cmd['audit'] = audit
+        if branch is not None:
+            cmd['branch'] = branch
+        data = self._core.data(cmd)
+        return models.AdminStorage.from_wire(data)
+
     def arrow_export(self, primitive, format, path, *, collection=None, event_type=None, graph=None, limit=None, prefix=None, branch=None, space=None):
         """Export a product primitive to an Arrow-compatible file.
 
@@ -1637,7 +1650,7 @@ class Commands:
     def space_delete(self, space, *, force=None, branch=None):
         """Delete a product space from a branch.
 
-        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.product_space_reserved, invalid_argument.engine.space_delete_default, failed_precondition.engine.space_not_empty, invalid_argument.engine.space_delete_too_large
+        Errors: failed_precondition.engine.runtime_closed, not_found.engine.branch, invalid_argument.engine.product_space, invalid_argument.engine.product_space_reserved, invalid_argument.engine.space_delete_default, failed_precondition.engine.space_not_empty
         """
         cmd = {'type': 'space_delete'}
         cmd['space'] = space

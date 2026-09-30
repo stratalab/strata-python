@@ -342,6 +342,13 @@ the same shape, and the wheel ships it as `sdk-errors.json`.
 
 Exact failure modes worth recognizing up front (match on the `.code`, not the message):
 
+- **Opening a durable database with stratadb 1.2.6+ upgrades its format, and
+  older wheels then refuse it.** The SDK has no read-only open, so *any*
+  `stratadb.open(path)` performs the upgrade — reading is enough. It is
+  one-way: an older stratadb (or `strata` CLI) afterwards reports
+  `unavailable.engine.persistence`, which reads as a retryable outage but is
+  permanent. Upgrade every reader of a shared database together, and copy the
+  directory first if you need a way back.
 - **`as_of_time` does not clamp.** An instant outside the branch's dated history
   raises `HistoryUnavailableError` (`history_unavailable.engine.persistence_history`)
   at *both* ends — including `datetime.now()`, which is past the newest commit.

@@ -304,6 +304,132 @@ class AdminPrimitives:
         )
 
 
+class AdminReclaimDeferralReason(str, Enum):
+    """Why a reclaim pass deferred."""
+    READER_PINNED = 'reader_pinned'
+    REFERENCED = 'referenced'
+    INCOMPLETE_PROOF = 'incomplete_proof'
+    STALE_PROOF = 'stale_proof'
+    RECOVERY_HEALTH = 'recovery_health'
+    INVENTORY_ADVANCED = 'inventory_advanced'
+    UNSUPPORTED_SCOPE = 'unsupported_scope'
+
+
+class AdminReclaimOutcome(str, Enum):
+    """How a reclaim pass ended."""
+    RECLAIMED = 'reclaimed'
+    NOTHING = 'nothing'
+    DEFERRED = 'deferred'
+    FAILED = 'failed'
+    CANCELED = 'canceled'
+
+
+@dataclass
+class AdminReclaimPass:
+    """One recorded reclaim pass."""
+    bytes_reclaimed: int
+    objects_affected: int
+    outcome: "AdminReclaimOutcome"
+    state_changes: int
+    deferral: Optional["AdminReclaimDeferralReason"] = None
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "AdminReclaimPass":
+        return cls(
+            bytes_reclaimed=d['bytes_reclaimed'],
+            objects_affected=d['objects_affected'],
+            outcome=AdminReclaimOutcome(d['outcome']),
+            state_changes=d['state_changes'],
+            deferral=(None if d.get('deferral') is None else AdminReclaimDeferralReason(d['deferral'])),
+        )
+
+
+@dataclass
+class AdminStorage:
+    """Storage footprint output (space-reclamation contract §3.5). Audit-only"""
+    audit: bool
+    live_table_bytes: int
+    live_table_objects: int
+    reclaim: "AdminStorageReclaim"
+    quarantined_bytes: Optional[int] = None
+    quarantined_objects: Optional[int] = None
+    snapshot_bytes: Optional[int] = None
+    snapshot_objects: Optional[int] = None
+    superseded_snapshot_bytes: Optional[int] = None
+    superseded_snapshots: Optional[int] = None
+    superseded_timeline_segment_bytes: Optional[int] = None
+    superseded_timeline_segments: Optional[int] = None
+    timeline_segment_bytes: Optional[int] = None
+    timeline_segment_objects: Optional[int] = None
+    total_bytes: Optional[int] = None
+    unreferenced_bytes: Optional[int] = None
+    unreferenced_objects: Optional[int] = None
+    wal_active_bytes: Optional[int] = None
+    wal_reclaimable_bytes: Optional[int] = None
+    wal_retained_bytes: Optional[int] = None
+    wal_retained_segments: Optional[int] = None
+    wal_retention_watermark: Optional[int] = None
+    wal_tail_bytes: Optional[int] = None
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "AdminStorage":
+        return cls(
+            audit=d['audit'],
+            live_table_bytes=d['live_table_bytes'],
+            live_table_objects=d['live_table_objects'],
+            reclaim=AdminStorageReclaim.from_wire(d['reclaim']),
+            quarantined_bytes=(None if d.get('quarantined_bytes') is None else d['quarantined_bytes']),
+            quarantined_objects=(None if d.get('quarantined_objects') is None else d['quarantined_objects']),
+            snapshot_bytes=(None if d.get('snapshot_bytes') is None else d['snapshot_bytes']),
+            snapshot_objects=(None if d.get('snapshot_objects') is None else d['snapshot_objects']),
+            superseded_snapshot_bytes=(None if d.get('superseded_snapshot_bytes') is None else d['superseded_snapshot_bytes']),
+            superseded_snapshots=(None if d.get('superseded_snapshots') is None else d['superseded_snapshots']),
+            superseded_timeline_segment_bytes=(None if d.get('superseded_timeline_segment_bytes') is None else d['superseded_timeline_segment_bytes']),
+            superseded_timeline_segments=(None if d.get('superseded_timeline_segments') is None else d['superseded_timeline_segments']),
+            timeline_segment_bytes=(None if d.get('timeline_segment_bytes') is None else d['timeline_segment_bytes']),
+            timeline_segment_objects=(None if d.get('timeline_segment_objects') is None else d['timeline_segment_objects']),
+            total_bytes=(None if d.get('total_bytes') is None else d['total_bytes']),
+            unreferenced_bytes=(None if d.get('unreferenced_bytes') is None else d['unreferenced_bytes']),
+            unreferenced_objects=(None if d.get('unreferenced_objects') is None else d['unreferenced_objects']),
+            wal_active_bytes=(None if d.get('wal_active_bytes') is None else d['wal_active_bytes']),
+            wal_reclaimable_bytes=(None if d.get('wal_reclaimable_bytes') is None else d['wal_reclaimable_bytes']),
+            wal_retained_bytes=(None if d.get('wal_retained_bytes') is None else d['wal_retained_bytes']),
+            wal_retained_segments=(None if d.get('wal_retained_segments') is None else d['wal_retained_segments']),
+            wal_retention_watermark=(None if d.get('wal_retention_watermark') is None else d['wal_retention_watermark']),
+            wal_tail_bytes=(None if d.get('wal_tail_bytes') is None else d['wal_tail_bytes']),
+        )
+
+
+@dataclass
+class AdminStorageReclaim:
+    """The reclaim ledger for `admin.storage`: the last pass of every reclaim"""
+    deferred_passes: int
+    reclaimed_passes: int
+    total_bytes_reclaimed: int
+    total_passes: int
+    last_mark: Optional["AdminReclaimPass"] = None
+    last_purge: Optional["AdminReclaimPass"] = None
+    last_snapshot_prune: Optional["AdminReclaimPass"] = None
+    last_sweep: Optional["AdminReclaimPass"] = None
+    last_wal_truncation: Optional["AdminReclaimPass"] = None
+    pending_reclaim_tasks: Optional[int] = None
+
+    @classmethod
+    def from_wire(cls, d: dict) -> "AdminStorageReclaim":
+        return cls(
+            deferred_passes=d['deferred_passes'],
+            reclaimed_passes=d['reclaimed_passes'],
+            total_bytes_reclaimed=d['total_bytes_reclaimed'],
+            total_passes=d['total_passes'],
+            last_mark=(None if d.get('last_mark') is None else AdminReclaimPass.from_wire(d['last_mark'])),
+            last_purge=(None if d.get('last_purge') is None else AdminReclaimPass.from_wire(d['last_purge'])),
+            last_snapshot_prune=(None if d.get('last_snapshot_prune') is None else AdminReclaimPass.from_wire(d['last_snapshot_prune'])),
+            last_sweep=(None if d.get('last_sweep') is None else AdminReclaimPass.from_wire(d['last_sweep'])),
+            last_wal_truncation=(None if d.get('last_wal_truncation') is None else AdminReclaimPass.from_wire(d['last_wal_truncation'])),
+            pending_reclaim_tasks=(None if d.get('pending_reclaim_tasks') is None else d['pending_reclaim_tasks']),
+        )
+
+
 @dataclass
 class AdminVectorCollection:
     """Vector collection summary in describe output."""
