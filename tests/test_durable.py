@@ -206,3 +206,31 @@ def test_storage_needs_a_durable_database():
         with pytest.raises(errors.UnsupportedError) as excinfo:
             db.admin.storage()
     assert excinfo.value.code == "unsupported.engine.persistence_capability"
+
+
+def test_a_clean_close_loop_leaves_no_empty_directories(tmp_path):
+    """strata-core #3692: 1.2.6 left one empty `timeline/<version>` per checkpoint.
+
+    Reproduced against the published 1.2.6 wheel (seven leftovers after eight
+    open/write/close cycles) and fixed in 1.2.7, which also sweeps existing
+    ones on open. Cheap to assert and the kind of growth nobody notices until
+    a directory listing gets slow.
+    """
+    path = str(tmp_path / "db")
+    for cycle in range(6):
+        db = stratadb.open(path)
+        try:
+            for i in range(40):
+                db.kv.put(f"c{cycle}-k{i}", b"v" * 400)
+        finally:
+            db.close()
+
+    empty = [
+        os.path.relpath(root, path)
+        for root, dirs, files in os.walk(path)
+        if not dirs and not files
+    ]
+    assert empty == [], f"empty directories left behind: {empty}"
+
+    with stratadb.open(path) as db:
+        assert db.kv.count() == 6 * 40  # and the data survived the sweeping
