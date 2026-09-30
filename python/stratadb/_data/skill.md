@@ -15,7 +15,7 @@ description: >-
   matched on .code, db.ai inference, and the sharp edges that trip agents.
 license: MIT
 metadata:
-  strata-core-rev: "81a9efbe60e25b84ba9355d3eb1d68001b834f3c"
+  strata-core-rev: "87fa1a9c3566a737ae99f9058aaf573da3019d78"
   cli-version-range: "1.x"
   stratadb-version-range: "1.x"
 ---
